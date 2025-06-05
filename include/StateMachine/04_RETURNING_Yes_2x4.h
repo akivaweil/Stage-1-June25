@@ -4,10 +4,11 @@
 #include "BaseState.h"
 
 //* ************************************************************************
-//* ************************ RETURNING YES 2X4 STATE **********************
+//* ******************** RETURNING YES 2X4 STATE **************************
 //* ************************************************************************
-// Handles the RETURNING_YES_2x4 cutting sequence when wood is detected.
-// This state manages the simultaneous return process for wood that triggers the wood sensor.
+// Handles the simultaneous return sequence when wood sensor detects lumber.
+// Manages cut motor return to home while feed motor executes multi-step return sequence.
+// Includes cut motor error handling with timeout and recovery logic.
 
 class ReturningYes2x4State : public BaseState {
 public:
@@ -20,10 +21,16 @@ private:
     // RETURNING_YES_2x4 sequence tracking
     int returningYes2x4SubStep = 0;
     int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
+    int feedHomingSubStep = 0; // For feed motor homing sequence
+    
+    // Cut motor error handling variables
+    unsigned long cutMotorHomingAttemptStartTime = 0;
+    bool cutMotorHomingAttemptInProgress = false;
     
     // Helper methods for RETURNING_YES_2x4 sequence
     void handleReturningYes2x4Sequence(StateManager& stateManager);
     void handleFeedMotorReturnSequence(StateManager& stateManager);
+    void handleReturningYes2x4FeedMotorHoming(StateManager& stateManager);
     
     // Reset all step counters
     void resetSteps();

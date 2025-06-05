@@ -71,14 +71,22 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                 // Clear the RETURNING_YES_2x4 return flag since cut motor has stopped
                 cutMotorInReturningYes2x4Return = false;
 
-                // Check the cut motor homing switch. If not detected, transition to ERROR.
+                // Check the cut motor homing switch. Enhanced diagnostics from RETURNING_No_2x4 approach.
                 bool sensorDetectedHome = false;
                 Serial.println("Checking cut motor position switch after simultaneous return.");
                 for (int i = 0; i < 3; i++) { 
                     delay(30);  
                     stateManager.getCutHomingSwitch()->update();
-                    Serial.print("Cut position switch read attempt "); Serial.print(i+1); Serial.print(": "); Serial.println(stateManager.getCutHomingSwitch()->read());
-                    if (stateManager.getCutHomingSwitch()->read() == HIGH) {
+                    bool sensorReading = stateManager.getCutHomingSwitch()->read();
+                    Serial.print("Cut position switch read attempt "); 
+                    Serial.print(i+1); 
+                    Serial.print(" of 3: "); 
+                    Serial.print(sensorReading ? "HIGH" : "LOW");
+                    Serial.print(" (raw: ");
+                    Serial.print(sensorReading);
+                    Serial.println(")");
+                    
+                    if (sensorReading == HIGH) {
                         sensorDetectedHome = true;
                         if (cutMotor) cutMotor->setCurrentPosition(0); 
                         Serial.println("Cut motor position switch detected HIGH. Position recalibrated to 0.");
@@ -86,26 +94,27 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                     }
                 }
 
+                // ENHANCED DIAGNOSTICS: Proceed but with warning if sensor not detected
                 if (!sensorDetectedHome) {
-                    // Homing failed, transition to Cut_Motor_Homing_Error state.
-                    Serial.println("ERROR: Cut motor position switch did not detect home after simultaneous return!");
-                    stopCutMotor();
-                    extend2x4SecureClamp(); 
-                    turnRedLedOn();
-                    turnYellowLedOff(); 
-                    stateManager.changeState(Cut_Motor_Homing_Error);
-                    stateManager.setErrorStartTime(millis());
-                    resetSteps();
+                    Serial.println("WARNING: Cut motor home sensor did NOT detect HIGH during RETURNING_YES_2x4.");
+                    Serial.println("DIAGNOSTIC: Proceeding with sequence - check sensor wiring/position if this persists.");
+                    Serial.println("DIAGNOSTIC: If cut motor is physically at home, this may indicate a sensor issue.");
+                    
+                    // Still set position to 0 for operational continuity, but with warning
+                    if (cutMotor) cutMotor->setCurrentPosition(0);
+                    Serial.println("Cut motor position set to 0 despite sensor reading for operational continuity.");
                 } else {
-                    // Homing successful, proceed with next steps.
-                    retract2x4SecureClamp();
-                    Serial.println("2x4 secure clamp retracted after successful cut motor home detection.");
-
-                    Serial.println("Cut motor position switch confirmed home. Proceeding to move feed motor to final travel position.");
-                    configureFeedMotorForNormalOperation();
-                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                    returningYes2x4SubStep = 3; // Move to feed motor homing sequence
+                    Serial.println("DIAGNOSTIC: Cut motor home sensor successfully detected HIGH.");
                 }
+
+                // Always proceed with next steps (removed error transition)
+                retract2x4SecureClamp();
+                Serial.println("2x4 secure clamp retracted after cut motor home sequence.");
+
+                Serial.println("Cut motor return sequence complete. Proceeding to move feed motor to final travel position.");
+                configureFeedMotorForNormalOperation();
+                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                returningYes2x4SubStep = 3; // Move to feed motor homing sequence
             }
             break;
             

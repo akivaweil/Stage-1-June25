@@ -27,6 +27,10 @@ private:
     unsigned long cutMotorHomingAttemptStartTime = 0;
     bool cutMotorHomingAttemptInProgress = false;
     
+    // Cut motor final verification debounce variables
+    unsigned long cutMotorFinalVerificationStartTime = 0;
+    bool cutMotorFinalVerificationInProgress = false;
+    
     // Helper methods for RETURNING_YES_2x4 sequence
     void handleReturningYes2x4Sequence(StateManager& stateManager);
     void handleFeedMotorReturnSequence(StateManager& stateManager);

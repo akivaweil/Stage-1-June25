@@ -32,7 +32,7 @@ const int FEED_HOMING_DIRECTION = 1;
 //* ************************ CUT MOTOR SPEED SETTINGS ********************
 //* ************************************************************************
 // Normal Cutting Operation (Cutting State)
-const float CUT_MOTOR_NORMAL_SPEED = 800;      // Speed for the cutting pass (steps/sec)
+const float CUT_MOTOR_NORMAL_SPEED = 700;      // Speed for the cutting pass (steps/sec)
 const float CUT_MOTOR_NORMAL_ACCELERATION = 15000; // Acceleration for the cutting pass (steps/sec^2)
 
 // Return Stroke (Returning State / End of Cutting State)
@@ -50,10 +50,10 @@ const float FEED_MOTOR_NORMAL_ACCELERATION = 21000; // Acceleration for normal f
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
 const float FEED_MOTOR_RETURN_SPEED = 25000;    // Speed for returning to home or start position (steps/sec)
-const float FEED_MOTOR_RETURN_ACCELERATION = 25000; // Acceleration for return moves (steps/sec^2)
+const float FEED_MOTOR_RETURN_ACCELERATION = 27000; // Acceleration for return moves (steps/sec^2)
 
 // Homing Operation (Homing State)
-const float FEED_MOTOR_HOMING_SPEED = 8000;     // Speed for homing the feed motor (steps/sec)
+const float FEED_MOTOR_HOMING_SPEED = 3000;     // Speed for homing the feed motor (steps/sec)
 
 //* ************************************************************************
 //* ************************ TIMING CONFIGURATION *************************
@@ -62,7 +62,7 @@ const float FEED_MOTOR_HOMING_SPEED = 8000;     // Speed for homing the feed mot
 const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;
 
 // Rotation clamp timing
-const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2300; // 2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
+const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2450; // 2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
 
 // Cut motor homing timeout
 const unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds timeout

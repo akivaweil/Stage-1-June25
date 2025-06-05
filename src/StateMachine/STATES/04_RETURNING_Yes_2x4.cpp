@@ -43,6 +43,8 @@ void ReturningYes2x4State::onEnter(StateManager& stateManager) {
     feedMotorReturnSubStep = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
+    cutMotorFinalVerificationStartTime = 0;
+    cutMotorFinalVerificationInProgress = false;
 }
 
 void ReturningYes2x4State::onExit(StateManager& stateManager) {
@@ -95,23 +97,18 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                 Serial.println(sensorReading ? "HIGH" : "LOW");
                 
                 if (sensorReading == HIGH) {
-                    // Successful homing
+                    // Initial homing successful - start 20ms final verification
                     if (cutMotor) cutMotor->setCurrentPosition(0);
                     Serial.println("Cut motor position switch detected HIGH. Position recalibrated to 0.");
+                    Serial.println("Starting 20ms final verification before feed motor operations...");
                     
-                    //! ************************************************************************
-                    //! STEP: PREPARE FOR FEED MOTOR FINAL POSITIONING
-                    //! ************************************************************************
-                    retract2x4SecureClamp();
-                    Serial.println("2x4 secure clamp retracted after cut motor home sequence.");
-
-                    Serial.println("Cut motor return sequence complete. Proceeding to move feed motor to final travel position.");
-                    configureFeedMotorForNormalOperation();
-                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                    returningYes2x4SubStep = 3;
+                    cutMotorFinalVerificationInProgress = true;
+                    cutMotorFinalVerificationStartTime = millis();
+                    // DO NOT proceed to feed motor operations yet - wait for final verification
                 } else {
-                    // Home switch not detected - start recovery attempt
-                    Serial.println("WARNING: Cut motor home switch not detected. Starting recovery homing attempt.");
+                    // Home switch not detected - start recovery attempt and BLOCK feed motor operations
+                    Serial.println("CRITICAL: Cut motor home switch not detected. Feed motor operations BLOCKED until cut motor homes.");
+                    Serial.println("Starting cut motor recovery homing attempt...");
                     cutMotorHomingAttemptInProgress = true;
                     cutMotorHomingAttemptStartTime = millis();
                     
@@ -121,17 +118,18 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_HOMING_SPEED);
                         cutMotor->moveTo(-10000); // Move toward home switch
                     }
-                    Serial.println("Cut motor moving toward home switch for recovery.");
+                    Serial.println("Cut motor moving toward home switch for recovery. Feed operations suspended.");
+                    // DO NOT advance returningYes2x4SubStep - stay in case 2 until cut motor homes
                 }
             }
             
-            // Handle cut motor homing recovery attempt
+            // Handle cut motor homing recovery attempt - FEED MOTOR OPERATIONS REMAIN BLOCKED
             if (cutMotorHomingAttemptInProgress) {
                 stateManager.getCutHomingSwitch()->update();
                 bool sensorReading = stateManager.getCutHomingSwitch()->read();
                 
                 if (sensorReading == HIGH) {
-                    // Recovery successful
+                    // Recovery successful - start 20ms final verification
                     Serial.println("Cut motor home switch detected during recovery attempt.");
                     if (cutMotor) {
                         cutMotor->forceStop();
@@ -139,18 +137,15 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                     }
                     cutMotorHomingAttemptInProgress = false;
                     Serial.println("Cut motor recovery successful. Position set to 0.");
+                    Serial.println("Starting 20ms final verification after recovery before feed motor operations...");
                     
-                    // Continue with normal sequence
-                    retract2x4SecureClamp();
-                    Serial.println("2x4 secure clamp retracted after cut motor recovery.");
-                    
-                    configureFeedMotorForNormalOperation();
-                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                    returningYes2x4SubStep = 3;
+                    cutMotorFinalVerificationInProgress = true;
+                    cutMotorFinalVerificationStartTime = millis();
+                    // DO NOT proceed to feed motor operations yet - wait for final verification
                 } else if (millis() - cutMotorHomingAttemptStartTime > 2000) {
                     // Timeout exceeded - transition to error state
                     Serial.println("ERROR: Cut motor failed to reach home switch within 2 seconds.");
-                    Serial.println("Transitioning to CUT_MOTOR_ERROR state.");
+                    Serial.println("SAFETY: Feed motor operations prevented. Transitioning to CUT_MOTOR_ERROR state.");
                     
                     if (cutMotor) cutMotor->forceStop();
                     cutMotorHomingAttemptInProgress = false;
@@ -158,6 +153,45 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                     stateManager.changeState(Cut_Motor_Homing_Error);
                     resetSteps();
                     return;
+                }
+            }
+            
+            // Handle 20ms final verification after successful cut motor homing
+            if (cutMotorFinalVerificationInProgress) {
+                if (millis() - cutMotorFinalVerificationStartTime >= 20) {
+                    // 20ms has elapsed - perform final verification
+                    stateManager.getCutHomingSwitch()->update();
+                    bool finalSensorReading = stateManager.getCutHomingSwitch()->read();
+                    
+                    Serial.print("20ms final verification - Cut motor home switch reading: ");
+                    Serial.println(finalSensorReading ? "HIGH" : "LOW");
+                    
+                    if (finalSensorReading == HIGH) {
+                        // FINAL VERIFICATION SUCCESSFUL - NOW safe to proceed with feed motor
+                        cutMotorFinalVerificationInProgress = false;
+                        
+                        //! ************************************************************************
+                        //! STEP: 20MS VERIFICATION COMPLETE - FEED MOTOR OPERATIONS NOW AUTHORIZED
+                        //! ************************************************************************
+                        Serial.println("20ms verification PASSED. Cut motor confirmed stable at home. Feed motor operations authorized.");
+                        
+                        retract2x4SecureClamp();
+                        Serial.println("2x4 secure clamp retracted after final cut motor verification.");
+
+                        Serial.println("Cut motor FINAL verification complete. Proceeding to move feed motor to final travel position.");
+                        configureFeedMotorForNormalOperation();
+                        moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                        returningYes2x4SubStep = 3;
+                    } else {
+                        // FINAL VERIFICATION FAILED - cut motor not stable at home
+                        Serial.println("CRITICAL ERROR: 20ms final verification FAILED. Cut motor home switch not stable.");
+                        Serial.println("SAFETY: Cut motor position unstable. Transitioning to CUT_MOTOR_ERROR state.");
+                        
+                        cutMotorFinalVerificationInProgress = false;
+                        stateManager.changeState(Cut_Motor_Homing_Error);
+                        resetSteps();
+                        return;
+                    }
                 }
             }
             break;
@@ -340,4 +374,6 @@ void ReturningYes2x4State::resetSteps() {
     feedHomingSubStep = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
+    cutMotorFinalVerificationStartTime = 0;
+    cutMotorFinalVerificationInProgress = false;
 } 

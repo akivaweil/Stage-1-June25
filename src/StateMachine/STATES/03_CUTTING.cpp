@@ -12,6 +12,20 @@
 void CuttingState::onEnter(StateManager& stateManager) {
     // Reset all step counters when entering cutting state
     resetSteps();
+    
+    // Check if we need to perform feed motor homing concurrently
+    // This happens when transitioning from RETURNING_YES_2x4 state (continuous operation)
+    if (stateManager.getCuttingCycleInProgress()) {
+        Serial.println("CUTTING: Continuous cycle detected - will perform concurrent feed motor homing during cut motor movement.");
+        feedMotorNeedsHoming = true;
+        feedMotorHomingActive = false;
+        concurrentFeedHomingSubStep = 0;
+    } else {
+        Serial.println("CUTTING: First cycle or non-continuous - no concurrent feed motor homing needed.");
+        feedMotorNeedsHoming = false;
+        feedMotorHomingActive = false;
+        concurrentFeedHomingSubStep = 0;
+    }
 }
 
 void CuttingState::onExit(StateManager& stateManager) {
@@ -35,6 +49,25 @@ void CuttingState::execute(StateManager& stateManager) {
     // Handle signal timing independently of motor movements
     if (signalActive && millis() - signalStartTime >= 2000) { // Original was 2000ms
         signalActive = false;
+    }
+
+    // Handle concurrent feed motor homing if needed
+    if (feedMotorNeedsHoming && (cuttingStep == 0 || cuttingStep == 1 || cuttingStep == 2)) {
+        handleConcurrentFeedMotorHoming(stateManager);
+    }
+    
+    // Debug logging for concurrent homing status
+    if (feedMotorNeedsHoming) {
+        static unsigned long lastHomingDebugTime = 0;
+        if (millis() - lastHomingDebugTime >= 1000) {
+            Serial.print("CUTTING DEBUG: Concurrent feed homing active: ");
+            Serial.print(feedMotorHomingActive ? "YES" : "NO");
+            Serial.print(", Substep: ");
+            Serial.print(concurrentFeedHomingSubStep);
+            Serial.print(", Cutting step: ");
+            Serial.println(cuttingStep);
+            lastHomingDebugTime = millis();
+        }
     }
 
     switch (cuttingStep) {
@@ -513,4 +546,74 @@ void CuttingState::resetSteps() {
     rotationServoActivatedThisCycle = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
     cuttingSubStep8 = 0; // Reset position motor homing substep
+    
+    // Reset concurrent feed motor homing variables
+    feedMotorHomingActive = false;
+    concurrentFeedHomingSubStep = 0;
+    feedMotorNeedsHoming = false;
+}
+
+void CuttingState::handleConcurrentFeedMotorHoming(StateManager& stateManager) {
+    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+    extern const float FEED_MOTOR_HOMING_SPEED; // From main.cpp
+    extern const float FEED_TRAVEL_DISTANCE; // From main.cpp
+    // FEED_MOTOR_STEPS_PER_INCH is already declared in General_Functions.h
+    
+    // Non-blocking concurrent feed motor homing sequence
+    switch (concurrentFeedHomingSubStep) {
+        case 0: // Start homing - move toward home switch
+            if (!feedMotorHomingActive) {
+                Serial.println("CUTTING: Starting concurrent feed motor homing - moving toward home switch.");
+                extend2x4SecureClamp();
+                Serial.println("2x4 secure clamp extended for concurrent homing.");
+                if (feedMotor) {
+                    feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
+                    feedMotor->moveTo(10000 * FEED_MOTOR_STEPS_PER_INCH); // Large positive move toward switch
+                }
+                feedMotorHomingActive = true;
+                concurrentFeedHomingSubStep = 1;
+            }
+            break;
+            
+        case 1: // Wait for home switch to trigger
+            stateManager.getFeedHomingSwitch()->update();
+            if (stateManager.getFeedHomingSwitch()->read() == HIGH) {
+                Serial.println("CUTTING: Concurrent feed motor homing - home switch triggered. Stopping motor.");
+                if (feedMotor) {
+                    feedMotor->forceStop();
+                    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+                }
+                Serial.println("Concurrent feed motor hit home switch.");
+                concurrentFeedHomingSubStep = 2;
+            }
+            break;
+            
+        case 2: // Wait for motor to stop, then move to -0.6 inch from switch
+            if (feedMotor && !feedMotor->isRunning()) {
+                Serial.println("CUTTING: Concurrent feed motor homing - moving to -0.6 inch from home switch to establish working zero.");
+                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.6 * FEED_MOTOR_STEPS_PER_INCH);
+                concurrentFeedHomingSubStep = 3;
+            }
+            break;
+            
+        case 3: // Wait for positioning move to complete, then set new zero
+            if (feedMotor && !feedMotor->isRunning()) {
+                Serial.println("CUTTING: Concurrent feed motor homing - setting new working zero position.");
+                feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
+                Serial.println("Concurrent feed motor homed: 0.6 inch from switch set as position 0.");
+                
+                configureFeedMotorForNormalOperation();
+                
+                // Mark homing as complete
+                feedMotorNeedsHoming = false;
+                feedMotorHomingActive = false;
+                Serial.println("CUTTING: Concurrent feed motor homing sequence complete.");
+                concurrentFeedHomingSubStep = 4;
+            }
+            break;
+            
+        case 4: // Homing complete - nothing more to do
+            // Feed motor homing is now complete and running concurrently with cutting
+            break;
+    }
 } 

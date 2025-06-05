@@ -20,7 +20,7 @@ const int ROTATION_SERVO_ACTIVE_POSITION = 90;   // Position when activated (deg
 const float CUT_MOTOR_STEPS_PER_INCH = 500.0;  // 4x increase from 38
 const float FEED_MOTOR_STEPS_PER_INCH = 1000.0; // Steps per inch for feed motor
 const float CUT_TRAVEL_DISTANCE = 9.0; // inches
-const float FEED_TRAVEL_DISTANCE = 3.25; // inches (3.4 for 3 inch squares and 3.25 for 2.65 inch squares)
+const float FEED_TRAVEL_DISTANCE = 3.3; // inches (3.4 for 3 inch squares and 3.25 for 2.65 inch squares)
 const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1; // Inches for incremental reverse
 const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4; // Max inches for incremental reverse before error
 
@@ -59,10 +59,10 @@ const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed mot
 //* ************************ TIMING CONFIGURATION *************************
 //* ************************************************************************
 // Servo timing configuration
-const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2700;
+const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;
 
 // Rotation clamp timing
-const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2400; // 2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
+const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2300; // 2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
 
 // Cut motor homing timeout
 const unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds timeout
@@ -74,7 +74,7 @@ const unsigned long TA_SIGNAL_DURATION = 2000; // Duration for Transfer Arm sign
 //* ************************ OPERATIONAL CONSTANTS ***********************
 //* ************************************************************************
 // Rotation clamp early activation offset
-const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
+const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
 
 // Rotation servo early activation offset
 const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.3; 

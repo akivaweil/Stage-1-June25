@@ -20,12 +20,10 @@ private:
     // RETURNING_YES_2x4 sequence tracking
     int returningYes2x4SubStep = 0;
     int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
-    int feedHomingSubStep = 0; // For feed motor homing sequence
     
     // Helper methods for RETURNING_YES_2x4 sequence
     void handleReturningYes2x4Sequence(StateManager& stateManager);
     void handleFeedMotorReturnSequence(StateManager& stateManager);
-    void handleReturningYes2x4FeedMotorHoming(StateManager& stateManager);
     
     // Reset all step counters
     void resetSteps();

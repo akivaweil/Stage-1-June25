@@ -28,6 +28,11 @@ private:
     float cutMotorIncrementalMoveTotalInches = 0.0;
     int cuttingSubStep8 = 0; // For feed motor homing sequence
     
+    // Concurrent feed motor homing during cutting
+    bool feedMotorHomingActive = false;
+    int concurrentFeedHomingSubStep = 0;
+    bool feedMotorNeedsHoming = false;
+    
     // Helper methods for different cutting phases
     void handleCuttingStep0(StateManager& stateManager);
     void handleCuttingStep1(StateManager& stateManager);
@@ -43,6 +48,9 @@ private:
     
     // Reset all step counters
     void resetSteps();
+
+    // Concurrent feed motor homing during cutting
+    void handleConcurrentFeedMotorHoming(StateManager& stateManager);
 };
 
 #endif // CUTTING_STATE_H 

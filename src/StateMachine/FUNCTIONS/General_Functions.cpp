@@ -387,7 +387,7 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     
     // Step 2: Move to -0.3 inch from home switch to establish working zero
     Serial.println("Moving feed motor to -0.3 inch from home switch...");
-    feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.3 * FEED_MOTOR_STEPS_PER_INCH);
+    feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.6 * FEED_MOTOR_STEPS_PER_INCH);
     
     // Wait for move to complete with timeout
     unsigned long moveStartTime = millis();

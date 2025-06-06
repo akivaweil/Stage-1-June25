@@ -37,6 +37,6 @@ void handleCutMotorErrorState() {
     // Wait for reload switch to acknowledge error using StateManager
     if (stateManager.getErrorAcknowledged()) {
         stateManager.changeState(ERROR_RESET);
-        Serial.println("Cut motor error acknowledged. Transitioning to ERROR_RESET.");
+        //serial.println("Cut motor error acknowledged. Transitioning to ERROR_RESET.");
     }
 } 

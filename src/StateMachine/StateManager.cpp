@@ -116,42 +116,42 @@ void StateManager::changeState(SystemState newState) {
             default: break;
         }
         
-        // Debug print for state transitions
-        switch (newState) {
-            case STARTUP: Serial.println("STARTUP"); break;
-            case HOMING: Serial.println("HOMING"); break;
-            case IDLE: Serial.println("IDLE"); break;
-            case FEED_FIRST_CUT: Serial.println("FEED_FIRST_CUT"); break;
-            case FEED_WOOD_FWD_ONE: Serial.println("FEED_WOOD_FWD_ONE"); break;
-            case CUTTING: Serial.println("CUTTING"); break;
-            case RETURNING_YES_2x4: Serial.println("RETURNING_YES_2x4"); break;
-            case RETURNING_NO_2x4: Serial.println("RETURNING_NO_2x4"); break;
-            case ERROR: Serial.println("ERROR"); break;
-            case ERROR_RESET: Serial.println("ERROR_RESET"); break;
-            case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
-            case Cut_Motor_Homing_Error: Serial.println("Cut_Motor_Homing_Error"); break;
-        }
+        // Debug print for state transitions (disabled)
+        // switch (newState) {
+        //     case STARTUP: Serial.println("STARTUP"); break;
+        //     case HOMING: Serial.println("HOMING"); break;
+        //     case IDLE: Serial.println("IDLE"); break;
+        //     case FEED_FIRST_CUT: Serial.println("FEED_FIRST_CUT"); break;
+        //     case FEED_WOOD_FWD_ONE: Serial.println("FEED_WOOD_FWD_ONE"); break;
+        //     case CUTTING: Serial.println("CUTTING"); break;
+        //     case RETURNING_YES_2x4: Serial.println("RETURNING_YES_2x4"); break;
+        //     case RETURNING_NO_2x4: Serial.println("RETURNING_NO_2x4"); break;
+        //     case ERROR: Serial.println("ERROR"); break;
+        //     case ERROR_RESET: Serial.println("ERROR_RESET"); break;
+        //     case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
+        //     case Cut_Motor_Homing_Error: Serial.println("Cut_Motor_Homing_Error"); break;
+        // }
     }
 }
 
 void StateManager::printStateChange() {
     if (currentState != previousState) {
-        Serial.print("Current State: ");
-        switch (currentState) {
-            case STARTUP: Serial.println("STARTUP"); break;
-            case HOMING: Serial.println("HOMING"); break;
-            case IDLE: Serial.println("IDLE"); break;
-            case FEED_FIRST_CUT: Serial.println("FEED_FIRST_CUT"); break;
-            case FEED_WOOD_FWD_ONE: Serial.println("FEED_WOOD_FWD_ONE"); break;
-            case CUTTING: Serial.println("CUTTING"); break;
-            case RETURNING_YES_2x4: Serial.println("RETURNING_YES_2x4"); break;
-            case RETURNING_NO_2x4: Serial.println("RETURNING_NO_2x4"); break;
-            case ERROR: Serial.println("ERROR"); break;
-            case ERROR_RESET: Serial.println("ERROR_RESET"); break;
-            case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
-            case Cut_Motor_Homing_Error: Serial.println("Cut_Motor_Homing_Error"); break;
-            default: Serial.println("UNKNOWN"); break;
-        }
+        // Serial.print("Current State: ");
+        // switch (currentState) {
+        //     case STARTUP: Serial.println("STARTUP"); break;
+        //     case HOMING: Serial.println("HOMING"); break;
+        //     case IDLE: Serial.println("IDLE"); break;
+        //     case FEED_FIRST_CUT: Serial.println("FEED_FIRST_CUT"); break;
+        //     case FEED_WOOD_FWD_ONE: Serial.println("FEED_WOOD_FWD_ONE"); break;
+        //     case CUTTING: Serial.println("CUTTING"); break;
+        //     case RETURNING_YES_2x4: Serial.println("RETURNING_YES_2x4"); break;
+        //     case RETURNING_NO_2x4: Serial.println("RETURNING_NO_2x4"); break;
+        //     case ERROR: Serial.println("ERROR"); break;
+        //     case ERROR_RESET: Serial.println("ERROR_RESET"); break;
+        //     case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
+        //     case Cut_Motor_Homing_Error: Serial.println("Cut_Motor_Homing_Error"); break;
+        //     default: Serial.println("UNKNOWN"); break;
+        // }
         previousState = currentState;
     }
 }
@@ -172,7 +172,7 @@ void StateManager::handleCommonOperations() {
     // Check for cut motor hitting home sensor during RETURNING_YES_2x4 return
     extern bool cutMotorInReturningYes2x4Return; // This global flag is still in main.cpp
     if (cutMotorInReturningYes2x4Return && cutMotor && cutMotor->isRunning() && cutHomingSwitch.read() == HIGH) {
-        Serial.println("Cut motor hit homing sensor during RETURNING_YES_2x4 return - stopping immediately!");
+        //serial.println("Cut motor hit homing sensor during RETURNING_YES_2x4 return - stopping immediately!");
         cutMotor->forceStopAndNewPosition(0);  // Stop immediately and set position to 0
     }
 
@@ -182,17 +182,17 @@ void StateManager::handleCommonOperations() {
         if (digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == HIGH) {
             // Return rotation servo to home position
             rotationServo.write(ROTATION_SERVO_HOME_POSITION);
-            Serial.println("Servo timing completed AND WAS_WOOD_SUCTIONED_SENSOR is HIGH, returning rotation servo to home.");
+            //serial.println("Servo timing completed AND WAS_WOOD_SUCTIONED_SENSOR is HIGH, returning rotation servo to home.");
             rotationServoIsActiveAndTiming = false; // Clear flag
         } else {
-            Serial.println("Waiting for WAS_WOOD_SUCTIONED_SENSOR to read HIGH before returning rotation servo...");
+            //serial.println("Waiting for WAS_WOOD_SUCTIONED_SENSOR to read HIGH before returning rotation servo...");
         }
     }
 
     // Handle Rotation Clamp retraction after 1 second
     if (rotationClampIsExtended && (millis() - rotationClampExtendTime >= ROTATION_CLAMP_EXTEND_DURATION_MS)) {
         retractRotationClamp();
-        Serial.println("Rotation Clamp retracted after 1 second.");
+        //serial.println("Rotation Clamp retracted after 1 second.");
     }
 
     // 2x4 sensor - Update global _2x4Present flag
@@ -221,7 +221,7 @@ void StateManager::handleCommonOperations() {
         extern const int TRANSFER_ARM_SIGNAL_PIN; // This is in main.cpp
         digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)
         signalTAActive = false;
-        Serial.println("Signal to Transfer Arm (TA) timed out and reset to LOW"); 
+        //serial.println("Signal to Transfer Arm (TA) timed out and reset to LOW"); 
     }
 }
 
@@ -237,7 +237,7 @@ void StateManager::handleStandardErrorState() {
     if (reloadSwitch.rose()) {
         changeState(ERROR_RESET);
         errorAcknowledged = true;
-        Serial.println("Standard error acknowledged by reload switch.");
+        //serial.println("Standard error acknowledged by reload switch.");
     }
 }
 

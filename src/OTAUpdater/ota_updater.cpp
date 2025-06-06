@@ -48,11 +48,11 @@ void otaUpdateProgressLEDs(unsigned int progress, unsigned int total) {
 }
 
 void setupOTA() {
-  Serial.println("Booting for OTA...");
+  //serial.println("Booting for OTA...");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
+    //serial.println("Connection Failed! Rebooting...");
     delay(5000);
     ESP.restart();
   }
@@ -79,13 +79,13 @@ void setupOTA() {
         type = "filesystem";
       }
       // NOTE: if updating SPIFFS, ensure SPIFFS is mounted via SPIFFS.begin()
-      Serial.println("Start updating " + type);
+      //serial.println("Start updating " + type);
       otaAllLedsOff(); // Clear all LEDs at start
       digitalWrite(STATUS_LED_RED, HIGH); // Start with red LED
-      Serial.println("OTA Upload started - LED progress indication active");
+      //serial.println("OTA Upload started - LED progress indication active");
     })
     .onEnd([]() {
-      Serial.println("\nOTA Upload completed!");
+      //serial.println("\nOTA Upload completed!");
       otaAllLedsOff(); // Clear LEDs
       // Briefly flash all LEDs to indicate completion
       for(int i = 0; i < 3; i++) {
@@ -97,7 +97,7 @@ void setupOTA() {
         otaAllLedsOff();
         delay(200);
       }
-      Serial.println("OTA completion flash sequence finished");
+      //serial.println("OTA completion flash sequence finished");
     })
     .onProgress([](unsigned int progress, unsigned int total) {
       otaUpdateProgressLEDs(progress, total);
@@ -105,15 +105,15 @@ void setupOTA() {
     .onError([](ota_error_t error) {
       Serial.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) {
-        Serial.println("Auth Failed");
+        //serial.println("Auth Failed");
       } else if (error == OTA_BEGIN_ERROR) {
-        Serial.println("Begin Failed");
+        //serial.println("Begin Failed");
       } else if (error == OTA_CONNECT_ERROR) {
-        Serial.println("Connect Failed");
+        //serial.println("Connect Failed");
       } else if (error == OTA_RECEIVE_ERROR) {
-        Serial.println("Receive Failed");
+        //serial.println("Receive Failed");
       } else if (error == OTA_END_ERROR) {
-        Serial.println("End Failed");
+        //serial.println("End Failed");
       }
       // Error indication: rapid red blinking
       otaAllLedsOff();
@@ -123,14 +123,14 @@ void setupOTA() {
         digitalWrite(STATUS_LED_RED, LOW);
         delay(100);
       }
-      Serial.println("OTA error indication completed");
+      //serial.println("OTA error indication completed");
     });
 
   ArduinoOTA.begin();
 
-  Serial.println("OTA Initialized");
+  //serial.println("OTA Initialized");
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  //serial.println(WiFi.localIP());
 }
 
 void handleOTA() {

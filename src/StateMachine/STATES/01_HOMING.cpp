@@ -44,62 +44,62 @@ void HomingState::execute(StateManager& stateManager) {
         Serial.print(", feedMotorMoved: ");
         Serial.print(feedMotorMoved);
         Serial.print(", feedHomingPhaseInitiated: ");
-        Serial.println(feedHomingPhaseInitiated);
+        //serial.println(feedHomingPhaseInitiated);
         lastDebugTime = millis();
     }
 
     if (!cutMotorHomed) {
-        Serial.println("Starting cut motor homing phase (blocking)...");
+        //serial.println("Starting cut motor homing phase (blocking)...");
         extern const unsigned long CUT_HOME_TIMEOUT; // This is in main.cpp
         homeCutMotorBlocking(*stateManager.getCutHomingSwitch(), CUT_HOME_TIMEOUT);
         if (stateManager.getCutMotor() && stateManager.getCutMotor()->getCurrentPosition() == 0) { // Check if homing was successful
             cutMotorHomed = true;
-            Serial.println("Cut motor homing marked as successful.");
+            //serial.println("Cut motor homing marked as successful.");
         } else {
-            Serial.println("Cut motor homing failed or timed out. Retrying or error.");
+            //serial.println("Cut motor homing failed or timed out. Retrying or error.");
         }
     } else if (!feedMotorHomed) {
         if (!feedHomingPhaseInitiated) {
-            Serial.println("Starting feed motor homing phase (blocking)..."); 
+            //serial.println("Starting feed motor homing phase (blocking)..."); 
             retractFeedClamp(); 
-            Serial.println("Feed clamp retracted for homing."); 
+            //serial.println("Feed clamp retracted for homing."); 
             feedHomingPhaseInitiated = true;
         }
-        Serial.println("Calling homeFeedMotorBlocking...");
+        //serial.println("Calling homeFeedMotorBlocking...");
         homeFeedMotorBlocking(*stateManager.getFeedHomingSwitch());
         feedMotorHomed = true; 
         feedHomingPhaseInitiated = false; // Reset for next potential homing cycle
-        Serial.println("Feed motor homing marked as successful.");
+        //serial.println("Feed motor homing marked as successful.");
     } else if (!feedMotorMoved) {
-        Serial.println("Moving feed motor to travel distance...");
+        //serial.println("Moving feed motor to travel distance...");
         extendFeedClamp();
-        Serial.println("Feed clamp re-extended.");
+        //serial.println("Feed clamp re-extended.");
         moveFeedMotorToTravel();
         while(stateManager.getFeedMotor()->isRunning()){
             // Wait for feed motor to reach FEED_TRAVEL_DISTANCE
         }
         feedMotorMoved = true;
-        Serial.println("Feed motor moved to FEED_TRAVEL_DISTANCE (blocking complete).");
+        //serial.println("Feed motor moved to FEED_TRAVEL_DISTANCE (blocking complete).");
     } else {
-        Serial.println("All homing steps complete! Transitioning to IDLE..."); 
+        //serial.println("All homing steps complete! Transitioning to IDLE..."); 
         cutMotorHomed = false; 
         feedMotorHomed = false;
         feedMotorMoved = false;
         
         extern bool isHomed; // This is in main.cpp
         isHomed = true; 
-        Serial.println("isHomed flag set to true.");
+        //serial.println("isHomed flag set to true.");
 
         turnBlueLedOff();
         turnGreenLedOn();
-        Serial.println("LEDs updated: Blue OFF, Green ON.");
+        //serial.println("LEDs updated: Blue OFF, Green ON.");
 
         // Set initial servo position via function call
         handleRotationServoReturn();
-        Serial.println("Servo returned to home position.");
+        //serial.println("Servo returned to home position.");
         
-        Serial.println("Changing state to IDLE...");
+        //serial.println("Changing state to IDLE...");
         stateManager.changeState(IDLE);
-        Serial.println("State change to IDLE completed.");
+        //serial.println("State change to IDLE completed.");
     }
 } 

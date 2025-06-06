@@ -20,7 +20,7 @@ void sendSignalToTA() {
   digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
   signalTAStartTime = millis();
   signalTAActive = true;
-  Serial.println("TA Signal activated (HIGH).");
+  //serial.println("TA Signal activated (HIGH).");
 
   // Only activate servo if it hasn't been activated early
   if (!rotationServoIsActiveAndTiming) {
@@ -29,9 +29,9 @@ void sendSignalToTA() {
     rotationServoIsActiveAndTiming = true;
     Serial.print("Rotation servo moved to ");
     Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
-    Serial.println(" degrees with TA signal.");
+    //serial.println(" degrees with TA signal.");
   } else {
-    Serial.println("Rotation servo already activated early - skipping normal activation.");
+    //serial.println("Rotation servo already activated early - skipping normal activation.");
   }
 }
 
@@ -45,25 +45,25 @@ void sendSignalToTA() {
 void extendFeedClamp() {
     // Feed clamp extends when LOW (inversed logic)
     digitalWrite(FEED_CLAMP, LOW); // Extended
-    Serial.println("Feed Clamp Extended");
+    //serial.println("Feed Clamp Extended");
 }
 
 void retractFeedClamp() {
     // Feed clamp retracts when HIGH (inversed logic)
     digitalWrite(FEED_CLAMP, HIGH); // Retracted
-    Serial.println("Feed Clamp Retracted");
+    //serial.println("Feed Clamp Retracted");
 }
 
 void extend2x4SecureClamp() {
     // 2x4 secure clamp extends when LOW (inversed logic)
     digitalWrite(_2x4_SECURE_CLAMP, LOW); // Extended
-    Serial.println("2x4 Secure Clamp Extended");
+    //serial.println("2x4 Secure Clamp Extended");
 }
 
 void retract2x4SecureClamp() {
     // 2x4 secure clamp retracts when HIGH (inversed logic)
     digitalWrite(_2x4_SECURE_CLAMP, HIGH); // Retracted
-    Serial.println("2x4 Secure Clamp Retracted");
+    //serial.println("2x4 Secure Clamp Retracted");
 }
 
 void extendRotationClamp() {
@@ -71,14 +71,14 @@ void extendRotationClamp() {
     digitalWrite(ROTATION_CLAMP, HIGH); // Extended 
     rotationClampExtendTime = millis();
     rotationClampIsExtended = true;
-    Serial.println("Rotation Clamp Extended");
+    //serial.println("Rotation Clamp Extended");
 }
 
 void retractRotationClamp() {
     // Rotation clamp retracts when LOW
     digitalWrite(ROTATION_CLAMP, LOW); // Retracted 
     rotationClampIsExtended = false; // Assuming we want to clear the flag when explicitly retracting
-    Serial.println("Rotation Clamp Retracted");
+    //serial.println("Rotation Clamp Retracted");
 }
 
 //* ************************************************************************
@@ -93,7 +93,7 @@ void turnRedLedOn() {
   digitalWrite(STATUS_LED_GREEN, LOW);
   digitalWrite(STATUS_LED_BLUE, LOW);
   if (!lastRedLedState) {
-    Serial.println("Red LED ON");
+    //serial.println("Red LED ON");
     lastRedLedState = true;
   }
 }
@@ -102,7 +102,7 @@ void turnRedLedOff() {
   static bool lastRedLedState = true;
   digitalWrite(STATUS_LED_RED, LOW);
   if (lastRedLedState) {
-    Serial.println("Red LED OFF");
+    //serial.println("Red LED OFF");
     lastRedLedState = false;
   }
 }
@@ -114,7 +114,7 @@ void turnYellowLedOn() {
   digitalWrite(STATUS_LED_GREEN, LOW);
   digitalWrite(STATUS_LED_BLUE, LOW);
   if (!lastYellowLedState) {
-    Serial.println("Yellow LED ON");
+    //serial.println("Yellow LED ON");
     lastYellowLedState = true;
   }
 }
@@ -123,7 +123,7 @@ void turnYellowLedOff() {
   static bool lastYellowLedState = true;
   digitalWrite(STATUS_LED_YELLOW, LOW);
   if (lastYellowLedState) {
-    Serial.println("Yellow LED OFF");
+    //serial.println("Yellow LED OFF");
     lastYellowLedState = false;
   }
 }
@@ -135,7 +135,7 @@ void turnGreenLedOn() {
   digitalWrite(STATUS_LED_YELLOW, LOW);
   digitalWrite(STATUS_LED_BLUE, LOW);
   if (!lastGreenLedState) {
-    Serial.println("Green LED ON");
+    //serial.println("Green LED ON");
     lastGreenLedState = true;
   }
 }
@@ -144,7 +144,7 @@ void turnGreenLedOff() {
   static bool lastGreenLedState = true;
   digitalWrite(STATUS_LED_GREEN, LOW);
   if (lastGreenLedState) {
-    Serial.println("Green LED OFF");
+    //serial.println("Green LED OFF");
     lastGreenLedState = false;
   }
 }
@@ -156,7 +156,7 @@ void turnBlueLedOn() {
   digitalWrite(STATUS_LED_GREEN, LOW);
   digitalWrite(STATUS_LED_YELLOW, LOW);
   if (!lastBlueLedState) {
-    Serial.println("Blue LED ON");
+    //serial.println("Blue LED ON");
     lastBlueLedState = true;
   }
 }
@@ -165,7 +165,7 @@ void turnBlueLedOff() {
   static bool lastBlueLedState = true;
   digitalWrite(STATUS_LED_BLUE, LOW);
   if (lastBlueLedState) {
-    Serial.println("Blue LED OFF");
+    //serial.println("Blue LED OFF");
     lastBlueLedState = false;
   }
 }
@@ -263,21 +263,21 @@ void stopFeedMotor() {
 // Basic blocking homing function for Cut Motor - can be expanded
 void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {
     if (!cutMotor) {
-        Serial.println("ERROR: cutMotor is NULL in homeCutMotorBlocking!");
+        //serial.println("ERROR: cutMotor is NULL in homeCutMotorBlocking!");
         return;
     }
     
-    Serial.println("Starting cut motor homing sequence...");
+    //serial.println("Starting cut motor homing sequence...");
     Serial.print("Initial switch state: ");
-    Serial.println(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
+    //serial.println(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
     
     unsigned long startTime = millis();
     cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_HOMING_SPEED);
     cutMotor->moveTo(-40000);
     
     Serial.print("Cut motor homing speed set to: ");
-    Serial.println(CUT_MOTOR_HOMING_SPEED);
-    Serial.println("Cut motor moving to -40000 steps...");
+    //serial.println(CUT_MOTOR_HOMING_SPEED);
+    //serial.println("Cut motor moving to -40000 steps...");
 
     while (homingSwitch.read() != HIGH) {
         homingSwitch.update();
@@ -290,18 +290,18 @@ void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {
             Serial.print(", Position: ");
             Serial.print(cutMotor->getCurrentPosition());
             Serial.print(", Running: ");
-            Serial.println(cutMotor->isRunning() ? "YES" : "NO");
+            //serial.println(cutMotor->isRunning() ? "YES" : "NO");
             lastStatusTime = millis();
         }
         
         if (millis() - startTime > timeout) {
-            Serial.println("Cut motor homing timeout!");
+            //serial.println("Cut motor homing timeout!");
             cutMotor->forceStopAndNewPosition(cutMotor->getCurrentPosition());
             return;
         }
     }
     
-    Serial.println("HOME SWITCH DETECTED! Stopping motor immediately...");
+    //serial.println("HOME SWITCH DETECTED! Stopping motor immediately...");
     // Use forceStopAndNewPosition for immediate stopping and set position to 0
     cutMotor->forceStopAndNewPosition(0);
     
@@ -311,34 +311,34 @@ void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {
     // Verify the switch is still pressed after stopping
     homingSwitch.update();
     if (homingSwitch.read() == HIGH) {
-        Serial.println("Cut motor homed successfully - switch confirmed HIGH after stop.");
+        //serial.println("Cut motor homed successfully - switch confirmed HIGH after stop.");
     } else {
-        Serial.println("WARNING: Switch not HIGH after homing - possible contact issue.");
+        //serial.println("WARNING: Switch not HIGH after homing - possible contact issue.");
     }
 }
 
 // Basic blocking homing function for Feed Motor - can be expanded
 void homeFeedMotorBlocking(Bounce& homingSwitch) {
     if (!feedMotor) {
-        Serial.println("ERROR: feedMotor is NULL in homeFeedMotorBlocking!");
+        //serial.println("ERROR: feedMotor is NULL in homeFeedMotorBlocking!");
         return;
     }
     
-    Serial.println("Starting feed motor homing sequence...");
+    //serial.println("Starting feed motor homing sequence...");
     Serial.print("Initial feed switch state: ");
-    Serial.println(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
+    //serial.println(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
     
     // Debug motor setup
     Serial.print("FEED_MOTOR_STEPS_PER_INCH value: ");
-    Serial.println(FEED_MOTOR_STEPS_PER_INCH);
+    //serial.println(FEED_MOTOR_STEPS_PER_INCH);
     Serial.print("FEED_MOTOR_HOMING_SPEED value: ");
-    Serial.println(FEED_MOTOR_HOMING_SPEED);
+    //serial.println(FEED_MOTOR_HOMING_SPEED);
     
     // Step 1: Move toward home switch until it triggers
     feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
     
     // Try using runForward() instead of moveTo() for more reliable operation
-    Serial.println("Starting feed motor forward run...");
+    //serial.println("Starting feed motor forward run...");
     feedMotor->runForward();
     
     // Verify motor started
@@ -346,7 +346,7 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     Serial.print("Motor started - Running: ");
     Serial.print(feedMotor->isRunning() ? "YES" : "NO");
     Serial.print(", Position: ");
-    Serial.println(feedMotor->getCurrentPosition());
+    //serial.println(feedMotor->getCurrentPosition());
 
     // Add timeout for feed motor homing
     unsigned long startTime = millis();
@@ -363,37 +363,37 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
             Serial.print(", Position: ");
             Serial.print(feedMotor->getCurrentPosition());
             Serial.print(", Running: ");
-            Serial.println(feedMotor->isRunning() ? "YES" : "NO");
+            //serial.println(feedMotor->isRunning() ? "YES" : "NO");
             lastStatusTime = millis();
             
             // If motor stopped running unexpectedly, restart it
             if (!feedMotor->isRunning()) {
-                Serial.println("Motor stopped unexpectedly! Restarting...");
+                //serial.println("Motor stopped unexpectedly! Restarting...");
                 feedMotor->runForward();
             }
         }
         
         // Check for timeout
         if (millis() - startTime > FEED_HOME_TIMEOUT) {
-            Serial.println("Feed motor homing timeout!");
+            //serial.println("Feed motor homing timeout!");
             feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
             return;
         }
     }
     
-    Serial.println("FEED HOME SWITCH DETECTED! Stopping motor...");
+    //serial.println("FEED HOME SWITCH DETECTED! Stopping motor...");
     feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    Serial.println("Feed motor hit home switch.");
+    //serial.println("Feed motor hit home switch.");
     
     // Step 2: Move to -0.3 inch from home switch to establish working zero
-    Serial.println("Moving feed motor to -0.3 inch from home switch...");
+    //serial.println("Moving feed motor to -0.3 inch from home switch...");
     feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.6 * FEED_MOTOR_STEPS_PER_INCH);
     
     // Wait for move to complete with timeout
     unsigned long moveStartTime = millis();
     while (feedMotor->isRunning()) {
         if (millis() - moveStartTime > 10000) { // 10 second timeout for positioning
-            Serial.println("Feed motor positioning timeout!");
+            //serial.println("Feed motor positioning timeout!");
             feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
             break;
         }
@@ -401,10 +401,10 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     
     // Step 3: Set this position (-0.3 inch from switch) as the new zero
     feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    Serial.println("Feed motor homed: 0.3 inch from switch set as working zero.");
+    //serial.println("Feed motor homed: 0.3 inch from switch set as working zero.");
     
     configureFeedMotorForNormalOperation();
-    Serial.println("Feed motor homed successfully.");
+    //serial.println("Feed motor homed successfully.");
 }
 
 void moveFeedMotorToInitialAfterHoming() {
@@ -425,11 +425,11 @@ bool checkAndRecalibrateCutMotorHome(int attempts) {
     bool sensorDetectedHome = false;
     for (int i = 0; i < attempts; i++) {
         cutHomingSwitch.update();
-        Serial.print("Cut position switch read attempt "); Serial.print(i + 1); Serial.print(": "); Serial.println(cutHomingSwitch.read());
+        Serial.print("Cut position switch read attempt "); Serial.print(i + 1); Serial.print(": "); //serial.println(cutHomingSwitch.read());
         if (cutHomingSwitch.read() == HIGH) {
             sensorDetectedHome = true;
             cutMotor->setCurrentPosition(0);
-            Serial.println("Cut motor position switch detected HIGH. Position recalibrated to 0.");
+            //serial.println("Cut motor position switch detected HIGH. Position recalibrated to 0.");
             break;
         }
     }
@@ -448,13 +448,13 @@ void handleReloadMode() {
             retractFeedClamp();
             retract2x4SecureClamp();
             turnYellowLedOn();
-            Serial.println("Entered reload mode");
+            //serial.println("Entered reload mode");
         } else if (!reloadSwitchOn && isReloadMode) {
             isReloadMode = false;
             extendFeedClamp();
             extend2x4SecureClamp();
             turnYellowLedOff();
-            Serial.println("Exited reload mode, ready for operation");
+            //serial.println("Exited reload mode, ready for operation");
         }
     }
 }
@@ -468,7 +468,7 @@ void handleErrorAcknowledgement() {
         if (currentState == ERROR) {
             currentState = ERROR_RESET;
             errorAcknowledged = true; // Set flag, main loop will see this for ERROR state
-            Serial.println("Error acknowledged by reload switch (from ERROR state). Transitioning to ERROR_RESET.");
+            //serial.println("Error acknowledged by reload switch (from ERROR state). Transitioning to ERROR_RESET.");
         }
         // If in CUTTING, setting errorAcknowledged might be used by the CUTTING state to proceed.
         // The original CUTTING state logic directly transitioned. For now, we set the flag.
@@ -484,13 +484,13 @@ void handleStartSwitchSafety() {
     // And continuously in the main loop before checking shouldStartCycle()
     if (!startSwitchSafe && startCycleSwitch.fell()) {
         startSwitchSafe = true;
-        Serial.println("Start switch is now safe to use (cycled OFF).");
+        //serial.println("Start switch is now safe to use (cycled OFF).");
     }
     // Initial check (typically for setup)
     // This part might be better directly in setup, but included here for completeness if called from there.
     // If called repeatedly from loop, this `else if` might be redundant if startSwitchSafe is managed correctly.
     /* else if (startCycleSwitch.read() == HIGH && !startSwitchSafe) {
-        Serial.println("WARNING: Start switch is ON. Turn it OFF before operation.");
+        //serial.println("WARNING: Start switch is ON. Turn it OFF before operation.");
     }*/
 }
 
@@ -499,9 +499,9 @@ void handleStartSwitchContinuousMode(){
     if (startSwitchOn != continuousModeActive && startSwitchSafe) {
         continuousModeActive = startSwitchOn;
         if (continuousModeActive) {
-            Serial.println("Continuous operation mode activated");
+            //serial.println("Continuous operation mode activated");
         } else {
-            Serial.println("Continuous operation mode deactivated");
+            //serial.println("Continuous operation mode deactivated");
         }
     }
 }
@@ -525,9 +525,9 @@ void activateRotationServo() {
         rotationServoIsActiveAndTiming = true;
         Serial.print("Rotation servo activated to ");
         Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
-        Serial.println(" degrees.");
+        //serial.println(" degrees.");
     } else {
-        Serial.println("Rotation servo already active - skipping activation.");
+        //serial.println("Rotation servo already active - skipping activation.");
     }
 }
 
@@ -536,27 +536,27 @@ void handleRotationServoReturn() {
     rotationServo.write(ROTATION_SERVO_HOME_POSITION);
     Serial.print("Rotation servo returned to home position (");
     Serial.print(ROTATION_SERVO_HOME_POSITION);
-    Serial.println(" degrees).");
+    //serial.println(" degrees).");
 }
 
 void handleTASignalTiming() { 
   if (signalTAActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
     digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)
     signalTAActive = false;
-    Serial.println("Signal to Transfer Arm (TA) completed"); 
+    //serial.println("Signal to Transfer Arm (TA) completed"); 
   }
 }
 
 void handleRotationClampRetract() {
     if (rotationClampIsExtended && (millis() - rotationClampExtendTime >= ROTATION_CLAMP_EXTEND_DURATION_MS)) {
         retractRotationClamp();
-        Serial.println("Rotation Clamp retracted after 1 second.");
+        //serial.println("Rotation Clamp retracted after 1 second.");
     }
 }
 
 void moveFeedMotorToPostCutHome() {
     if (feedMotor) {
         feedMotor->moveTo(0);
-        Serial.println("Feed motor moving to post-cut home position (0 inches)");
+        //serial.println("Feed motor moving to post-cut home position (0 inches)");
     }
 } 

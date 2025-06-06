@@ -15,13 +15,13 @@ void FeedFirstCutState::execute(StateManager& stateManager) {
 void FeedFirstCutState::onEnter(StateManager& stateManager) {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
-    Serial.println("FeedFirstCut: Starting feed first cut sequence");
+    //serial.println("FeedFirstCut: Starting feed first cut sequence");
 }
 
 void FeedFirstCutState::onExit(StateManager& stateManager) {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
-    Serial.println("FeedFirstCut: Feed clamp retracted");
+    //serial.println("FeedFirstCut: Feed clamp retracted");
 }
 
 void FeedFirstCutState::executeStep(StateManager& stateManager) {
@@ -32,14 +32,14 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
     switch (currentStep) {
         case RETRACT_FEED_CLAMP:
             retractFeedClamp();
-            Serial.println("FeedFirstCut: Feed clamp retracted");
+            //serial.println("FeedFirstCut: Feed clamp retracted");
             advanceToNextStep(stateManager);
             break;
 
         case MOVE_TO_NEGATIVE_ONE:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(-1.0);
-                Serial.println("FeedFirstCut: Moving feed motor to -1 inch");
+                //serial.println("FeedFirstCut: Moving feed motor to -1 inch");
                 advanceToNextStep(stateManager);
             }
             break;
@@ -49,7 +49,7 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
                 //! STEP 3: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP
                 extendFeedClamp();
                 retract2x4SecureClamp();
-                Serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
+                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
                 stepStartTime = millis();
                 advanceToNextStep(stateManager);
             }
@@ -57,7 +57,7 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
 
         case WAIT_200MS:
             if (millis() - stepStartTime >= 200) {
-                Serial.println("FeedFirstCut: Waiting 200ms");
+                //serial.println("FeedFirstCut: Waiting 200ms");
                 advanceToNextStep(stateManager);
             }
             break;
@@ -65,28 +65,28 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                Serial.println("FeedFirstCut: Moving feed motor to travel distance");
+                //serial.println("FeedFirstCut: Moving feed motor to travel distance");
                 advanceToNextStep(stateManager);
             }
             break;
 
         case FIRST_RUN_COMPLETE:
             if (feedMotor && !feedMotor->isRunning()) {
-                Serial.println("FeedFirstCut: First run complete, starting second run");
+                //serial.println("FeedFirstCut: First run complete, starting second run");
                 advanceToNextStep(stateManager);
             }
             break;
 
         case RETRACT_FEED_CLAMP_SECOND:
             retractFeedClamp();
-            Serial.println("FeedFirstCut: Feed clamp retracted (second run)");
+            //serial.println("FeedFirstCut: Feed clamp retracted (second run)");
             advanceToNextStep(stateManager);
             break;
 
         case MOVE_TO_NEGATIVE_TWO:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(-2.0);
-                Serial.println("FeedFirstCut: Moving feed motor to -2 inch (second run)");
+                //serial.println("FeedFirstCut: Moving feed motor to -2 inch (second run)");
                 advanceToNextStep(stateManager);
             }
             break;
@@ -96,7 +96,7 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
                 //! STEP 9: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP (SECOND RUN)
                 extendFeedClamp();
                 retract2x4SecureClamp();
-                Serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
+                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
                 stepStartTime = millis();
                 advanceToNextStep(stateManager);
             }
@@ -104,7 +104,7 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
 
         case WAIT_200MS_SECOND:
             if (millis() - stepStartTime >= 200) {
-                Serial.println("FeedFirstCut: Waiting 200ms (second run)");
+                //serial.println("FeedFirstCut: Waiting 200ms (second run)");
                 advanceToNextStep(stateManager);
             }
             break;
@@ -112,25 +112,25 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
         case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - 2.75);
-                Serial.println("FeedFirstCut: Moving feed motor to travel distance minus 2.75 inches");
+                //serial.println("FeedFirstCut: Moving feed motor to travel distance minus 2.75 inches");
                 advanceToNextStep(stateManager);
             }
             break;
 
         case CHECK_START_CYCLE_SWITCH:
             if (feedMotor && !feedMotor->isRunning()) {
-                Serial.println("FeedFirstCut: Checking start cycle switch for next state");
+                //serial.println("FeedFirstCut: Checking start cycle switch for next state");
                 
                 // Check the start cycle switch state
                 if (stateManager.getStartCycleSwitch()->read() == HIGH) {
-                    Serial.println("FeedFirstCut: Start cycle switch HIGH - transitioning to CUTTING state");
+                    //serial.println("FeedFirstCut: Start cycle switch HIGH - transitioning to CUTTING state");
                     stateManager.changeState(CUTTING);
                     stateManager.setCuttingCycleInProgress(true);
                     configureCutMotorForCutting();
                     turnYellowLedOn();
                     extendFeedClamp();
                 } else {
-                    Serial.println("FeedFirstCut: Start cycle switch LOW - transitioning to IDLE state");
+                    //serial.println("FeedFirstCut: Start cycle switch LOW - transitioning to IDLE state");
                     stateManager.changeState(IDLE);
                 }
             }

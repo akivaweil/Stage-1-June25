@@ -83,7 +83,7 @@ bool cutMotorInReturningYes2x4Return = false;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Automated Table Saw Control System - Stage 1");
+  //serial.println("Automated Table Saw Control System - Stage 1");
   
   setupOTA();
 
@@ -146,7 +146,7 @@ void setup() {
     configureCutMotorForCutting();
     cutMotor->setCurrentPosition(0);
   } else {
-    Serial.println("Failed to init cutMotor");
+    //serial.println("Failed to init cutMotor");
   }
 
   feedMotor = engine.stepperConnectToPin(FEED_MOTOR_STEP_PIN);
@@ -155,7 +155,7 @@ void setup() {
     configureFeedMotorForNormalOperation();
     feedMotor->setCurrentPosition(0);
   } else {
-    Serial.println("Failed to init feedMotor");
+    //serial.println("Failed to init feedMotor");
   }
   
   //! Initialize servo

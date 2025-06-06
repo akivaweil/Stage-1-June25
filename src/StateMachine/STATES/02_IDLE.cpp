@@ -52,7 +52,7 @@ void IdleState::onEnter(StateManager& stateManager) {
     extend2x4SecureClamp();
     retractFeedClamp();
     retractRotationClamp(); // Ensure rotation clamp is retracted in IDLE state
-    Serial.println("Idle: Secure wood clamp extended, feed clamp retracted, rotation clamp retracted");
+    //serial.println("Idle: Secure wood clamp extended, feed clamp retracted, rotation clamp retracted");
 }
 
 void IdleState::handleReloadModeLogic(StateManager& stateManager) {
@@ -84,11 +84,11 @@ void IdleState::checkFirstCutConditions(StateManager& stateManager) {
     bool firstCutSensorLow = (digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == LOW);
     
     if (pushwoodPressed && firstCutSensorHigh) {
-        Serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor HIGH - transitioning to FEED_FIRST_CUT");
+        //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor HIGH - transitioning to FEED_FIRST_CUT");
         stateManager.changeState(FEED_FIRST_CUT);
     }
     else if (pushwoodPressed && firstCutSensorLow) {
-        Serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor LOW - transitioning to FEED_WOOD_FWD_ONE");
+        //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor LOW - transitioning to FEED_WOOD_FWD_ONE");
         stateManager.changeState(FEED_WOOD_FWD_ONE);
     }
 }

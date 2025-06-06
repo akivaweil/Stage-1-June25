@@ -36,10 +36,10 @@ void handleSuctionErrorState() {
 
     // Step 1: Home cut motor immediately when entering this state (only once)
     if (!hasHomedCutMotor) {
-        Serial.println("SUCTION ERROR: Automatically homing cut motor for safety...");
+        //serial.println("SUCTION ERROR: Automatically homing cut motor for safety...");
         homeCutMotorBlocking(cutHomingSwitch, 10000); // 10 second timeout
         hasHomedCutMotor = true;
-        Serial.println("Cut motor homing complete. Now monitoring for user reset.");
+        //serial.println("Cut motor homing complete. Now monitoring for user reset.");
     }
 
     // Step 2: Blink STATUS_LED_RED using defined suction error timing interval
@@ -56,7 +56,7 @@ void handleSuctionErrorState() {
 
     // Step 4 & 5: Use StateManager to access switches instead of global variables
     if (stateManager.getStartCycleSwitch()->rose()) { // Check for start switch OFF to ON transition
-        Serial.println("Start cycle switch toggled ON. Resetting from suction error. Transitioning to HOMING.");
+        //serial.println("Start cycle switch toggled ON. Resetting from suction error. Transitioning to HOMING.");
         turnRedLedOff();   // Turn off error LED explicitly before changing state
         
         stateManager.setContinuousModeActive(false); // Ensure continuous mode is off

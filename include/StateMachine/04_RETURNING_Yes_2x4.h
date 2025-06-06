@@ -18,18 +18,17 @@ public:
     SystemState getStateType() const override { return RETURNING_YES_2x4; }
 
 private:
-    // RETURNING_YES_2x4 sequence tracking
+    // Step tracking variables
     int returningYes2x4SubStep = 0;
     int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
     int feedHomingSubStep = 0; // For feed motor homing sequence
     
-    // Cut motor error handling variables
+    // Cut motor homing verification timing
     unsigned long cutMotorHomingAttemptStartTime = 0;
     bool cutMotorHomingAttemptInProgress = false;
-    
-    // Cut motor final verification debounce variables
     unsigned long cutMotorFinalVerificationStartTime = 0;
     bool cutMotorFinalVerificationInProgress = false;
+    unsigned long cutMotorSensorStabilizationStartTime = 0;  // Separate timing for sensor stabilization
     
     // Helper methods for RETURNING_YES_2x4 sequence
     void handleReturningYes2x4Sequence(StateManager& stateManager);

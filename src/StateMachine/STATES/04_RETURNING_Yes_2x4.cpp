@@ -40,6 +40,7 @@ void ReturningYes2x4State::onEnter(StateManager& stateManager) {
     cutMotorHomingAttemptInProgress = false;
     cutMotorFinalVerificationStartTime = 0;
     cutMotorFinalVerificationInProgress = false;
+    cutMotorSensorStabilizationStartTime = 0;
 }
 
 void ReturningYes2x4State::onExit(StateManager& stateManager) {
@@ -80,13 +81,13 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                 cutMotorInReturningYes2x4Return = false;
 
                 // Non-blocking sensor stabilization - start timing if not already started
-                if (cutMotorFinalVerificationStartTime == 0) {
-                    cutMotorFinalVerificationStartTime = millis();
+                if (cutMotorSensorStabilizationStartTime == 0) {
+                    cutMotorSensorStabilizationStartTime = millis();
                     return; // Exit and wait for stabilization period
                 }
                 
                 // Check if stabilization period has elapsed
-                if (millis() - cutMotorFinalVerificationStartTime < SENSOR_STABILIZATION_DELAY_MS) {
+                if (millis() - cutMotorSensorStabilizationStartTime < SENSOR_STABILIZATION_DELAY_MS) {
                     return; // Still waiting for stabilization
                 }
                 
@@ -324,4 +325,5 @@ void ReturningYes2x4State::resetSteps() {
     cutMotorHomingAttemptInProgress = false;
     cutMotorFinalVerificationStartTime = 0;
     cutMotorFinalVerificationInProgress = false;
+    cutMotorSensorStabilizationStartTime = 0;
 } 

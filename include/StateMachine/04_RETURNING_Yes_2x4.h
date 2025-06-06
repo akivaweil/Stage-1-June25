@@ -23,12 +23,9 @@ private:
     int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
     int feedHomingSubStep = 0; // For feed motor homing sequence
     
-    // Cut motor homing verification timing
+    // Cut motor homing recovery timing
     unsigned long cutMotorHomingAttemptStartTime = 0;
     bool cutMotorHomingAttemptInProgress = false;
-    unsigned long cutMotorFinalVerificationStartTime = 0;
-    bool cutMotorFinalVerificationInProgress = false;
-    unsigned long cutMotorSensorStabilizationStartTime = 0;  // Separate timing for sensor stabilization
     
     // Helper methods for RETURNING_YES_2x4 sequence
     void handleReturningYes2x4Sequence(StateManager& stateManager);

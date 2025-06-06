@@ -78,7 +78,10 @@ void CuttingState::handleCuttingStep0(StateManager& stateManager) {
     } else {
         //serial.println("Step 0 - ERROR: cutMotor is NULL!");
     }
-    
+        
+    extend2x4SecureClamp();
+    extendFeedClamp();
+
     // Configure and move motor
     configureCutMotorForCutting();
     moveCutMotorToCut();

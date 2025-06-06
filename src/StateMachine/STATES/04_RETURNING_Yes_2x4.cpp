@@ -38,9 +38,6 @@ void ReturningYes2x4State::onEnter(StateManager& stateManager) {
     feedMotorReturnSubStep = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
-    cutMotorFinalVerificationStartTime = 0;
-    cutMotorFinalVerificationInProgress = false;
-    cutMotorSensorStabilizationStartTime = 0;
 }
 
 void ReturningYes2x4State::onExit(StateManager& stateManager) {
@@ -57,6 +54,9 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
     FastAccelStepper* cutMotor = stateManager.getCutMotor();
     extern const float FEED_TRAVEL_DISTANCE;
     extern bool cutMotorInReturningYes2x4Return;
+    
+    Serial.print("DEBUG: RETURNING_YES_2x4 SubStep: ");
+    Serial.println(returningYes2x4SubStep);
     
     switch (returningYes2x4SubStep) {
         case 0: // Execute feed motor return sequence
@@ -79,31 +79,39 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                 //! STEP: CUT MOTOR HOME COMPLETE - VERIFY POSITION WITH ERROR HANDLING
                 //! ************************************************************************
                 cutMotorInReturningYes2x4Return = false;
-
-                // Non-blocking sensor stabilization - start timing if not already started
-                if (cutMotorSensorStabilizationStartTime == 0) {
-                    cutMotorSensorStabilizationStartTime = millis();
-                    return; // Exit and wait for stabilization period
-                }
                 
-                // Check if stabilization period has elapsed
-                if (millis() - cutMotorSensorStabilizationStartTime < SENSOR_STABILIZATION_DELAY_MS) {
-                    return; // Still waiting for stabilization
-                }
+                Serial.println("DEBUG: Cut motor stopped, checking home position");
+                bool sensorDetectedHome = false;
                 
-                // Stabilization complete - read sensor
-                stateManager.getCutHomingSwitch()->update();
-                bool sensorReading = stateManager.getCutHomingSwitch()->read();
-                
-                if (sensorReading == HIGH) {
-                    // Initial homing successful - start final verification
-                    if (cutMotor) cutMotor->setCurrentPosition(0);
+                // Simple 3-attempt verification like other states use
+                for (int i = 0; i < 3; i++) {
+                    delay(30);
+                    stateManager.getCutHomingSwitch()->update();
+                    bool sensorReading = stateManager.getCutHomingSwitch()->read();
+                    Serial.print("DEBUG: Cut home verification attempt ");
+                    Serial.print(i + 1);
+                    Serial.print(" of 3: ");
+                    Serial.println(sensorReading ? "HIGH" : "LOW");
                     
-                    cutMotorFinalVerificationInProgress = true;
-                    cutMotorFinalVerificationStartTime = millis();
-                    // DO NOT proceed to feed motor operations yet - wait for final verification
+                    if (sensorReading == HIGH) {
+                        sensorDetectedHome = true;
+                        if (cutMotor) cutMotor->setCurrentPosition(0);
+                        Serial.println("DEBUG: Cut motor home position confirmed");
+                        break;
+                    }
+                }
+                
+                if (sensorDetectedHome) {
+                    //! ************************************************************************
+                    //! STEP: HOME VERIFIED - PROCEED WITH FEED MOTOR OPERATIONS
+                    //! ************************************************************************
+                    retract2x4SecureClamp();
+                    configureFeedMotorForNormalOperation();
+                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                    returningYes2x4SubStep = 3;
                 } else {
-                    // Home switch not detected - start recovery attempt and BLOCK feed motor operations
+                    // Home switch not detected - start recovery attempt
+                    Serial.println("DEBUG: Sensor LOW - starting recovery attempt");
                     cutMotorHomingAttemptInProgress = true;
                     cutMotorHomingAttemptStartTime = millis();
                     
@@ -112,26 +120,28 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_HOMING_SPEED);
                         cutMotor->moveTo(-LARGE_POSITION_VALUE); // Move toward home switch
                     }
-                    // DO NOT advance returningYes2x4SubStep - stay in case 2 until cut motor homes
                 }
             }
             
-            // Handle cut motor homing recovery attempt - FEED MOTOR OPERATIONS REMAIN BLOCKED
+            // Handle cut motor homing recovery attempt
             if (cutMotorHomingAttemptInProgress) {
                 stateManager.getCutHomingSwitch()->update();
                 bool sensorReading = stateManager.getCutHomingSwitch()->read();
                 
                 if (sensorReading == HIGH) {
-                    // Recovery successful - start final verification
+                    // Recovery successful
                     if (cutMotor) {
                         cutMotor->forceStop();
                         cutMotor->setCurrentPosition(0);
                     }
                     cutMotorHomingAttemptInProgress = false;
                     
-                    cutMotorFinalVerificationInProgress = true;
-                    cutMotorFinalVerificationStartTime = millis();
-                    // DO NOT proceed to feed motor operations yet - wait for final verification
+                    Serial.println("DEBUG: Recovery successful, proceeding with feed motor");
+                    retract2x4SecureClamp();
+                    configureFeedMotorForNormalOperation();
+                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                    returningYes2x4SubStep = 3;
+                    
                 } else if (millis() - cutMotorHomingAttemptStartTime > CUT_MOTOR_RECOVERY_TIMEOUT_MS) {
                     // Timeout exceeded - transition to error state
                     if (cutMotor) cutMotor->forceStop();
@@ -140,34 +150,6 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                     stateManager.changeState(Cut_Motor_Homing_Error);
                     resetSteps();
                     return;
-                }
-            }
-            
-            // Handle final verification after successful cut motor homing
-            if (cutMotorFinalVerificationInProgress) {
-                if (millis() - cutMotorFinalVerificationStartTime >= CUT_MOTOR_VERIFICATION_DELAY_MS) {
-                    // Verification period elapsed - perform final verification
-                    stateManager.getCutHomingSwitch()->update();
-                    bool finalSensorReading = stateManager.getCutHomingSwitch()->read();
-                    
-                    if (finalSensorReading == HIGH) {
-                        // FINAL VERIFICATION SUCCESSFUL - NOW safe to proceed with feed motor
-                        cutMotorFinalVerificationInProgress = false;
-                        
-                        //! ************************************************************************
-                        //! STEP: VERIFICATION COMPLETE - FEED MOTOR OPERATIONS NOW AUTHORIZED
-                        //! ************************************************************************
-                        retract2x4SecureClamp();
-                        configureFeedMotorForNormalOperation();
-                        moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                        returningYes2x4SubStep = 3;
-                    } else {
-                        // FINAL VERIFICATION FAILED - cut motor not stable at home
-                        cutMotorFinalVerificationInProgress = false;
-                        stateManager.changeState(Cut_Motor_Homing_Error);
-                        resetSteps();
-                        return;
-                    }
                 }
             }
             break;
@@ -323,7 +305,4 @@ void ReturningYes2x4State::resetSteps() {
     feedHomingSubStep = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
-    cutMotorFinalVerificationStartTime = 0;
-    cutMotorFinalVerificationInProgress = false;
-    cutMotorSensorStabilizationStartTime = 0;
 } 

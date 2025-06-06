@@ -78,3 +78,19 @@ const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 i
 
 // Rotation servo early activation offset
 const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.3; 
+
+//* ************************************************************************
+//* ************************ MOTOR CONTROL CONSTANTS *********************
+//* ************************************************************************
+// Position and movement constants
+const long LARGE_POSITION_VALUE = 10000; // Large position value for homing moves
+const float FEED_MOTOR_RETURN_DISTANCE = 0.1; // Distance for feed motor return moves (inches)
+const float FEED_MOTOR_OFFSET_FROM_SWITCH = 1.0; // Offset from home switch for working zero (inches)
+
+//* ************************************************************************
+//* ************************ TIMING CONSTANTS *****************************
+//* ************************************************************************
+// Motor operation timing
+const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
+const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
+const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization 

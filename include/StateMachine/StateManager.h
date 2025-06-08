@@ -95,8 +95,15 @@ public:
     
     bool getSignalTAActive() const { return signalTAActive; }
     void setSignalTAActive(bool value) { signalTAActive = value; }
+    
+    // Yeswood counter access methods
+    int getConsecutiveYeswoodCount() const { return consecutiveYeswoodCount; }
+    void incrementConsecutiveYeswoodCount() { consecutiveYeswoodCount++; }
+    void resetConsecutiveYeswoodCount() { consecutiveYeswoodCount = 0; }
 
 private:
+    // Consecutive yeswood state counter
+    int consecutiveYeswoodCount = 0;
     SystemState previousState;
     
     // Print state changes

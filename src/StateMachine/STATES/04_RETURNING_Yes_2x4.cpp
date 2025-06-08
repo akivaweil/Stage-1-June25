@@ -23,6 +23,11 @@ void ReturningYes2x4State::onEnter(StateManager& stateManager) {
     //! INITIALIZE RETURNING YES 2X4 SEQUENCE - SIMULTANEOUS RETURN
     //! ************************************************************************
     
+    // Increment consecutive yeswood counter
+    stateManager.incrementConsecutiveYeswoodCount();
+    Serial.print("DEBUG: Consecutive yeswood count: ");
+    Serial.println(stateManager.getConsecutiveYeswoodCount());
+    
     // Enable cut motor homing sensor monitoring during return
     extern bool cutMotorInReturningYes2x4Return;
     cutMotorInReturningYes2x4Return = true;
@@ -73,17 +78,17 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
             }
             break;
 
-        case 2: // Wait for cut motor to complete return home and verify position
+        case 2: // Wait for cut motor to complete return home, then execute homing sequence
             if (cutMotor && !cutMotor->isRunning() && !cutMotorHomingAttemptInProgress) {
                 //! ************************************************************************
-                //! STEP: CUT MOTOR HOME COMPLETE - VERIFY POSITION WITH ERROR HANDLING
+                //! STEP: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE
                 //! ************************************************************************
                 cutMotorInReturningYes2x4Return = false;
                 
-                Serial.println("DEBUG: Cut motor stopped, checking home position");
+                Serial.println("DEBUG: Cut motor stopped at -0.02, starting homing verification");
                 bool sensorDetectedHome = false;
                 
-                // Simple 3-attempt verification like other states use
+                // Execute homing verification sequence - 3-attempt verification
                 for (int i = 0; i < 3; i++) {
                     delay(30);
                     stateManager.getCutHomingSwitch()->update();
@@ -95,23 +100,25 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                     
                     if (sensorReading == HIGH) {
                         sensorDetectedHome = true;
-                        if (cutMotor) cutMotor->setCurrentPosition(0);
-                        Serial.println("DEBUG: Cut motor home position confirmed");
+                        Serial.println("DEBUG: Cut motor home position confirmed during homing sequence");
                         break;
                     }
                 }
                 
                 if (sensorDetectedHome) {
                     //! ************************************************************************
-                    //! STEP: HOME VERIFIED - PROCEED WITH FEED MOTOR OPERATIONS
+                    //! STEP: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED WITH FEED MOTOR
                     //! ************************************************************************
+                    if (cutMotor) cutMotor->setCurrentPosition(0);
+                    Serial.println("DEBUG: Cut motor position set to 0 after homing verification");
+                    
                     retract2x4SecureClamp();
                     configureFeedMotorForNormalOperation();
                     moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                     returningYes2x4SubStep = 3;
                 } else {
-                    // Home switch not detected - start recovery attempt
-                    Serial.println("DEBUG: Sensor LOW - starting recovery attempt");
+                    // Home switch not detected during homing sequence - start recovery attempt
+                    Serial.println("DEBUG: Homing sequence failed - sensor LOW - starting recovery attempt");
                     cutMotorHomingAttemptInProgress = true;
                     cutMotorHomingAttemptStartTime = millis();
                     
@@ -129,14 +136,14 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
                 bool sensorReading = stateManager.getCutHomingSwitch()->read();
                 
                 if (sensorReading == HIGH) {
-                    // Recovery successful
+                    // Recovery successful - set position to 0 and proceed
                     if (cutMotor) {
                         cutMotor->forceStop();
                         cutMotor->setCurrentPosition(0);
                     }
                     cutMotorHomingAttemptInProgress = false;
                     
-                    Serial.println("DEBUG: Recovery successful, proceeding with feed motor");
+                    Serial.println("DEBUG: Recovery successful - position set to 0 - proceeding with feed motor");
                     retract2x4SecureClamp();
                     configureFeedMotorForNormalOperation();
                     moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
@@ -157,8 +164,9 @@ void ReturningYes2x4State::handleReturningYes2x4Sequence(StateManager& stateMana
         case 3: // Wait for feed motor final positioning
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP: START END-OF-CYCLE FEED MOTOR HOMING SEQUENCE
+                //! STEP: START FEED MOTOR HOMING SEQUENCE (RUNS EVERY TIME)
                 //! ************************************************************************
+                Serial.println("DEBUG: Starting feed motor homing sequence");
                 retractFeedClamp();
                 returningYes2x4SubStep = 4;
                 feedHomingSubStep = 0;
@@ -225,28 +233,38 @@ void ReturningYes2x4State::handleReturningYes2x4FeedMotorHoming(StateManager& st
     switch (feedHomingSubStep) {
         case 0: // Start homing movement toward switch
             //! ************************************************************************
-            //! HOMING STEP 1: MOVE TOWARD HOME SWITCH
+            //! HOMING STEP 1: MOVE TOWARD HOME SWITCH USING CONTINUOUS FORWARD RUN
             //! ************************************************************************
             extend2x4SecureClamp();
             
             if (feedMotor) {
                 feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-                feedMotor->moveTo(LARGE_POSITION_VALUE * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotor->runForward();  // Use runForward() like the working blocking function
             }
             feedHomingSubStep = 1;
             break;
             
-        case 1: // Wait for home switch trigger
+        case 1: // Wait for home switch trigger with continuous monitoring
             //! ************************************************************************
-            //! HOMING STEP 2: DETECT HOME SWITCH ACTIVATION
+            //! HOMING STEP 2: DETECT HOME SWITCH ACTIVATION - CONTINUOUS MONITORING
             //! ************************************************************************
-            stateManager.getFeedHomingSwitch()->update();
-            if (stateManager.getFeedHomingSwitch()->read() == HIGH) {
-                if (feedMotor) {
-                    feedMotor->forceStop();
-                    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+            // Check if motor stopped unexpectedly and restart it
+            if (feedMotor && !feedMotor->isRunning()) {
+                feedMotor->runForward();
+            }
+            
+            // Continuous sensor monitoring - check multiple times per loop to prevent missing sensor activation
+            for (int i = 0; i < 10; i++) {  // Check sensor 10 times per main loop iteration
+                stateManager.getFeedHomingSwitch()->update();
+                if (stateManager.getFeedHomingSwitch()->read() == HIGH) {
+                    if (feedMotor) {
+                        feedMotor->forceStop();
+                        feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+                    }
+                    feedHomingSubStep = 2;
+                    return;  // Exit immediately when sensor detected
                 }
-                feedHomingSubStep = 2;
+                delayMicroseconds(100);  // Small delay between checks
             }
             break;
             
@@ -273,11 +291,20 @@ void ReturningYes2x4State::handleReturningYes2x4FeedMotorHoming(StateManager& st
             
         case 4: // Complete homing and determine next state
             //! ************************************************************************
-            //! HOMING COMPLETE: CHECK FOR CONTINUOUS OPERATION OR RETURN TO IDLE
+            //! HOMING COMPLETE: RESET COUNTER IF AT 3 AND CHECK FOR CONTINUOUS OPERATION OR RETURN TO IDLE
             //! ************************************************************************
             extend2x4SecureClamp();
             turnYellowLedOff();
             stateManager.setCuttingCycleInProgress(false);
+            
+            // Reset consecutive yeswood counter only when it reaches 3
+            if (stateManager.getConsecutiveYeswoodCount() >= 3) {
+                stateManager.resetConsecutiveYeswoodCount();
+                Serial.println("DEBUG: Homing sequence complete - consecutive yeswood counter reset at 3");
+            } else {
+                Serial.print("DEBUG: Homing sequence complete - consecutive yeswood count: ");
+                Serial.println(stateManager.getConsecutiveYeswoodCount());
+            }
             
             // Check for continuous operation mode
             if (stateManager.getStartCycleSwitch()->read() == HIGH && stateManager.getStartSwitchSafe()) {

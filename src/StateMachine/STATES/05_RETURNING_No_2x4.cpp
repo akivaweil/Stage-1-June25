@@ -16,6 +16,10 @@ void ReturningNo2x4State::execute(StateManager& stateManager) {
 void ReturningNo2x4State::onEnter(StateManager& stateManager) {
     //serial.println("Entering RETURNING_NO_2x4 state");
     
+    // Reset consecutive yeswood counter when nowood state occurs
+    stateManager.resetConsecutiveYeswoodCount();
+    Serial.println("DEBUG: RETURNING_No_2x4 state entered - consecutive yeswood counter reset");
+    
     // Initialize RETURNING_NO_2x4 sequence from CUTTING_state logic
     //serial.println("RETURNING_NO_2x4 state - Wood sensor reads HIGH. Starting RETURNING_NO_2x4 Sequence.");
     configureCutMotorForReturn();

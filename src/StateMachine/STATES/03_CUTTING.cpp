@@ -121,7 +121,7 @@ void CuttingState::handleCuttingStep1(StateManager& stateManager) {
     }
 
     // Check suction sensor after brief delay to ensure it's stabilized
-    if (millis() - stepStartTime >= 500) {
+    if (millis() - stepStartTime >= 1000) {
         if (digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == LOW) { // LOW means NO SUCTION (Error condition)
             //serial.println("Cutting Step 1: WAS_WOOD_SUCTIONED_SENSOR is LOW (No Suction). Error detected. Returning cut motor home before manual reset.");
             

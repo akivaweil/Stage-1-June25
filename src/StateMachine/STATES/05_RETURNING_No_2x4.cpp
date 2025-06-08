@@ -196,31 +196,31 @@ void ReturningNo2x4State::handleReturningNo2x4FeedMotorHoming(StateManager& stat
     
     // Non-blocking feed motor homing sequence for RETURNING_NO_2x4
     switch (returningNo2x4HomingSubStep) {
-        case 0: // Start homing - move toward home switch
-            //serial.println("RETURNING_NO_2x4 Feed Motor Homing Step 9.0: Moving toward home switch.");
+        case 0: // Start homing - move toward home sensor
+            //serial.println("RETURNING_NO_2x4 Feed Motor Homing Step 9.0: Moving toward home sensor.");
             if (feedMotor) {
                 feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-                feedMotor->moveTo(10000 * FEED_MOTOR_STEPS_PER_INCH); // Large positive move toward switch
+                feedMotor->moveTo(10000 * FEED_MOTOR_STEPS_PER_INCH); // Large positive move toward sensor
             }
             returningNo2x4HomingSubStep = 1;
             break;
             
-        case 1: // Wait for home switch to trigger
+        case 1: // Wait for home sensor to trigger
             stateManager.getFeedHomingSwitch()->update();
-            if (stateManager.getFeedHomingSwitch()->read() == HIGH) {
-                //serial.println("RETURNING_NO_2x4 Feed Motor Homing Step 9.1: Home switch triggered. Stopping motor.");
+            if (stateManager.getFeedHomingSwitch()->read() == LOW) {
+                //serial.println("RETURNING_NO_2x4 Feed Motor Homing Step 9.1: Home sensor triggered. Stopping motor.");
                 if (feedMotor) {
                     feedMotor->forceStop();
                     feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
                 }
-                //serial.println("RETURNING_NO_2x4: Feed motor hit home switch.");
+                //serial.println("RETURNING_NO_2x4: Feed motor hit home sensor.");
                 returningNo2x4HomingSubStep = 2;
             }
             break;
             
-        case 2: // Wait for motor to stop, then move to -0.1 inch from switch
+        case 2: // Wait for motor to stop, then move to -0.1 inch from sensor
             if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("RETURNING_NO_2x4 Feed Motor Homing Step 9.2: Moving to -0.1 inch from home switch to establish working zero.");
+                //serial.println("RETURNING_NO_2x4 Feed Motor Homing Step 9.2: Moving to -0.1 inch from home sensor to establish working zero.");
                 feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.1 * FEED_MOTOR_STEPS_PER_INCH);
                 returningNo2x4HomingSubStep = 3;
             }
@@ -230,7 +230,7 @@ void ReturningNo2x4State::handleReturningNo2x4FeedMotorHoming(StateManager& stat
             if (feedMotor && !feedMotor->isRunning()) {
                 //serial.println("RETURNING_NO_2x4 Feed Motor Homing Step 9.3: Setting new working zero position.");
                 feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
-                //serial.println("RETURNING_NO_2x4: Feed motor homed: 0.1 inch from switch set as position 0.");
+                //serial.println("RETURNING_NO_2x4: Feed motor homed: 0.1 inch from sensor set as position 0.");
                 
                 configureFeedMotorForNormalOperation();
                 returningNo2x4HomingSubStep = 4;

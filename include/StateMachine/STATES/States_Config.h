@@ -48,7 +48,7 @@ extern const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
 // Position and movement constants
 extern const long LARGE_POSITION_VALUE;
 extern const float FEED_MOTOR_RETURN_DISTANCE;
-extern const float FEED_MOTOR_OFFSET_FROM_SWITCH;
+extern const float FEED_MOTOR_OFFSET_FROM_SENSOR;
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************

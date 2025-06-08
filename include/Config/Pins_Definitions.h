@@ -25,9 +25,9 @@ extern const int ROTATION_SERVO_PIN;
 //* ************************************************************************
 //* ************************ SWITCH & SENSOR PINS ************************
 //* ************************************************************************
-// Homing switches (Active HIGH - input pulldown)
-extern const int CUT_MOTOR_HOME_SWITCH;
-extern const int FEED_MOTOR_HOME_SWITCH;
+  // Homing switches and sensors
+  extern const int CUT_MOTOR_HOME_SWITCH;     // Active HIGH - input pulldown
+  extern const int FEED_MOTOR_HOME_SENSOR;    // Active LOW - input pullup
 
 // Control switches (Active HIGH - input pulldown)
 extern const int RELOAD_SWITCH;

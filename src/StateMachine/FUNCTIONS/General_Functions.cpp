@@ -325,8 +325,8 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     }
     
     //serial.println("Starting feed motor homing sequence...");
-    Serial.print("Initial feed switch state: ");
-    //serial.println(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
+    Serial.print("Initial feed sensor state: ");
+    //serial.println(homingSwitch.read() == LOW ? "ACTIVE" : "INACTIVE");
     
     // Debug motor setup
     Serial.print("FEED_MOTOR_STEPS_PER_INCH value: ");
@@ -334,7 +334,7 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     Serial.print("FEED_MOTOR_HOMING_SPEED value: ");
     //serial.println(FEED_MOTOR_HOMING_SPEED);
     
-    // Step 1: Move toward home switch until it triggers
+    // Step 1: Move toward home sensor until it triggers
     feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
     
     // Try using runForward() instead of moveTo() for more reliable operation
@@ -352,14 +352,14 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     unsigned long startTime = millis();
     const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
 
-    while (homingSwitch.read() != HIGH) {
+    while (homingSwitch.read() != LOW) {
         homingSwitch.update();
         
         // Add periodic status updates
         static unsigned long lastStatusTime = 0;
         if (millis() - lastStatusTime >= 1000) {
-            Serial.print("Feed homing in progress... Switch: ");
-            Serial.print(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
+            Serial.print("Feed homing in progress... Sensor: ");
+            Serial.print(homingSwitch.read() == LOW ? "ACTIVE" : "INACTIVE");
             Serial.print(", Position: ");
             Serial.print(feedMotor->getCurrentPosition());
             Serial.print(", Running: ");
@@ -381,12 +381,12 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         }
     }
     
-    //serial.println("FEED HOME SWITCH DETECTED! Stopping motor...");
+    //serial.println("FEED HOME SENSOR DETECTED! Stopping motor...");
     feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    //serial.println("Feed motor hit home switch.");
+    //serial.println("Feed motor hit home sensor.");
     
-    // Step 2: Move to -0.3 inch from home switch to establish working zero
-    //serial.println("Moving feed motor to -0.3 inch from home switch...");
+    // Step 2: Move to -0.3 inch from home sensor to establish working zero
+    //serial.println("Moving feed motor to -0.3 inch from home sensor...");
     feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.6 * FEED_MOTOR_STEPS_PER_INCH);
     
     // Wait for move to complete with timeout
@@ -399,9 +399,9 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         }
     }
     
-    // Step 3: Set this position (-0.3 inch from switch) as the new zero
+    // Step 3: Set this position (-0.3 inch from sensor) as the new zero
     feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    //serial.println("Feed motor homed: 0.3 inch from switch set as working zero.");
+    //serial.println("Feed motor homed: 0.3 inch from sensor set as working zero.");
     
     configureFeedMotorForNormalOperation();
     //serial.println("Feed motor homed successfully.");

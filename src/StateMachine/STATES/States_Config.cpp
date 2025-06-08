@@ -85,7 +85,7 @@ const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.6;
 // Position and movement constants
 const long LARGE_POSITION_VALUE = 10000; // Large position value for homing moves
 const float FEED_MOTOR_RETURN_DISTANCE = 0.1; // Distance for feed motor return moves (inches)
-const float FEED_MOTOR_OFFSET_FROM_SWITCH = 1.0; // Offset from home switch for working zero (inches)
+const float FEED_MOTOR_OFFSET_FROM_SENSOR = 1.0; // Offset from home sensor for working zero (inches)
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************

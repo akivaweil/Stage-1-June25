@@ -231,9 +231,9 @@ void ReturningYes2x4State::handleReturningYes2x4FeedMotorHoming(StateManager& st
     FastAccelStepper* feedMotor = stateManager.getFeedMotor();
     
     switch (feedHomingSubStep) {
-        case 0: // Start homing movement toward switch
+        case 0: // Start homing movement toward sensor
             //! ************************************************************************
-            //! HOMING STEP 1: MOVE TOWARD HOME SWITCH USING CONTINUOUS FORWARD RUN
+            //! HOMING STEP 1: MOVE TOWARD HOME SENSOR USING CONTINUOUS FORWARD RUN
             //! ************************************************************************
             extend2x4SecureClamp();
             
@@ -244,9 +244,9 @@ void ReturningYes2x4State::handleReturningYes2x4FeedMotorHoming(StateManager& st
             feedHomingSubStep = 1;
             break;
             
-        case 1: // Wait for home switch trigger with continuous monitoring
+        case 1: // Wait for home sensor trigger with continuous monitoring
             //! ************************************************************************
-            //! HOMING STEP 2: DETECT HOME SWITCH ACTIVATION - CONTINUOUS MONITORING
+            //! HOMING STEP 2: DETECT HOME SENSOR ACTIVATION - CONTINUOUS MONITORING
             //! ************************************************************************
             // Check if motor stopped unexpectedly and restart it
             if (feedMotor && !feedMotor->isRunning()) {
@@ -256,7 +256,7 @@ void ReturningYes2x4State::handleReturningYes2x4FeedMotorHoming(StateManager& st
             // Continuous sensor monitoring - check multiple times per loop to prevent missing sensor activation
             for (int i = 0; i < 10; i++) {  // Check sensor 10 times per main loop iteration
                 stateManager.getFeedHomingSwitch()->update();
-                if (stateManager.getFeedHomingSwitch()->read() == HIGH) {
+                if (stateManager.getFeedHomingSwitch()->read() == LOW) {
                     if (feedMotor) {
                         feedMotor->forceStop();
                         feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
@@ -268,12 +268,12 @@ void ReturningYes2x4State::handleReturningYes2x4FeedMotorHoming(StateManager& st
             }
             break;
             
-        case 2: // Move to working position offset from switch
+        case 2: // Move to working position offset from sensor
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
                 //! HOMING STEP 3: MOVE TO WORKING ZERO POSITION
                 //! ************************************************************************
-                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SWITCH * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
                 feedHomingSubStep = 3;
             }
             break;

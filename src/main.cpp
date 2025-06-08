@@ -94,7 +94,7 @@ void setup() {
   pinMode(FEED_MOTOR_DIR_PIN, OUTPUT);
   
   pinMode(CUT_MOTOR_HOME_SWITCH, INPUT_PULLDOWN);
-  pinMode(FEED_MOTOR_HOME_SWITCH, INPUT_PULLDOWN);
+  pinMode(FEED_MOTOR_HOME_SENSOR, INPUT_PULLUP);
   pinMode(RELOAD_SWITCH, INPUT_PULLDOWN);
   pinMode(START_CYCLE_SWITCH, INPUT_PULLDOWN);
   pinMode(MANUAL_FEED_SWITCH, INPUT_PULLDOWN);
@@ -125,7 +125,7 @@ void setup() {
   cutHomingSwitch.attach(CUT_MOTOR_HOME_SWITCH);
   cutHomingSwitch.interval(3);
   
-  feedHomingSwitch.attach(FEED_MOTOR_HOME_SWITCH);
+  feedHomingSwitch.attach(FEED_MOTOR_HOME_SENSOR);
   feedHomingSwitch.interval(5);
   
   reloadSwitch.attach(RELOAD_SWITCH);

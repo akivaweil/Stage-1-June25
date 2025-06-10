@@ -19,14 +19,12 @@ public:
 private:
     // RETURNING_NO_2x4 sequence tracking
     int returningNo2x4Step = 0;
-    int returningNo2x4HomingSubStep = 0; // For RETURNING_NO_2x4 feed motor homing sequence
     unsigned long cylinderActionTime = 0;
     bool waitingForCylinder = false;
     
     // Helper methods for RETURNING_NO_2x4 sequence
     void handleReturningNo2x4Sequence(StateManager& stateManager);
     void handleReturningNo2x4Step(StateManager& stateManager, int step);
-    void handleReturningNo2x4FeedMotorHoming(StateManager& stateManager);
     
     // Reset all step counters
     void resetSteps();

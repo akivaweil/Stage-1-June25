@@ -26,7 +26,7 @@ const int ROTATION_SERVO_PIN = 14;
 //* ************************************************************************
   // Homing switches and sensors
   const int CUT_MOTOR_HOME_SWITCH = 3;        // Active HIGH - input pulldown
-  const int FEED_MOTOR_HOME_SENSOR = 16;      // Active LOW - input pullup
+  const int FEED_MOTOR_HOME_SENSOR = 13;      // Active LOW - input pullup
 
 // Control switches (Active HIGH - input pulldown)
 const int RELOAD_SWITCH = 6;

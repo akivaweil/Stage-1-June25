@@ -85,8 +85,8 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
 
         case MOVE_TO_NEGATIVE_TWO:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(-2.0);
-                //serial.println("FeedFirstCut: Moving feed motor to -2 inch (second run)");
+                moveFeedMotorToPosition(-1.35);
+                //serial.println("FeedFirstCut: Moving feed motor to -2.25 inch (second run)");
                 advanceToNextStep(stateManager);
             }
             break;
@@ -111,7 +111,7 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
 
         case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - 2.75);
+                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - 1.4);
                 //serial.println("FeedFirstCut: Moving feed motor to travel distance minus 2.75 inches");
                 advanceToNextStep(stateManager);
             }

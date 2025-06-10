@@ -20,7 +20,7 @@ const int ROTATION_SERVO_ACTIVE_POSITION = 90;   // Position when activated (deg
 const float CUT_MOTOR_STEPS_PER_INCH = 500.0;  // 4x increase from 38
 const float FEED_MOTOR_STEPS_PER_INCH = 1000.0; // Steps per inch for feed motor
 const float CUT_TRAVEL_DISTANCE = 9.0; // inches
-const float FEED_TRAVEL_DISTANCE = 3.4; // inches (3.4 for 3 inch squares and 3.25 for 2.65 inch squares)
+const float FEED_TRAVEL_DISTANCE = 3.33; // inches (3.4 for 3 inch squares and 3.25 for 2.65 inch squares)
 const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1; // Inches for incremental reverse
 const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4; // Max inches for incremental reverse before error
 
@@ -33,7 +33,7 @@ const int FEED_HOMING_DIRECTION = 1;
 //* ************************************************************************
 // Normal Cutting Operation (Cutting State)
 const float CUT_MOTOR_NORMAL_SPEED = 700;      // Speed for the cutting pass (steps/sec)
-const float CUT_MOTOR_NORMAL_ACCELERATION = 18000; // Acceleration for the cutting pass (steps/sec^2)
+const float CUT_MOTOR_NORMAL_ACCELERATION = 15000; // Acceleration for the cutting pass (steps/sec^2)
 
 // Return Stroke (Returning State / End of Cutting State)
 const float CUT_MOTOR_RETURN_SPEED = 30000;     // Speed for returning after a cut (steps/sec)
@@ -46,14 +46,15 @@ const float CUT_MOTOR_HOMING_SPEED = 1000;      // Speed for homing the cut moto
 //* ************************************************************************
 // Normal Feed Operation (Feed State / Parts of Cutting State)
 const float FEED_MOTOR_NORMAL_SPEED = 20000;    // Speed for normal feed moves (steps/sec)
-const float FEED_MOTOR_NORMAL_ACCELERATION = 21000; // Acceleration for normal feed (steps/sec^2)
+const float FEED_MOTOR_NORMAL_ACCELETION = 21000; // Acceleration for normal feed (steps/sec^2)
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
-const float FEED_MOTOR_RETURN_SPEED = 40000;    // Speed for returning to home or start position (steps/sec)
-const float FEED_MOTOR_RETURN_ACCELERATION = 40000; // Acceleration for return moves (steps/sec^2)
+const float FEED_MOTOR_RETURN_SPEED = 30000;    // Speed for returning to home or start position (steps/sec)
+const float FEED_MOTOR_RETURN_ACCELERATION =
+ 30000; // Acceleration for return moves (steps/sec^2)
 
 // Homing Operation (Homing State)
-const float FEED_MOTOR_HOMING_SPEED = 4000;     // Speed for homing the feed motor (steps/sec)
+const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed motor (steps/sec)
 
 //* ************************************************************************
 //* ************************ TIMING CONFIGURATION *************************
@@ -74,18 +75,18 @@ const unsigned long TA_SIGNAL_DURATION = 1000; // Duration for Transfer Arm sign
 //* ************************ OPERATIONAL CONSTANTS ***********************
 //* ************************************************************************
 // Rotation clamp early activation offset
-const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.4; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
+const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
 
 // Rotation servo early activation offset
-const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.6; 
+const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.5; 
 
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************
 //* ************************************************************************
 // Position and movement constants
 const long LARGE_POSITION_VALUE = 10000; // Large position value for homing moves
-const float FEED_MOTOR_RETURN_DISTANCE = 0.1; // Distance for feed motor return moves (inches)
-const float FEED_MOTOR_OFFSET_FROM_SENSOR = 1.0; // Offset from home sensor for working zero (inches)
+const float FEED_MOTOR_RETURN_DISTANCE = 0.0; // Distance for feed motor return moves (inches)
+const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for working zero (inches)
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************

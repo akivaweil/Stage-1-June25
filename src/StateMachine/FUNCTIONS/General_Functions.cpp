@@ -4,6 +4,7 @@
 #include <FastAccelStepper.h>
 #include <Bounce2.h>
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/STATES/States_Config.h"
 
 // External motor object references from main.cpp
 extern FastAccelStepper* cutMotor;
@@ -387,7 +388,7 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     
     // Step 2: Move to -0.3 inch from home sensor to establish working zero
     //serial.println("Moving feed motor to -0.3 inch from home sensor...");
-    feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.6 * FEED_MOTOR_STEPS_PER_INCH);
+    feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
     
     // Wait for move to complete with timeout
     unsigned long moveStartTime = millis();

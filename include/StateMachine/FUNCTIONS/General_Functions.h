@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <Bounce2.h>
 #include <FastAccelStepper.h>
-#include <ESP32Servo.h>
+// #include <ESP32Servo.h> // Removed - using function-based PWM control instead
 
 // Forward declarations and external variable references
 extern bool blinkState;
@@ -41,8 +41,8 @@ enum SystemState {
 
 extern SystemState currentState;
 
-// Servo and motor objects
-extern Servo rotationServo;
+// Motor objects (servo now uses function-based PWM control)
+extern const int ROTATION_SERVO_PWM_CHANNEL;
 extern FastAccelStepper* cutMotor;
 extern FastAccelStepper* feedMotor;
 
@@ -147,6 +147,10 @@ void handleStartSwitchContinuousMode();
 //* ************************************************************************
 bool shouldStartCycle();
 void activateRotationServo();
+
+// Rotation servo safety delay access functions (forward declarations)
+bool getRotationServoSafetyDelayActive();
+void setRotationServoSafetyDelayActive(bool value);
 void handleRotationServoReturn();
 void handleTASignalTiming();
 void handleRotationClampRetract();

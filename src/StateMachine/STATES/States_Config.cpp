@@ -46,7 +46,7 @@ const float CUT_MOTOR_HOMING_SPEED = 1000;      // Speed for homing the cut moto
 //* ************************************************************************
 // Normal Feed Operation (Feed State / Parts of Cutting State)
 const float FEED_MOTOR_NORMAL_SPEED = 20000;    // Speed for normal feed moves (steps/sec)
-const float FEED_MOTOR_NORMAL_ACCELETION = 21000; // Acceleration for normal feed (steps/sec^2)
+const float FEED_MOTOR_NORMAL_ACCELERATION = 21000; // Acceleration for normal feed (steps/sec^2)
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
 const float FEED_MOTOR_RETURN_SPEED = 30000;    // Speed for returning to home or start position (steps/sec)
@@ -78,7 +78,14 @@ const unsigned long TA_SIGNAL_DURATION = 1000; // Duration for Transfer Arm sign
 const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
 
 // Rotation servo early activation offset
-const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.5; 
+const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.4;
+
+//* ************************************************************************
+//* ************************ SAFETY CONSTANTS *****************************
+//* ************************************************************************
+// Rotation servo safety timing
+const unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000; // 3 seconds - threshold for extended wait due to failure to suction
+const unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 2000; // 2 seconds - additional safety delay before returning servo to home 
 
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************
@@ -94,4 +101,5 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for 
 // Motor operation timing
 const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
 const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
-const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization 
+const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
+const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.1; // Distance cut motor must travel before checking suction sensor 

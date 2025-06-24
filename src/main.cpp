@@ -22,6 +22,10 @@
 unsigned long rotationServoActiveStartTime = 0;
 bool rotationServoIsActiveAndTiming = false;
 
+// Rotation servo safety delay variables
+bool rotationServoSafetyDelayActive = false;
+unsigned long rotationServoSafetyDelayStartTime = 0;
+
 unsigned long rotationClampExtendTime = 0;
 bool rotationClampIsExtended = false;
 
@@ -38,7 +42,7 @@ FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *cutMotor = NULL;
 FastAccelStepper *feedMotor = NULL;
 
-// Servo object
+// Create servo object
 Servo rotationServo;
 
 // Bounce objects for debouncing switches
@@ -159,8 +163,9 @@ void setup() {
   }
   
   //! Initialize servo
-  rotationServo.setTimerWidth(14);
   rotationServo.attach(ROTATION_SERVO_PIN);
+  // Set initial servo position to home
+  rotationServo.write(ROTATION_SERVO_HOME_POSITION);
   
   //! Configure initial state
   currentState = STARTUP;
@@ -178,6 +183,6 @@ void setup() {
 void loop() {
   handleOTA(); // Handle OTA requests
 
-  // Execute the state machine - all the logic below has been moved to StateManager
-  stateManager.execute();
+  // Execute the state machine - all the logic below has been moved to function-based state management
+  executeStateMachine();
 }

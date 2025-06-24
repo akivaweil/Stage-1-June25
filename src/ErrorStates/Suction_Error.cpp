@@ -55,16 +55,16 @@ void handleSuctionErrorState() {
     turnBlueLedOff();
 
     // Step 4 & 5: Use StateManager to access switches instead of global variables
-    if (stateManager.getStartCycleSwitch()->rose()) { // Check for start switch OFF to ON transition
+    if (getStartCycleSwitch()->rose()) { // Check for start switch OFF to ON transition
         //serial.println("Start cycle switch toggled ON. Resetting from suction error. Transitioning to HOMING.");
         turnRedLedOff();   // Turn off error LED explicitly before changing state
         
-        stateManager.setContinuousModeActive(false); // Ensure continuous mode is off
-        stateManager.setStartSwitchSafe(false);      // Require user to cycle switch OFF then ON for a new actual start
+        setContinuousModeActive(false); // Ensure continuous mode is off
+        setStartSwitchSafe(false);      // Require user to cycle switch OFF then ON for a new actual start
         
         // Reset the homing flag for next time this state is entered
         hasHomedCutMotor = false;
         
-        stateManager.changeState(HOMING);        // Go to HOMING to re-initialize using proper StateManager method
+        changeState(HOMING);        // Go to HOMING to re-initialize using proper StateManager method
     }
 } 

@@ -1,6 +1,7 @@
 #include "StateMachine/03_CUTTING.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/STATES/States_Config.h"
 
 //* ************************************************************************
 //* ************************** CUTTING STATE *******************************
@@ -9,17 +10,60 @@
 // This state manages a multi-step cutting process.
 // It includes logic for normal cutting, deciding between a YES_WOOD Sequence and a NO_WOOD Sequence, and error handling.
 
-void CuttingState::onEnter(StateManager& stateManager) {
+//! ************************************************************************
+//! STEP 0: START CUT MOTION - CONFIGURE AND MOVE CUT MOTOR
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 1: CHECK WOOD SUCTION SENSOR AND START CUT MOTOR
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 2: MONITOR CUT MOTOR POSITION AND ACTIVATE ROTATION CLAMP/SERVO
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 3: WAIT FOR CUT MOTOR TO COMPLETE TRAVEL
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 4: DETERMINE WOOD PRESENCE AND TRANSITION TO APPROPRIATE STATE
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 5: HANDLE CONTINUOUS MODE LOGIC
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 8: FEED MOTOR HOMING SEQUENCE (ERROR RECOVERY)
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 9: SUCTION ERROR RECOVERY SEQUENCE
+//! ************************************************************************
+
+// Static variables for cutting state tracking
+static int cuttingStep = 0;
+static unsigned long stepStartTime = 0;
+static unsigned long signalStartTime = 0;
+static bool signalActive = false;
+static bool homePositionErrorDetected = false;
+static bool rotationClampActivatedThisCycle = false;
+static bool rotationServoActivatedThisCycle = false;
+static float cutMotorIncrementalMoveTotalInches = 0.0;
+static int cuttingSubStep8 = 0; // For feed motor homing sequence
+
+void onEnterCuttingState() {
     // Reset all step counters when entering cutting state
-    resetSteps();
+    resetCuttingSteps();
 }
 
-void CuttingState::onExit(StateManager& stateManager) {
+void onExitCuttingState() {
     // Reset all step counters when exiting cutting state
-    resetSteps();
+    resetCuttingSteps();
 }
 
-void CuttingState::execute(StateManager& stateManager) {
+void executeCuttingState() {
     // Throttle state logging to every 2 seconds
     static unsigned long lastStateLogTime = 0;
     if (millis() - lastStateLogTime >= 2000) {
@@ -28,7 +72,7 @@ void CuttingState::execute(StateManager& stateManager) {
     }
     
     if (homePositionErrorDetected) {
-        handleHomePositionError(stateManager);
+        handleHomePositionError();
         return;
     }
     
@@ -39,37 +83,37 @@ void CuttingState::execute(StateManager& stateManager) {
 
     switch (cuttingStep) {
         case 0: 
-            handleCuttingStep0(stateManager);
+            handleCuttingStep0();
             break;
         case 1: 
-            handleCuttingStep1(stateManager);
+            handleCuttingStep1();
             break;
         case 2: 
-            handleCuttingStep2(stateManager);
+            handleCuttingStep2();
             break;
         case 3: 
-            handleCuttingStep3(stateManager);
+            handleCuttingStep3();
             break;
         case 4: 
-            handleCuttingStep4(stateManager);
+            handleCuttingStep4();
             break;
         case 5: 
-            handleCuttingStep5(stateManager);
+            handleCuttingStep5();
             break;
         case 8:
-            handleCuttingStep8_FeedMotorHomingSequence(stateManager);
+            handleCuttingStep8_FeedMotorHomingSequence();
             break;
         case 9:
-            handleCuttingStep9_SuctionErrorRecovery(stateManager);
+            handleCuttingStep9_SuctionErrorRecovery();
             break;
     }
 }
 
-void CuttingState::handleCuttingStep0(StateManager& stateManager) {
+void handleCuttingStep0() {
     //serial.println("Cutting Step 0: Starting cut motion."); 
     
     // Debug motor before configuration
-    FastAccelStepper* cutMotor = stateManager.getCutMotor();
+    FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor) {
         Serial.print("Step 0 - Motor before config - Running: ");
         Serial.print(cutMotor->isRunning() ? "YES" : "NO");
@@ -102,7 +146,7 @@ void CuttingState::handleCuttingStep0(StateManager& stateManager) {
     //serial.println("Step 0 complete - advancing to Step 1");
 }
 
-void CuttingState::handleCuttingStep1(StateManager& stateManager) {
+void handleCuttingStep1() {
     // CUTTING (Step 1): Check WAS_WOOD_SUCTIONED_SENSOR, start cut motor, monitor position for servo activation
     extern const int WOOD_SUCTION_CONFIRM_SENSOR; // From main.cpp
     
@@ -111,7 +155,7 @@ void CuttingState::handleCuttingStep1(StateManager& stateManager) {
         //serial.println("Cutting Step 1: Checking suction sensor then starting cut motion.");
         
         // Debug motor status at start of step 1
-        FastAccelStepper* cutMotor = stateManager.getCutMotor();
+        FastAccelStepper* cutMotor = getCutMotor();
         if (cutMotor) {
             Serial.print("Step 1 start - Motor Running: ");
             Serial.print(cutMotor->isRunning() ? "YES" : "NO");
@@ -120,14 +164,16 @@ void CuttingState::handleCuttingStep1(StateManager& stateManager) {
         }
     }
 
-    // Check suction sensor after brief delay to ensure it's stabilized
-    if (millis() - stepStartTime >= 1000) {
-        if (digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == LOW) { // LOW means NO SUCTION (Error condition)
-            //serial.println("Cutting Step 1: WAS_WOOD_SUCTIONED_SENSOR is LOW (No Suction). Error detected. Returning cut motor home before manual reset.");
+    // Check suction sensor after cut motor has traveled the required distance
+    FastAccelStepper* cutMotor = getCutMotor();
+    if (cutMotor && cutMotor->getCurrentPosition() >= (SUCTION_SENSOR_CHECK_DISTANCE_INCHES * CUT_MOTOR_STEPS_PER_INCH)) {
+        // Only check suction sensor if rotation servo is currently active and timing (servo has been activated)
+        if (getRotationServoIsActiveAndTiming()) { // LOW means NO SUCTION (Error condition)
+            //serial.println("Cutting Step 1: Rotation servo is active (No Suction). Error detected. Returning cut motor home before manual reset.");
             
             // Stop feed motor immediately but return cut motor home safely
-            FastAccelStepper* cutMotor = stateManager.getCutMotor();
-            FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+            FastAccelStepper* cutMotor = getCutMotor();
+            FastAccelStepper* feedMotor = getFeedMotor();
             
             if (feedMotor && feedMotor->isRunning()) {
                 feedMotor->forceStop();
@@ -142,7 +188,7 @@ void CuttingState::handleCuttingStep1(StateManager& stateManager) {
             }
             
             // Set cutting cycle flag to false to prevent continuous operation
-            stateManager.setCuttingCycleInProgress(false);
+            setCuttingCycleInProgress(false);
             
             // Transition to suction error recovery step
             cuttingStep = 9; // New step for suction error recovery
@@ -152,7 +198,7 @@ void CuttingState::handleCuttingStep1(StateManager& stateManager) {
             //serial.println("Cutting Step 1: WAS_WOOD_SUCTIONED_SENSOR is HIGH (Suction OK). Starting cut motor toward cut position.");
             
             // Debug: Double-check motor configuration and movement
-            FastAccelStepper* cutMotor = stateManager.getCutMotor();
+            FastAccelStepper* cutMotor = getCutMotor();
             if (cutMotor) {
                 Serial.print("Step 1 - Before reconfiguring - Motor Running: ");
                 Serial.print(cutMotor->isRunning() ? "YES" : "NO");
@@ -183,8 +229,8 @@ void CuttingState::handleCuttingStep1(StateManager& stateManager) {
     }
 }
 
-void CuttingState::handleCuttingStep2(StateManager& stateManager) {
-    FastAccelStepper* cutMotor = stateManager.getCutMotor();
+void handleCuttingStep2() {
+    FastAccelStepper* cutMotor = getCutMotor();
     extern const int _2x4_PRESENT_SENSOR; // From main.cpp
     extern const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES; // From main.cpp
     extern const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES; // From main.cpp
@@ -262,17 +308,17 @@ void CuttingState::handleCuttingStep2(StateManager& stateManager) {
         
         if (no2x4Detected) {
             //serial.println("Cutting Step 2: RETURNING_NO_2x4 state - 2x4 sensor reads HIGH. Transitioning to RETURNING_NO_2x4 state.");
-            stateManager.changeState(RETURNING_NO_2x4);
+            changeState(RETURNING_NO_2x4);
         } else {
             //serial.println("Cutting Step 2: RETURNING_YES_2x4 state - 2x4 sensor reads LOW. Transitioning to RETURNING_YES_2x4 state.");
-            stateManager.changeState(RETURNING_YES_2x4);
+            changeState(RETURNING_YES_2x4);
         }
     }
 }
 
-void CuttingState::handleCuttingStep3(StateManager& stateManager) {
+void handleCuttingStep3() {
     //serial.println("Cutting Step 3: (Should be bypassed for wood path) Initial position move complete.");
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+    FastAccelStepper* feedMotor = getFeedMotor();
     if (feedMotor && !feedMotor->isRunning()) {
         retract2x4SecureClamp();
         //serial.println("Feed clamp and 2x4 secure clamp retracted.");
@@ -283,10 +329,10 @@ void CuttingState::handleCuttingStep3(StateManager& stateManager) {
     }
 }
 
-void CuttingState::handleCuttingStep4(StateManager& stateManager) {
+void handleCuttingStep4() {
     //serial.println("Cutting Step 4: (Logic moved to Step 7 for wood path) Feed motor at home (0).");
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
-    FastAccelStepper* cutMotor = stateManager.getCutMotor();
+    FastAccelStepper* feedMotor = getFeedMotor();
+    FastAccelStepper* cutMotor = getCutMotor();
     extern const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES; // From main.cpp
     extern const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES; // From main.cpp
     // CUT_MOTOR_STEPS_PER_INCH, FEED_TRAVEL_DISTANCE are already declared in General_Functions.h
@@ -300,9 +346,9 @@ void CuttingState::handleCuttingStep4(StateManager& stateManager) {
             bool sensorDetectedHome = false;
             for (int i = 0; i < 3; i++) {
                 delay(30);
-                stateManager.getCutHomingSwitch()->update();
-                Serial.print("Cut position switch read attempt "); Serial.print(i+1); Serial.print(": "); //serial.println(stateManager.getCutHomingSwitch()->read());
-                if (stateManager.getCutHomingSwitch()->read() == HIGH) {
+                getCutHomingSwitch()->update();
+                Serial.print("Cut position switch read attempt "); Serial.print(i+1); Serial.print(": "); //serial.println(getCutHomingSwitch()->read());
+                if (getCutHomingSwitch()->read() == HIGH) {
                     sensorDetectedHome = true;
                     if (cutMotor) cutMotor->setCurrentPosition(0); // Recalibrate to 0 when switch is hit
                     //serial.println("Cut motor position switch detected HIGH. Position recalibrated to 0.");
@@ -325,9 +371,9 @@ void CuttingState::handleCuttingStep4(StateManager& stateManager) {
                     extend2x4SecureClamp();
                     turnRedLedOn();
                     turnYellowLedOff();
-                    stateManager.changeState(ERROR);
-                    stateManager.setErrorStartTime(millis());
-                    resetSteps();
+                    changeState(ERROR);
+                    setErrorStartTime(millis());
+                    resetCuttingSteps();
                     cutMotorIncrementalMoveTotalInches = 0.0; // Reset for next attempt
                     //serial.println("Transitioning to ERROR state due to cut motor homing failure after cut.");
                 }
@@ -341,13 +387,13 @@ void CuttingState::handleCuttingStep4(StateManager& stateManager) {
     }
 }
 
-void CuttingState::handleCuttingStep5(StateManager& stateManager) {
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+void handleCuttingStep5() {
+    FastAccelStepper* feedMotor = getFeedMotor();
     if (feedMotor && !feedMotor->isRunning()) {
         //serial.println("Cutting Step 5: Feed motor at final position. Starting end-of-cycle feed motor homing sequence."); 
         
         //! ************************************************************************
-        //! STEP 1: RETRACT FEED CLAMP AND START FEED MOTOR HOMING SEQUENCE
+        //! STEP 6: RETRACT FEED CLAMP AND START FEED MOTOR HOMING SEQUENCE
         //! ************************************************************************
         retract2x4SecureClamp();
         //serial.println("Feed clamp retracted. Starting feed motor homing sequence...");
@@ -359,8 +405,8 @@ void CuttingState::handleCuttingStep5(StateManager& stateManager) {
     }
 }
 
-void CuttingState::handleCuttingStep8_FeedMotorHomingSequence(StateManager& stateManager) {
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+void handleCuttingStep8_FeedMotorHomingSequence() {
+    FastAccelStepper* feedMotor = getFeedMotor();
     extern const float FEED_MOTOR_HOMING_SPEED; // From main.cpp
     // FEED_TRAVEL_DISTANCE and FEED_MOTOR_STEPS_PER_INCH are already declared in General_Functions.h
     
@@ -376,8 +422,8 @@ void CuttingState::handleCuttingStep8_FeedMotorHomingSequence(StateManager& stat
             break;
             
         case 1: // Wait for home sensor to trigger
-            stateManager.getFeedHomingSwitch()->update();
-            if (stateManager.getFeedHomingSwitch()->read() == LOW) {
+            getFeedHomingSwitch()->update();
+            if (getFeedHomingSwitch()->read() == LOW) {
                 //serial.println("Feed Motor Homing Step 8.1: Home sensor triggered. Stopping motor.");
                 if (feedMotor) {
                     feedMotor->stopMove();
@@ -412,32 +458,32 @@ void CuttingState::handleCuttingStep8_FeedMotorHomingSequence(StateManager& stat
             extend2x4SecureClamp();
             //serial.println("2x4 secure clamp extended."); 
             turnYellowLedOff();
-            stateManager.setCuttingCycleInProgress(false);
+            setCuttingCycleInProgress(false);
             
             // Check if start cycle switch is active for continuous operation
-            if (stateManager.getStartCycleSwitch()->read() == HIGH && stateManager.getStartSwitchSafe()) {
+            if (getStartCycleSwitch()->read() == HIGH && getStartSwitchSafe()) {
                 //serial.println("Start cycle switch is active - continuing with another cut cycle.");
                 // Prepare for next cycle
                 extend2x4SecureClamp();
                 extendRotationClamp(); // Extend rotation clamp for next cutting cycle
                 configureCutMotorForCutting(); // Ensure cut motor is set to proper cutting speed
                 turnYellowLedOn();
-                stateManager.setCuttingCycleInProgress(true);
-                stateManager.changeState(CUTTING);
-                resetSteps();
+                setCuttingCycleInProgress(true);
+                changeState(CUTTING);
+                resetCuttingSteps();
                 //serial.println("Transitioning to CUTTING state for continuous operation.");
             } else {
                 //serial.println("Cycle complete. Transitioning to IDLE state.");
-                stateManager.changeState(IDLE);
-                resetSteps();
+                changeState(IDLE);
+                resetCuttingSteps();
             }
             break;
     }
 }
 
-void CuttingState::handleCuttingStep9_SuctionErrorRecovery(StateManager& stateManager) {
+void handleCuttingStep9_SuctionErrorRecovery() {
     // CUTTING (Step 9): Suction Error Recovery - Wait for cut motor to return home, then transition to error hold
-    FastAccelStepper* cutMotor = stateManager.getCutMotor();
+    FastAccelStepper* cutMotor = getCutMotor();
     
     if (cutMotor && !cutMotor->isRunning()) {
         //serial.println("Cutting Step 9: Cut motor returned home after suction error. Checking home sensor.");
@@ -446,13 +492,13 @@ void CuttingState::handleCuttingStep9_SuctionErrorRecovery(StateManager& stateMa
         bool sensorDetectedHome = false;
         for (int i = 0; i < 3; i++) {
             delay(30);
-            stateManager.getCutHomingSwitch()->update();
+            getCutHomingSwitch()->update();
             Serial.print("Cut position switch read attempt "); 
             Serial.print(i+1); 
             Serial.print(": "); 
-            //serial.println(stateManager.getCutHomingSwitch()->read());
+            //serial.println(getCutHomingSwitch()->read());
             
-            if (stateManager.getCutHomingSwitch()->read() == HIGH) {
+            if (getCutHomingSwitch()->read() == HIGH) {
                 sensorDetectedHome = true;
                 if (cutMotor) cutMotor->setCurrentPosition(0); // Recalibrate to 0 when switch is hit
                 //serial.println("Cut motor position switch detected HIGH after suction error recovery.");
@@ -462,12 +508,12 @@ void CuttingState::handleCuttingStep9_SuctionErrorRecovery(StateManager& stateMa
         
         if (sensorDetectedHome) {
             //serial.println("Cut motor successfully returned home after suction error. Transitioning to SUCTION_ERROR for manual reset.");
-            stateManager.changeState(SUCTION_ERROR);
-            resetSteps();
+            changeState(SUCTION_ERROR);
+            resetCuttingSteps();
         } else {
             //serial.println("WARNING: Cut motor home sensor not detected after suction error recovery. Proceeding to SUCTION_ERROR anyway.");
-            stateManager.changeState(SUCTION_ERROR);
-            resetSteps();
+            changeState(SUCTION_ERROR);
+            resetCuttingSteps();
         }
     } else if (cutMotor) {
         // Motor still running - provide status update
@@ -479,35 +525,35 @@ void CuttingState::handleCuttingStep9_SuctionErrorRecovery(StateManager& stateMa
     }
 }
 
-void CuttingState::handleHomePositionError(StateManager& stateManager) {
+void handleHomePositionError() {
     //serial.println("Home position error detected during cutting operation."); 
-    unsigned long lastErrorBlinkTime = stateManager.getLastErrorBlinkTime();
-    bool errorBlinkState = stateManager.getErrorBlinkState();
+    unsigned long lastErrorBlinkTime = getLastErrorBlinkTime();
+    bool errorBlinkState = getErrorBlinkState();
     
     if (millis() - lastErrorBlinkTime > 100) { 
         errorBlinkState = !errorBlinkState;
-        stateManager.setErrorBlinkState(errorBlinkState);
+        setErrorBlinkState(errorBlinkState);
         if(errorBlinkState) turnRedLedOn(); else turnRedLedOff();
         if(!errorBlinkState) turnYellowLedOn(); else turnYellowLedOff();
-        stateManager.setLastErrorBlinkTime(millis());
+        setLastErrorBlinkTime(millis());
     }
     
-    FastAccelStepper* cutMotor = stateManager.getCutMotor();
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+    FastAccelStepper* cutMotor = getCutMotor();
+    FastAccelStepper* feedMotor = getFeedMotor();
     if (cutMotor) cutMotor->forceStopAndNewPosition(cutMotor->getCurrentPosition());
     if (feedMotor) feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
     
     extend2x4SecureClamp();
     
-    if (stateManager.getReloadSwitch()->rose()) {
+    if (getReloadSwitch()->rose()) {
         homePositionErrorDetected = false;
-        stateManager.changeState(ERROR_RESET);
-        stateManager.setErrorAcknowledged(true);
+        changeState(ERROR_RESET);
+        setErrorAcknowledged(true);
         //serial.println("Home position error acknowledged by reload switch."); 
     }
 }
 
-void CuttingState::resetSteps() {
+void resetCuttingSteps() {
     cuttingStep = 0;
     signalStartTime = 0;
     signalActive = false;

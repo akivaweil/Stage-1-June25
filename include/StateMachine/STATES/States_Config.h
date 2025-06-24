@@ -42,6 +42,10 @@ extern const unsigned long TA_SIGNAL_DURATION;
 extern const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
 extern const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
 
+// Safety Constants
+extern const unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS;
+extern const unsigned long ROTATION_SERVO_SAFETY_DELAY_MS;
+
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************
 //* ************************************************************************
@@ -57,5 +61,6 @@ extern const float FEED_MOTOR_OFFSET_FROM_SENSOR;
 extern const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS;
 extern const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
 extern const unsigned long SENSOR_STABILIZATION_DELAY_MS;
+extern const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
 
 #endif // STATES_CONFIG_H 

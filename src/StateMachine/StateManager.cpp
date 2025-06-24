@@ -1,41 +1,51 @@
 #include "StateMachine/StateManager.h"
+#include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/00_STARTUP.h"
-#include "StateMachine/01_HOMING.h"
-#include "StateMachine/02_IDLE.h"
-#include "StateMachine/08_FEED_FIRST_CUT.h"
-#include "StateMachine/07_FEED_WOOD_FWD_ONE.h"
-#include "StateMachine/03_CUTTING.h"
-#include "StateMachine/04_RETURNING_Yes_2x4.h"
-#include "StateMachine/05_RETURNING_No_2x4.h"
+#include "StateMachine/STATES/States_Config.h"
 #include "ErrorStates/Errors_Functions.h"
 #include "ErrorStates/Error_Reset.h"
 #include "ErrorStates/Suction_Error.h"
 #include "ErrorStates/Cut_Motor_Error.h"
-#include <memory>
 
 //* ************************************************************************
 //* ************************* STATE MANAGER *******************************
 //* ************************************************************************
-// Central state manager implementation that coordinates all state operations.
+// Function-based state manager implementation that coordinates all state operations.
 
-// Global state manager instance
-StateManager stateManager;
+// Global variables for state management
+static int consecutiveYeswoodCount = 0;
+static SystemState previousState = STARTUP;
 
-// State instances
-static StartupState startupState;
-static HomingState homingState;
-static IdleState idleState;
-static FeedFirstCutState feedFirstCutState;
-static FeedWoodFwdOneState feedWoodFwdOneState;
-static CuttingState cuttingState;
-static ReturningYes2x4State returningYes2x4State;
-static ReturningNo2x4State returningNo2x4State;
+// Forward declarations for state execution functions
+void executeStartupState();
+void executeHomingState();
+void executeIdleState();
+void executeFeedFirstCutState();
+void executeFeedWoodFwdOneState();
+void executeCuttingState();
+void executeReturningYes2x4State();
+void executeReturningNo2x4State();
 
-StateManager::StateManager() : previousState(ERROR_RESET) {
-    // Constructor - previousState initialized to different state to ensure first print
-}
+// Forward declarations for state lifecycle functions
+void onEnterStartupState();
+void onEnterHomingState();
+void onEnterIdleState();
+void onEnterFeedFirstCutState();
+void onEnterFeedWoodFwdOneState();
+void onEnterCuttingState();
+void onEnterReturningYes2x4State();
+void onEnterReturningNo2x4State();
 
-void StateManager::execute() {
+void onExitStartupState();
+void onExitHomingState();
+void onExitIdleState();
+void onExitFeedFirstCutState();
+void onExitFeedWoodFwdOneState();
+void onExitCuttingState();
+void onExitReturningYes2x4State();
+void onExitReturningNo2x4State();
+
+void executeStateMachine() {
     handleCommonOperations();
     
     // Update error LED blinking for ERROR state
@@ -45,28 +55,28 @@ void StateManager::execute() {
     
     switch (currentState) {
         case STARTUP:
-            startupState.execute(*this);
+            executeStartupState();
             break;
         case HOMING:
-            homingState.execute(*this);
+            executeHomingState();
             break;
         case IDLE:
-            idleState.execute(*this);
+            executeIdleState();
             break;
         case FEED_FIRST_CUT:
-            feedFirstCutState.execute(*this);
+            executeFeedFirstCutState();
             break;
         case FEED_WOOD_FWD_ONE:
-            feedWoodFwdOneState.execute(*this);
+            executeFeedWoodFwdOneState();
             break;
         case CUTTING:
-            cuttingState.execute(*this);
+            executeCuttingState();
             break;
         case RETURNING_YES_2x4:
-            returningYes2x4State.execute(*this);
+            executeReturningYes2x4State();
             break;
         case RETURNING_NO_2x4:
-            returningNo2x4State.execute(*this);
+            executeReturningNo2x4State();
             break;
         case ERROR:
             handleStandardErrorState();
@@ -83,18 +93,18 @@ void StateManager::execute() {
     }
 }
 
-void StateManager::changeState(SystemState newState) {
+void changeState(SystemState newState) {
     if (currentState != newState) {
         // Call onExit for the current state before changing
         switch (currentState) {
-            case STARTUP: startupState.onExit(*this); break;
-            case HOMING: homingState.onExit(*this); break;
-            case IDLE: idleState.onExit(*this); break;
-            case FEED_FIRST_CUT: feedFirstCutState.onExit(*this); break;
-            case FEED_WOOD_FWD_ONE: feedWoodFwdOneState.onExit(*this); break;
-            case CUTTING: cuttingState.onExit(*this); break;
-            case RETURNING_YES_2x4: returningYes2x4State.onExit(*this); break;
-            case RETURNING_NO_2x4: returningNo2x4State.onExit(*this); break;
+            case STARTUP: onExitStartupState(); break;
+            case HOMING: onExitHomingState(); break;
+            case IDLE: onExitIdleState(); break;
+            case FEED_FIRST_CUT: onExitFeedFirstCutState(); break;
+            case FEED_WOOD_FWD_ONE: onExitFeedWoodFwdOneState(); break;
+            case CUTTING: onExitCuttingState(); break;
+            case RETURNING_YES_2x4: onExitReturningYes2x4State(); break;
+            case RETURNING_NO_2x4: onExitReturningNo2x4State(); break;
             // Error states don't have onExit handlers
             default: break;
         }
@@ -104,37 +114,242 @@ void StateManager::changeState(SystemState newState) {
         
         // Call onEnter for the new state after changing
         switch (newState) {
-            case STARTUP: startupState.onEnter(*this); break;
-            case HOMING: homingState.onEnter(*this); break;
-            case IDLE: idleState.onEnter(*this); break;
-            case FEED_FIRST_CUT: feedFirstCutState.onEnter(*this); break;
-            case FEED_WOOD_FWD_ONE: feedWoodFwdOneState.onEnter(*this); break;
-            case CUTTING: cuttingState.onEnter(*this); break;
-            case RETURNING_YES_2x4: returningYes2x4State.onEnter(*this); break;
-            case RETURNING_NO_2x4: returningNo2x4State.onEnter(*this); break;
+            case STARTUP: onEnterStartupState(); break;
+            case HOMING: onEnterHomingState(); break;
+            case IDLE: onEnterIdleState(); break;
+            case FEED_FIRST_CUT: onEnterFeedFirstCutState(); break;
+            case FEED_WOOD_FWD_ONE: onEnterFeedWoodFwdOneState(); break;
+            case CUTTING: onEnterCuttingState(); break;
+            case RETURNING_YES_2x4: onEnterReturningYes2x4State(); break;
+            case RETURNING_NO_2x4: onEnterReturningNo2x4State(); break;
             // Error states don't have onEnter handlers
             default: break;
         }
-        
-        // Debug print for state transitions (disabled)
-        // switch (newState) {
-        //     case STARTUP: Serial.println("STARTUP"); break;
-        //     case HOMING: Serial.println("HOMING"); break;
-        //     case IDLE: Serial.println("IDLE"); break;
-        //     case FEED_FIRST_CUT: Serial.println("FEED_FIRST_CUT"); break;
-        //     case FEED_WOOD_FWD_ONE: Serial.println("FEED_WOOD_FWD_ONE"); break;
-        //     case CUTTING: Serial.println("CUTTING"); break;
-        //     case RETURNING_YES_2x4: Serial.println("RETURNING_YES_2x4"); break;
-        //     case RETURNING_NO_2x4: Serial.println("RETURNING_NO_2x4"); break;
-        //     case ERROR: Serial.println("ERROR"); break;
-        //     case ERROR_RESET: Serial.println("ERROR_RESET"); break;
-        //     case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
-        //     case Cut_Motor_Homing_Error: Serial.println("Cut_Motor_Homing_Error"); break;
-        // }
     }
 }
 
-void StateManager::printStateChange() {
+//* ************************************************************************
+//* ************************* ACCESS FUNCTIONS *****************************
+//* ************************************************************************
+
+SystemState getCurrentState() {
+    return currentState;
+}
+
+SystemState getPreviousState() {
+    return previousState;
+}
+
+FastAccelStepper* getCutMotor() {
+    return cutMotor;
+}
+
+FastAccelStepper* getFeedMotor() {
+    return feedMotor;
+}
+
+Servo* getRotationServo() {
+    extern Servo rotationServo; // From main.cpp
+    return &rotationServo;
+}
+
+Bounce* getCutHomingSwitch() {
+    return &cutHomingSwitch;
+}
+
+Bounce* getFeedHomingSwitch() {
+    return &feedHomingSwitch;
+}
+
+Bounce* getReloadSwitch() {
+    return &reloadSwitch;
+}
+
+Bounce* getStartCycleSwitch() {
+    return &startCycleSwitch;
+}
+
+bool getIsReloadMode() {
+    return isReloadMode;
+}
+
+void setIsReloadMode(bool value) {
+    isReloadMode = value;
+}
+
+bool get2x4Present() {
+    return _2x4Present;
+}
+
+void set2x4Present(bool value) {
+    _2x4Present = value;
+}
+
+bool getWoodSuctionError() {
+    return woodSuctionError;
+}
+
+void setWoodSuctionError(bool value) {
+    woodSuctionError = value;
+}
+
+bool getErrorAcknowledged() {
+    return errorAcknowledged;
+}
+
+void setErrorAcknowledged(bool value) {
+    errorAcknowledged = value;
+}
+
+bool getCuttingCycleInProgress() {
+    return cuttingCycleInProgress;
+}
+
+void setCuttingCycleInProgress(bool value) {
+    cuttingCycleInProgress = value;
+}
+
+bool getContinuousModeActive() {
+    return continuousModeActive;
+}
+
+void setContinuousModeActive(bool value) {
+    continuousModeActive = value;
+}
+
+bool getStartSwitchSafe() {
+    return startSwitchSafe;
+}
+
+void setStartSwitchSafe(bool value) {
+    startSwitchSafe = value;
+}
+
+unsigned long getLastBlinkTime() {
+    return lastBlinkTime;
+}
+
+void setLastBlinkTime(unsigned long value) {
+    lastBlinkTime = value;
+}
+
+unsigned long getLastErrorBlinkTime() {
+    return lastErrorBlinkTime;
+}
+
+void setLastErrorBlinkTime(unsigned long value) {
+    lastErrorBlinkTime = value;
+}
+
+unsigned long getErrorStartTime() {
+    return errorStartTime;
+}
+
+void setErrorStartTime(unsigned long value) {
+    errorStartTime = value;
+}
+
+bool getBlinkState() {
+    return blinkState;
+}
+
+void setBlinkState(bool value) {
+    blinkState = value;
+}
+
+bool getErrorBlinkState() {
+    return errorBlinkState;
+}
+
+void setErrorBlinkState(bool value) {
+    errorBlinkState = value;
+}
+
+unsigned long getRotationServoActiveStartTime() {
+    return rotationServoActiveStartTime;
+}
+
+void setRotationServoActiveStartTime(unsigned long value) {
+    rotationServoActiveStartTime = value;
+}
+
+bool getRotationServoIsActiveAndTiming() {
+    return rotationServoIsActiveAndTiming;
+}
+
+void setRotationServoIsActiveAndTiming(bool value) {
+    rotationServoIsActiveAndTiming = value;
+}
+
+bool getRotationServoSafetyDelayActive() {
+    extern bool rotationServoSafetyDelayActive; // From main.cpp
+    return rotationServoSafetyDelayActive;
+}
+
+void setRotationServoSafetyDelayActive(bool value) {
+    extern bool rotationServoSafetyDelayActive; // From main.cpp
+    rotationServoSafetyDelayActive = value;
+}
+
+unsigned long getRotationServoSafetyDelayStartTime() {
+    extern unsigned long rotationServoSafetyDelayStartTime; // From main.cpp
+    return rotationServoSafetyDelayStartTime;
+}
+
+void setRotationServoSafetyDelayStartTime(unsigned long value) {
+    extern unsigned long rotationServoSafetyDelayStartTime; // From main.cpp
+    rotationServoSafetyDelayStartTime = value;
+}
+
+unsigned long getRotationClampExtendTime() {
+    return rotationClampExtendTime;
+}
+
+void setRotationClampExtendTime(unsigned long value) {
+    rotationClampExtendTime = value;
+}
+
+bool getRotationClampIsExtended() {
+    return rotationClampIsExtended;
+}
+
+void setRotationClampIsExtended(bool value) {
+    rotationClampIsExtended = value;
+}
+
+unsigned long getSignalTAStartTime() {
+    return signalTAStartTime;
+}
+
+void setSignalTAStartTime(unsigned long value) {
+    signalTAStartTime = value;
+}
+
+bool getSignalTAActive() {
+    return signalTAActive;
+}
+
+void setSignalTAActive(bool value) {
+    signalTAActive = value;
+}
+
+int getConsecutiveYeswoodCount() {
+    return consecutiveYeswoodCount;
+}
+
+void incrementConsecutiveYeswoodCount() {
+    consecutiveYeswoodCount++;
+}
+
+void resetConsecutiveYeswoodCount() {
+    consecutiveYeswoodCount = 0;
+}
+
+//* ************************************************************************
+//* ************************* UTILITY FUNCTIONS ****************************
+//* ************************************************************************
+
+void printStateChange() {
     if (currentState != previousState) {
         // Serial.print("Current State: ");
         // switch (currentState) {
@@ -156,7 +371,7 @@ void StateManager::printStateChange() {
     }
 }
 
-void StateManager::updateSwitches() {
+void updateSwitches() {
     // Update all debounced switches - moved from main loop
     cutHomingSwitch.update();
     feedHomingSwitch.update();
@@ -165,7 +380,7 @@ void StateManager::updateSwitches() {
     pushwoodForwardSwitch.update();
 }
 
-void StateManager::handleCommonOperations() {
+void handleCommonOperations() {
     // Update all switches first
     updateSwitches();
     
@@ -175,16 +390,47 @@ void StateManager::handleCommonOperations() {
         //serial.println("Cut motor hit homing sensor during RETURNING_YES_2x4 return - stopping immediately!");
         cutMotor->forceStopAndNewPosition(0);  // Stop immediately and set position to 0
     }
-
-    // Handle rotation servo return after hold duration at active position AND when WAS_WOOD_SUCTIONED_SENSOR reads HIGH
+    // Handle rotation servo return with safety delay logic
     if (rotationServoIsActiveAndTiming && millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS) {
         extern const int WOOD_SUCTION_CONFIRM_SENSOR; // This is in main.cpp
+        
+        // Check if suction sensor reads HIGH (wood was picked up)
         if (digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == HIGH) {
-            // Return rotation servo to home position
-            rotationServo.write(ROTATION_SERVO_HOME_POSITION);
-            //serial.println("Servo timing completed AND WAS_WOOD_SUCTIONED_SENSOR is HIGH, returning rotation servo to home.");
-            rotationServoIsActiveAndTiming = false; // Clear flag
+            // Check if we've been waiting for more than 3 seconds due to failure to suction
+            if (millis() - rotationServoActiveStartTime >= ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS) {
+                // We've been waiting for extended time due to failure to suction - apply safety delay
+                extern bool rotationServoSafetyDelayActive; // From main.cpp
+                extern unsigned long rotationServoSafetyDelayStartTime; // From main.cpp
+                if (!rotationServoSafetyDelayActive) {
+                    // Start the safety delay period
+                    rotationServoSafetyDelayActive = true;
+                    rotationServoSafetyDelayStartTime = millis();
+                    //serial.println("Servo was waiting for extended time due to failure to suction. Starting 2-second safety delay before returning to home.");
+                } else if (millis() - rotationServoSafetyDelayStartTime >= ROTATION_SERVO_SAFETY_DELAY_MS) {
+                    // Safety delay complete - now return servo to home
+                    handleRotationServoReturn();
+                    //serial.println("Safety delay complete. Returning rotation servo to home position.");
+                    rotationServoIsActiveAndTiming = false;
+                    rotationServoSafetyDelayActive = false; // Reset safety delay flag
+                } else {
+                    // Still in safety delay period
+                    static unsigned long lastSafetyMessage = 0;
+                    if (millis() - lastSafetyMessage >= 500) { // Update message every 500ms
+                        unsigned long remainingMs = ROTATION_SERVO_SAFETY_DELAY_MS - (millis() - rotationServoSafetyDelayStartTime);
+                        Serial.print("Safety delay active. Servo will return home in ");
+                        Serial.print(remainingMs);
+                        //serial.println("ms to allow operator to move hand away.");
+                        lastSafetyMessage = millis();
+                    }
+                }
+            } else {
+                // Normal operation - no extended wait, return servo immediately
+                handleRotationServoReturn();
+                //serial.println("Servo timing completed AND WAS_WOOD_SUCTIONED_SENSOR is HIGH, returning rotation servo to home.");
+                rotationServoIsActiveAndTiming = false; // Clear flag
+            }
         } else {
+            // Suction sensor still reads LOW - continue waiting
             //serial.println("Waiting for WAS_WOOD_SUCTIONED_SENSOR to read HIGH before returning rotation servo...");
         }
     }
@@ -229,7 +475,7 @@ void StateManager::handleCommonOperations() {
 //* ************************* ERROR STATE HANDLERS ************************
 //* ************************************************************************
 
-void StateManager::handleStandardErrorState() {
+void handleStandardErrorState() {
     // Handle standard error state with basic error LED blinking
     handleErrorLedBlink();
     
@@ -241,12 +487,8 @@ void StateManager::handleStandardErrorState() {
     }
 }
 
-void StateManager::handleErrorResetState() {
+void handleErrorResetState() {
     // Call the actual error reset handling function from Error_Reset.cpp
     ::handleErrorResetState();
 }
 
-void StateManager::handleSuctionErrorState() {
-    // Call the actual suction error handling function from Suction_Error.cpp
-    ::handleSuctionErrorState();
-}

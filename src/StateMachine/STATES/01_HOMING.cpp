@@ -6,16 +6,47 @@
 //* ************************** HOMING STATE ********************************
 //* ************************************************************************
 // Handles the homing sequence for all motors.
-// Step 1: Blink blue LED to indicate homing in progress.
-// Step 2: Home the cut motor (blocking). If fails, it might retry or transition to ERROR (currently retries).
-// Step 3: If cut motor homed, home the feed motor (blocking). Retract feed clamp before homing.
-// Step 4: If feed motor homed, move feed motor to FEED_TRAVEL_DISTANCE (blocking). Re-extend feed clamp.
-// Step 5: If all homing and initial positioning are complete, set isHomed flag to true.
-// Step 6: Turn off blue LED, turn on green LED.
-// Step 7: Ensure servo is at 2 degrees.
-// Step 8: Transition to IDLE state.
 
-void HomingState::onEnter(StateManager& stateManager) {
+//! ************************************************************************
+//! STEP 1: BLINK BLUE LED TO INDICATE HOMING IN PROGRESS
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 2: HOME THE CUT MOTOR (BLOCKING) - RETRY ON FAILURE
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 3: HOME THE FEED MOTOR (BLOCKING) - RETRACT FEED CLAMP FIRST
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 4: MOVE FEED MOTOR TO FEED_TRAVEL_DISTANCE - RE-EXTEND FEED CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 5: SET ISHOMED FLAG TO TRUE WHEN ALL HOMING COMPLETE
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 6: TURN OFF BLUE LED, TURN ON GREEN LED
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 7: ENSURE SERVO IS AT 2 DEGREES
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 8: TRANSITION TO IDLE STATE
+//! ************************************************************************
+
+// Static variables for homing state tracking
+static bool cutMotorHomed = false;
+static bool feedMotorHomed = false;
+static bool feedMotorMoved = false;
+static bool feedHomingPhaseInitiated = false;
+static unsigned long blinkTimer = 0;
+
+void onEnterHomingState() {
     // Reset homing state variables when entering
     cutMotorHomed = false;
     feedMotorHomed = false;
@@ -24,12 +55,12 @@ void HomingState::onEnter(StateManager& stateManager) {
     blinkTimer = 0;
 }
 
-void HomingState::execute(StateManager& stateManager) {
+void executeHomingState() {
     // Blink blue LED to indicate homing in progress
     if (millis() - blinkTimer > 500) {
-        bool blinkState = stateManager.getBlinkState();
+        bool blinkState = getBlinkState();
         blinkState = !blinkState;
-        stateManager.setBlinkState(blinkState);
+        setBlinkState(blinkState);
         if (blinkState) turnBlueLedOn(); else turnBlueLedOff();
         blinkTimer = millis();
     }
@@ -51,8 +82,8 @@ void HomingState::execute(StateManager& stateManager) {
     if (!cutMotorHomed) {
         //serial.println("Starting cut motor homing phase (blocking)...");
         extern const unsigned long CUT_HOME_TIMEOUT; // This is in main.cpp
-        homeCutMotorBlocking(*stateManager.getCutHomingSwitch(), CUT_HOME_TIMEOUT);
-        if (stateManager.getCutMotor() && stateManager.getCutMotor()->getCurrentPosition() == 0) { // Check if homing was successful
+        homeCutMotorBlocking(*getCutHomingSwitch(), CUT_HOME_TIMEOUT);
+        if (getCutMotor() && getCutMotor()->getCurrentPosition() == 0) { // Check if homing was successful
             cutMotorHomed = true;
             //serial.println("Cut motor homing marked as successful.");
         } else {
@@ -66,7 +97,7 @@ void HomingState::execute(StateManager& stateManager) {
             feedHomingPhaseInitiated = true;
         }
         //serial.println("Calling homeFeedMotorBlocking...");
-        homeFeedMotorBlocking(*stateManager.getFeedHomingSwitch());
+        homeFeedMotorBlocking(*getFeedHomingSwitch());
         feedMotorHomed = true; 
         feedHomingPhaseInitiated = false; // Reset for next potential homing cycle
         //serial.println("Feed motor homing marked as successful.");
@@ -75,7 +106,7 @@ void HomingState::execute(StateManager& stateManager) {
         extendFeedClamp();
         //serial.println("Feed clamp re-extended.");
         moveFeedMotorToTravel();
-        while(stateManager.getFeedMotor()->isRunning()){
+        while(getFeedMotor()->isRunning()){
             // Wait for feed motor to reach FEED_TRAVEL_DISTANCE
         }
         feedMotorMoved = true;
@@ -99,7 +130,11 @@ void HomingState::execute(StateManager& stateManager) {
         //serial.println("Servo returned to home position.");
         
         //serial.println("Changing state to IDLE...");
-        stateManager.changeState(IDLE);
+        changeState(IDLE);
         //serial.println("State change to IDLE completed.");
     }
+}
+
+void onExitHomingState() {
+    // No specific cleanup needed for HOMING state
 } 

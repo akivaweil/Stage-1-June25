@@ -5,6 +5,7 @@
 #include <Bounce2.h>
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
+#include "StateMachine/StateManager.h"
 
 // External motor object references from main.cpp
 extern FastAccelStepper* cutMotor;
@@ -25,7 +26,11 @@ void sendSignalToTA() {
 
   // Only activate servo if it hasn't been activated early
   if (!rotationServoIsActiveAndTiming) {
-    rotationServo.write(ROTATION_SERVO_ACTIVE_POSITION);
+    Servo* servo = getRotationServo();
+    if (servo) {
+      servo->write(ROTATION_SERVO_ACTIVE_POSITION);
+    }
+    
     rotationServoActiveStartTime = millis();
     rotationServoIsActiveAndTiming = true;
     Serial.print("Rotation servo moved to ");
@@ -521,9 +526,15 @@ bool shouldStartCycle() {
 void activateRotationServo() {
     // Activate rotation servo without sending TA signal
     if (!rotationServoIsActiveAndTiming) {
-        rotationServo.write(ROTATION_SERVO_ACTIVE_POSITION);
+        Servo* servo = getRotationServo();
+        if (servo) {
+            servo->write(ROTATION_SERVO_ACTIVE_POSITION);
+        }
+        
         rotationServoActiveStartTime = millis();
         rotationServoIsActiveAndTiming = true;
+        // Reset safety delay flag for new activation cycle
+        setRotationServoSafetyDelayActive(false);
         Serial.print("Rotation servo activated to ");
         Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
         //serial.println(" degrees.");
@@ -534,7 +545,11 @@ void activateRotationServo() {
 
 void handleRotationServoReturn() {
     // Move rotation servo to home position
-    rotationServo.write(ROTATION_SERVO_HOME_POSITION);
+    Servo* servo = getRotationServo();
+    if (servo) {
+        servo->write(ROTATION_SERVO_HOME_POSITION);
+    }
+    
     Serial.print("Rotation servo returned to home position (");
     Serial.print(ROTATION_SERVO_HOME_POSITION);
     //serial.println(" degrees).");

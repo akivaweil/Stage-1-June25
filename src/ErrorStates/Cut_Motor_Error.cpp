@@ -20,14 +20,14 @@ extern void stopFeedMotor();
 // Step 4: Once error is acknowledged, transition to ERROR_RESET state.
 void handleCutMotorErrorState() {
     // Blink error LEDs using StateManager timing
-    if (millis() - stateManager.getLastErrorBlinkTime() > STANDARD_ERROR_BLINK_INTERVAL) {
-        bool newBlinkState = !stateManager.getErrorBlinkState();
-        stateManager.setErrorBlinkState(newBlinkState);
+    if (millis() - getLastErrorBlinkTime() > STANDARD_ERROR_BLINK_INTERVAL) {
+        bool newBlinkState = !getErrorBlinkState();
+        setErrorBlinkState(newBlinkState);
         
         if(newBlinkState) turnRedLedOn(); else turnRedLedOff();
         if(!newBlinkState) turnYellowLedOn(); else turnYellowLedOff();
         
-        stateManager.setLastErrorBlinkTime(millis());
+        setLastErrorBlinkTime(millis());
     }
     
     // Keep motors stopped
@@ -35,8 +35,8 @@ void handleCutMotorErrorState() {
     stopFeedMotor();
     
     // Wait for reload switch to acknowledge error using StateManager
-    if (stateManager.getErrorAcknowledged()) {
-        stateManager.changeState(ERROR_RESET);
+    if (getErrorAcknowledged()) {
+        changeState(ERROR_RESET);
         //serial.println("Cut motor error acknowledged. Transitioning to ERROR_RESET.");
     }
 } 

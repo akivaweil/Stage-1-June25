@@ -8,24 +8,91 @@
 // Handles the feed first cut sequence when pushwood forward switch is pressed
 // in idle state AND 2x4 sensor reads high.
 
-void FeedFirstCutState::execute(StateManager& stateManager) {
-    executeStep(stateManager);
+//! ************************************************************************
+//! STEP 1: RETRACT FEED CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 2: MOVE TO NEGATIVE ONE INCH
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 3: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 4: WAIT 200MS
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 5: MOVE TO TRAVEL DISTANCE
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 6: FIRST RUN COMPLETE - PREPARE FOR SECOND RUN
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 7: RETRACT FEED CLAMP (SECOND RUN)
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 8: MOVE TO NEGATIVE 1.35 INCHES (SECOND RUN)
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 9: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP (SECOND RUN)
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 10: WAIT 200MS (SECOND RUN)
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 11: MOVE TO TRAVEL DISTANCE MINUS 1.4 INCHES
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 12: CHECK START CYCLE SWITCH AND TRANSITION TO APPROPRIATE STATE
+//! ************************************************************************
+
+// Static variables for feed first cut state tracking
+enum FeedFirstCutStep {
+    RETRACT_FEED_CLAMP,
+    MOVE_TO_NEGATIVE_ONE,
+    EXTEND_FEED_CLAMP_RETRACT_SECURE,
+    WAIT_200MS,
+    MOVE_TO_TRAVEL_DISTANCE,
+    FIRST_RUN_COMPLETE,
+    RETRACT_FEED_CLAMP_SECOND,
+    MOVE_TO_NEGATIVE_TWO,
+    EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND,
+    WAIT_200MS_SECOND,
+    MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75,
+    CHECK_START_CYCLE_SWITCH
+};
+
+static FeedFirstCutStep currentStep = RETRACT_FEED_CLAMP;
+static unsigned long stepStartTime = 0;
+
+void executeFeedFirstCutState() {
+    executeFeedFirstCutStep();
 }
 
-void FeedFirstCutState::onEnter(StateManager& stateManager) {
+void onEnterFeedFirstCutState() {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
     //serial.println("FeedFirstCut: Starting feed first cut sequence");
 }
 
-void FeedFirstCutState::onExit(StateManager& stateManager) {
+void onExitFeedFirstCutState() {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
     //serial.println("FeedFirstCut: Feed clamp retracted");
 }
 
-void FeedFirstCutState::executeStep(StateManager& stateManager) {
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+void executeFeedFirstCutStep() {
+    FastAccelStepper* feedMotor = getFeedMotor();
     extern const float FEED_TRAVEL_DISTANCE;
     // FEED_MOTOR_STEPS_PER_INCH is already declared in General_Functions.h
 
@@ -33,32 +100,31 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
         case RETRACT_FEED_CLAMP:
             retractFeedClamp();
             //serial.println("FeedFirstCut: Feed clamp retracted");
-            advanceToNextStep(stateManager);
+            advanceToNextFeedFirstCutStep();
             break;
 
         case MOVE_TO_NEGATIVE_ONE:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(-1.0);
                 //serial.println("FeedFirstCut: Moving feed motor to -1 inch");
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
         case EXTEND_FEED_CLAMP_RETRACT_SECURE:
             if (feedMotor && !feedMotor->isRunning()) {
-                //! STEP 3: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP
                 extendFeedClamp();
                 retract2x4SecureClamp();
                 //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
                 stepStartTime = millis();
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
         case WAIT_200MS:
             if (millis() - stepStartTime >= 200) {
                 //serial.println("FeedFirstCut: Waiting 200ms");
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
@@ -66,46 +132,45 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                 //serial.println("FeedFirstCut: Moving feed motor to travel distance");
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
         case FIRST_RUN_COMPLETE:
             if (feedMotor && !feedMotor->isRunning()) {
                 //serial.println("FeedFirstCut: First run complete, starting second run");
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
         case RETRACT_FEED_CLAMP_SECOND:
             retractFeedClamp();
             //serial.println("FeedFirstCut: Feed clamp retracted (second run)");
-            advanceToNextStep(stateManager);
+            advanceToNextFeedFirstCutStep();
             break;
 
         case MOVE_TO_NEGATIVE_TWO:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(-1.35);
                 //serial.println("FeedFirstCut: Moving feed motor to -2.25 inch (second run)");
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
         case EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND:
             if (feedMotor && !feedMotor->isRunning()) {
-                //! STEP 9: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP (SECOND RUN)
                 extendFeedClamp();
                 retract2x4SecureClamp();
                 //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
                 stepStartTime = millis();
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
         case WAIT_200MS_SECOND:
             if (millis() - stepStartTime >= 200) {
                 //serial.println("FeedFirstCut: Waiting 200ms (second run)");
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
@@ -113,7 +178,7 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - 1.4);
                 //serial.println("FeedFirstCut: Moving feed motor to travel distance minus 2.75 inches");
-                advanceToNextStep(stateManager);
+                advanceToNextFeedFirstCutStep();
             }
             break;
 
@@ -122,23 +187,23 @@ void FeedFirstCutState::executeStep(StateManager& stateManager) {
                 //serial.println("FeedFirstCut: Checking start cycle switch for next state");
                 
                 // Check the start cycle switch state
-                if (stateManager.getStartCycleSwitch()->read() == HIGH) {
+                if (getStartCycleSwitch()->read() == HIGH) {
                     //serial.println("FeedFirstCut: Start cycle switch HIGH - transitioning to CUTTING state");
-                    stateManager.changeState(CUTTING);
-                    stateManager.setCuttingCycleInProgress(true);
+                    changeState(CUTTING);
+                    setCuttingCycleInProgress(true);
                     configureCutMotorForCutting();
                     turnYellowLedOn();
                     extendFeedClamp();
                 } else {
                     //serial.println("FeedFirstCut: Start cycle switch LOW - transitioning to IDLE state");
-                    stateManager.changeState(IDLE);
+                    changeState(IDLE);
                 }
             }
             break;
     }
 }
 
-void FeedFirstCutState::advanceToNextStep(StateManager& stateManager) {
+void advanceToNextFeedFirstCutStep() {
     currentStep = static_cast<FeedFirstCutStep>(static_cast<int>(currentStep) + 1);
     stepStartTime = 0; // Reset step timer
 }

@@ -1,7 +1,7 @@
 #ifndef _04_RETURNING_YES_2X4_STATE_H
 #define _04_RETURNING_YES_2X4_STATE_H
 
-#include "BaseState.h"
+#include "StateMachine/FUNCTIONS/General_Functions.h"
 
 //* ************************************************************************
 //* ******************** RETURNING YES 2X4 STATE **************************
@@ -10,30 +10,17 @@
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
 // Includes cut motor error handling with timeout and recovery logic.
 
-class ReturningYes2x4State : public BaseState {
-public:
-    void execute(StateManager& stateManager) override;
-    void onEnter(StateManager& stateManager) override;
-    void onExit(StateManager& stateManager) override;
-    SystemState getStateType() const override { return RETURNING_YES_2x4; }
+// Function declarations for RETURNING_YES_2x4 state
+void executeReturningYes2x4State();
+void onEnterReturningYes2x4State();
+void onExitReturningYes2x4State();
 
-private:
-    // Step tracking variables
-    int returningYes2x4SubStep = 0;
-    int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
-    int feedHomingSubStep = 0; // For feed motor homing sequence
-    
-    // Cut motor homing recovery timing
-    unsigned long cutMotorHomingAttemptStartTime = 0;
-    bool cutMotorHomingAttemptInProgress = false;
-    
-    // Helper methods for RETURNING_YES_2x4 sequence
-    void handleReturningYes2x4Sequence(StateManager& stateManager);
-    void handleFeedMotorReturnSequence(StateManager& stateManager);
-    void handleReturningYes2x4FeedMotorHoming(StateManager& stateManager);
-    
-    // Reset all step counters
-    void resetSteps();
-};
+// Helper function declarations for RETURNING_YES_2x4 sequence
+void handleReturningYes2x4Sequence();
+void handleFeedMotorReturnSequence();
+void handleReturningYes2x4FeedMotorHoming();
+
+// Reset all step counters
+void resetReturningYes2x4Steps();
 
 #endif // _04_RETURNING_YES_2X4_STATE_H 

@@ -5,11 +5,25 @@
 //* ************************************************************************
 //* ************************** STARTUP STATE *******************************
 //* ************************************************************************
-// Handles the initial startup state, transitioning to HOMING.
-// Step 1: Turn on the blue LED to indicate startup/homing.
-// Step 2: Transition to the HOMING state.
+// Function-based startup state handling.
 
-void StartupState::execute(StateManager& stateManager) {
+//! ************************************************************************
+//! STEP 1: TURN ON BLUE LED TO INDICATE STARTUP/HOMING
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 2: TRANSITION TO HOMING STATE
+//! ************************************************************************
+
+void executeStartupState() {
     turnBlueLedOn();  // Blue LED on during startup/homing
-    stateManager.changeState(HOMING);
+    changeState(HOMING);
+}
+
+void onEnterStartupState() {
+    // No specific entry actions for startup state
+}
+
+void onExitStartupState() {
+    // No specific exit actions for startup state
 } 

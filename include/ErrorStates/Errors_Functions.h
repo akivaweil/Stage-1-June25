@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <Bounce2.h>
-#include <ESP32Servo.h>
+// #include <ESP32Servo.h> // Removed - using function-based PWM control instead
 #include <FastAccelStepper.h>
 
 // Include the SystemState enum definition
@@ -105,8 +105,8 @@ extern bool continuousModeActive;
 extern bool cuttingCycleInProgress;
 extern bool woodSuctionError;
 
-// Servo objects
-extern Servo rotationServo;
+// Servo objects (now uses function-based PWM control)
+extern const int ROTATION_SERVO_PWM_CHANNEL;
 
 // Switch objects
 extern Bounce reloadSwitch;

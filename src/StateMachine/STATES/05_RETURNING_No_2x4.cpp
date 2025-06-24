@@ -9,15 +9,59 @@
 // Handles the RETURNING_NO_2x4 cutting sequence when no wood is detected.
 // This state manages the multi-step process for handling material that doesn't trigger the wood sensor.
 
-void ReturningNo2x4State::execute(StateManager& stateManager) {
-    handleReturningNo2x4Sequence(stateManager); 
+//! ************************************************************************
+//! STEP 1: INITIALIZE SEQUENCE - MOVE CUT MOTOR HOME AND RETRACT 2X4 CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 2: WAIT FOR CUT MOTOR HOME AND EXTEND FEED CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 3: WAIT FOR FEED MOTOR HOME AND RETRACT FEED CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 4: MOVE FEED MOTOR TO 2.0 INCHES
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 5: WAIT FOR FEED MOTOR AT 2.0 AND EXTEND FEED CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 6: MOVE FEED MOTOR TO HOME
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 7: WAIT FOR FEED MOTOR HOME AND RETRACT FEED CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 8: MOVE FEED MOTOR TO FINAL POSITION
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 9: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
+//! ************************************************************************
+
+// Static variables for returning no 2x4 state tracking
+static int returningNo2x4Step = 0;
+static unsigned long cylinderActionTime = 0;
+static bool waitingForCylinder = false;
+
+void executeReturningNo2x4State() {
+    handleReturningNo2x4Sequence(); 
 }
 
-void ReturningNo2x4State::onEnter(StateManager& stateManager) {
+void onEnterReturningNo2x4State() {
+    //! ************************************************************************
+    //! STEP 1: INITIALIZE RETURNING NO 2X4 SEQUENCE
+    //! ************************************************************************
     //serial.println("Entering RETURNING_NO_2x4 state");
     
     // Reset consecutive yeswood counter when nowood state occurs
-    stateManager.resetConsecutiveYeswoodCount();
+    resetConsecutiveYeswoodCount();
     Serial.println("DEBUG: RETURNING_No_2x4 state entered - consecutive yeswood counter reset");
     
     // Initialize RETURNING_NO_2x4 sequence from CUTTING_state logic
@@ -35,14 +79,14 @@ void ReturningNo2x4State::onEnter(StateManager& stateManager) {
     waitingForCylinder = false;
 }
 
-void ReturningNo2x4State::onExit(StateManager& stateManager) {
+void onExitReturningNo2x4State() {
     //serial.println("Exiting RETURNING_NO_2x4 state");
-    resetSteps();
+    resetReturningNo2x4Steps();
 }
 
-void ReturningNo2x4State::handleReturningNo2x4Sequence(StateManager& stateManager) {
+void handleReturningNo2x4Sequence() {
     // RETURNING_NO_2x4 sequence logic
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+    FastAccelStepper* feedMotor = getFeedMotor();
     const unsigned long CYLINDER_ACTION_DELAY_MS = 150;
     
     if (returningNo2x4Step == 0) { // First time entering this specific RETURNING_NO_2x4 logic path
@@ -65,13 +109,13 @@ void ReturningNo2x4State::handleReturningNo2x4Sequence(StateManager& stateManage
     }
     
     if (!waitingForCylinder) {
-        handleReturningNo2x4Step(stateManager, returningNo2x4Step);
+        handleReturningNo2x4Step(returningNo2x4Step);
     }
 }
 
-void ReturningNo2x4State::handleReturningNo2x4Step(StateManager& stateManager, int step) {
-    FastAccelStepper* cutMotor = stateManager.getCutMotor();
-    FastAccelStepper* feedMotor = stateManager.getFeedMotor();
+void handleReturningNo2x4Step(int step) {
+    FastAccelStepper* cutMotor = getCutMotor();
+    FastAccelStepper* feedMotor = getFeedMotor();
     extern const float FEED_TRAVEL_DISTANCE; // From main.cpp
     
     switch (step) { 
@@ -139,8 +183,8 @@ void ReturningNo2x4State::handleReturningNo2x4Step(StateManager& stateManager, i
                 //serial.println("RETURNING_NO_2x4 Step 8: Checking cut motor position switch."); 
                 for (int i = 0; i < 3; i++) {
                     delay(30);  
-                    stateManager.getCutHomingSwitch()->update();
-                    bool sensorReading = stateManager.getCutHomingSwitch()->read();
+                    getCutHomingSwitch()->update();
+                    bool sensorReading = getCutHomingSwitch()->read();
                     Serial.print("Cut position switch read attempt "); 
                     Serial.print(i+1); 
                     Serial.print(" of 3: "); 
@@ -176,13 +220,13 @@ void ReturningNo2x4State::handleReturningNo2x4Step(StateManager& stateManager, i
                 turnYellowLedOff();
                 turnBlueLedOn(); 
 
-                resetSteps();
-                stateManager.setCuttingCycleInProgress(false);
-                stateManager.changeState(IDLE);
+                resetReturningNo2x4Steps();
+                setCuttingCycleInProgress(false);
+                changeState(IDLE);
                 
                 // Check if cycle switch is currently ON - if yes, require cycling
-                if (stateManager.getStartCycleSwitch()->read() == HIGH) {
-                    stateManager.setStartSwitchSafe(false);
+                if (getStartCycleSwitch()->read() == HIGH) {
+                    setStartSwitchSafe(false);
                     //serial.println("Cycle switch is still ON - must be cycled OFF then ON for next cycle.");
                 } else {
                     //serial.println("Cycle switch is OFF - ready for next cycle.");
@@ -196,7 +240,7 @@ void ReturningNo2x4State::handleReturningNo2x4Step(StateManager& stateManager, i
 
 
 
-void ReturningNo2x4State::resetSteps() {
+void resetReturningNo2x4Steps() {
     returningNo2x4Step = 0;
     cylinderActionTime = 0;
     waitingForCylinder = false;

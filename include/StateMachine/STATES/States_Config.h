@@ -41,6 +41,7 @@ extern const unsigned long TA_SIGNAL_DURATION;
 // Operational Constants
 extern const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
 extern const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
+extern const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
 
 // Safety Constants
 extern const unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS;

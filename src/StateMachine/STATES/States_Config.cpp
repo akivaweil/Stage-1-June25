@@ -33,7 +33,7 @@ const int FEED_HOMING_DIRECTION = 1;
 //* ************************************************************************
 // Normal Cutting Operation (Cutting State)
 const float CUT_MOTOR_NORMAL_SPEED = 700;      // Speed for the cutting pass (steps/sec)
-const float CUT_MOTOR_NORMAL_ACCELERATION = 15000; // Acceleration for the cutting pass (steps/sec^2)
+const float CUT_MOTOR_NORMAL_ACCELERATION = 18000; // Acceleration for the cutting pass (steps/sec^2)
 
 // Return Stroke (Returning State / End of Cutting State)
 const float CUT_MOTOR_RETURN_SPEED = 30000;     // Speed for returning after a cut (steps/sec)
@@ -45,8 +45,8 @@ const float CUT_MOTOR_HOMING_SPEED = 1000;      // Speed for homing the cut moto
 //* ************************ FEED MOTOR SPEED SETTINGS *******************
 //* ************************************************************************
 // Normal Feed Operation (Feed State / Parts of Cutting State)
-const float FEED_MOTOR_NORMAL_SPEED = 20000;    // Speed for normal feed moves (steps/sec)
-const float FEED_MOTOR_NORMAL_ACCELERATION = 21000; // Acceleration for normal feed (steps/sec^2)
+const float FEED_MOTOR_NORMAL_SPEED = 25000;    // Speed for normal feed moves (steps/sec)
+const float FEED_MOTOR_NORMAL_ACCELERATION = 25000; // Acceleration for normal feed (steps/sec^2)
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
 const float FEED_MOTOR_RETURN_SPEED = 30000;    // Speed for returning to home or start position (steps/sec)
@@ -60,7 +60,7 @@ const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed mot
 //* ************************ TIMING CONFIGURATION *************************
 //* ************************************************************************
 // Servo timing configuration
-const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;
+const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2300;
 
 // Rotation clamp timing
 const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2000; // 2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
@@ -79,6 +79,9 @@ const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 i
 
 // Rotation servo early activation offset
 const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.4;
+
+// Transfer Arm signal early activation offset
+const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.5;
 
 //* ************************************************************************
 //* ************************ SAFETY CONSTANTS *****************************

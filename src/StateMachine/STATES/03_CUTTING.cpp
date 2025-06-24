@@ -50,6 +50,7 @@ static bool signalActive = false;
 static bool homePositionErrorDetected = false;
 static bool rotationClampActivatedThisCycle = false;
 static bool rotationServoActivatedThisCycle = false;
+static bool taSignalSentThisCycle = false; // Track TA signal per cycle
 static float cutMotorIncrementalMoveTotalInches = 0.0;
 static int cuttingSubStep8 = 0; // For feed motor homing sequence
 
@@ -110,18 +111,7 @@ void executeCuttingState() {
 }
 
 void handleCuttingStep0() {
-    //serial.println("Cutting Step 0: Starting cut motion."); 
-    
-    // Debug motor before configuration
-    FastAccelStepper* cutMotor = getCutMotor();
-    if (cutMotor) {
-        Serial.print("Step 0 - Motor before config - Running: ");
-        Serial.print(cutMotor->isRunning() ? "YES" : "NO");
-        Serial.print(", Position: ");
-        //serial.println(cutMotor->getCurrentPosition());
-    } else {
-        //serial.println("Step 0 - ERROR: cutMotor is NULL!");
-    }
+    Serial.println("Starting cut motion");
         
     extend2x4SecureClamp();
     extendFeedClamp();
@@ -130,20 +120,8 @@ void handleCuttingStep0() {
     configureCutMotorForCutting();
     moveCutMotorToCut();
     
-    // Debug motor after move command
-    if (cutMotor) {
-        Serial.print("Step 0 - Motor after moveTo command - Running: ");
-        Serial.print(cutMotor->isRunning() ? "YES" : "NO");
-        Serial.print(", Position: ");
-        Serial.print(cutMotor->getCurrentPosition());
-        Serial.print(", Target: ");
-        Serial.print(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
-        //serial.println(" steps");
-    }
-    
     rotationClampActivatedThisCycle = false; // Reset for this cut cycle
     cuttingStep = 1;
-    //serial.println("Step 0 complete - advancing to Step 1");
 }
 
 void handleCuttingStep1() {
@@ -152,16 +130,6 @@ void handleCuttingStep1() {
     
     if (stepStartTime == 0) {
         stepStartTime = millis();
-        //serial.println("Cutting Step 1: Checking suction sensor then starting cut motion.");
-        
-        // Debug motor status at start of step 1
-        FastAccelStepper* cutMotor = getCutMotor();
-        if (cutMotor) {
-            Serial.print("Step 1 start - Motor Running: ");
-            Serial.print(cutMotor->isRunning() ? "YES" : "NO");
-            Serial.print(", Position: ");
-            //serial.println(cutMotor->getCurrentPosition());
-        }
     }
 
     // Check suction sensor after cut motor has traveled the required distance
@@ -195,36 +163,12 @@ void handleCuttingStep1() {
             stepStartTime = 0; // Reset step timer
             return;
         } else {
-            //serial.println("Cutting Step 1: WAS_WOOD_SUCTIONED_SENSOR is HIGH (Suction OK). Starting cut motor toward cut position.");
-            
-            // Debug: Double-check motor configuration and movement
-            FastAccelStepper* cutMotor = getCutMotor();
-            if (cutMotor) {
-                Serial.print("Step 1 - Before reconfiguring - Motor Running: ");
-                Serial.print(cutMotor->isRunning() ? "YES" : "NO");
-                Serial.print(", Position: ");
-                //serial.println(cutMotor->getCurrentPosition());
-                
-                configureCutMotorForCutting();
-                moveCutMotorToCut();
-                
-                // Small delay to let motor start
-                delay(50);
-                
-                Serial.print("Step 1 - After moveCutMotorToCut - Motor Running: ");
-                Serial.print(cutMotor->isRunning() ? "YES" : "NO");
-                Serial.print(", Position: ");
-                Serial.print(cutMotor->getCurrentPosition());
-                Serial.print(", Target: ");
-                Serial.print(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
-                //serial.println(" steps");
-            } else {
-                //serial.println("Step 1 - ERROR: cutMotor is NULL!");
-            }
+            // Suction OK - proceed with cutting
+            configureCutMotorForCutting();
+            moveCutMotorToCut();
             
             cuttingStep = 2;
             stepStartTime = 0; // Reset for next step
-            //serial.println("Step 1 complete - advancing to Step 2");
         }
     }
 }
@@ -234,83 +178,69 @@ void handleCuttingStep2() {
     extern const int _2x4_PRESENT_SENSOR; // From main.cpp
     extern const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES; // From main.cpp
     extern const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES; // From main.cpp
+    extern const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES; // From main.cpp
     // CUT_TRAVEL_DISTANCE and CUT_MOTOR_STEPS_PER_INCH are already declared in General_Functions.h
     
-    // Debug logging every 100ms to track motor state
+    // Reduced debug logging to every 1000ms to minimize stuttering
     static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 100) {
+    if (millis() - lastDebugTime >= 1000) {
         if (cutMotor) {
             long currentPosition = cutMotor->getCurrentPosition();
             float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
-            Serial.print("Step 2 - Motor Running: ");
-            Serial.print(cutMotor->isRunning() ? "YES" : "NO");
-            Serial.print(", Position: ");
-            Serial.print(currentPositionInches, 3);
-            Serial.print(" inches (");
-            Serial.print(currentPosition);
-            Serial.print(" steps), Target: ");
+            Serial.print("Cut position: ");
+            Serial.print(currentPositionInches, 2);
+            Serial.print("/");
             Serial.print(CUT_TRAVEL_DISTANCE);
-            //serial.println(" inches");
-        } else {
-            //serial.println("Step 2 - ERROR: cutMotor is NULL!");
+            Serial.print(" inches, Running: ");
+            Serial.println(cutMotor->isRunning() ? "YES" : "NO");
         }
         lastDebugTime = millis();
-    }
-    
-    // Debug logging for motor position every 500ms (detailed logging)
-    static unsigned long lastDetailedDebugTime = 0;
-    if (cutMotor && cutMotor->isRunning() && millis() - lastDetailedDebugTime >= 500) {
-        long currentPosition = cutMotor->getCurrentPosition();
-        float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
-        Serial.print("Cut motor position: ");
-        Serial.print(currentPositionInches);
-        Serial.print(" inches (");
-        Serial.print(currentPosition);
-        Serial.print(" steps). Clamp activated: ");
-        //serial.println(rotationClampActivatedThisCycle ? "YES" : "NO");
-        lastDetailedDebugTime = millis();
     }
     
     // Early Rotation Clamp Activation (matching old catcher clamp logic)
     if (!rotationClampActivatedThisCycle && cutMotor &&
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
-        Serial.print("*** ACTIVATING ROTATION CLAMP *** Position: ");
-        Serial.print((float)cutMotor->getCurrentPosition() / CUT_MOTOR_STEPS_PER_INCH);
-        Serial.print(" inches, Activation threshold: ");
-        Serial.print(CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES);
-        //serial.println(" inches");
-        extendRotationClamp(); // FIXED: Extend clamp when reaching activation position (matching old catcher clamp logic)
+        extendRotationClamp();
         rotationClampActivatedThisCycle = true;
-        Serial.print("Cutting Step 2: Cut motor reached ");
+        Serial.print("Rotation clamp activated at ");
         Serial.print(CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES);
-        //serial.println(" inches - extending rotation clamp early.");
+        Serial.println(" inches");
     }
     
     // Early Rotation Servo Activation (matching old catcher servo logic)
     if (!rotationServoActivatedThisCycle && cutMotor &&
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
-        //serial.println("Cutting Step 2: Activating Rotation Servo (early).");
         activateRotationServo();
         rotationServoActivatedThisCycle = true;
-        Serial.print("Cutting Step 2: Cut motor reached ");
+        Serial.print("Rotation servo activated at ");
         Serial.print(CUT_TRAVEL_DISTANCE - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES);
-        //serial.println(" inches - activating rotation servo early.");
+        Serial.println(" inches");
+    }
+    
+    // Early TA Signal Activation - Send signal before cut completes
+    if (!taSignalSentThisCycle && cutMotor &&
+        cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
+        sendSignalToTA();
+        taSignalSentThisCycle = true;
+        Serial.print("TA signal sent at ");
+        Serial.print(CUT_TRAVEL_DISTANCE - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES);
+        Serial.println(" inches (early activation)");
     }
     
     // Check if motor finished moving to cut position
     if (cutMotor && !cutMotor->isRunning()) {
-        //serial.println("Cutting Step 2: Cut fully complete."); 
-        sendSignalToTA(); // Signal to Transfer Arm (this also activates servo if not already active)
+        Serial.println("Cut cycle complete - transitioning to return sequence");
         configureCutMotorForReturn();
+        
+        // Reset TA signal flag for next cycle
+        taSignalSentThisCycle = false;
 
         int sensorValue = digitalRead(_2x4_PRESENT_SENSOR);
         bool no2x4Detected = (sensorValue == HIGH);
         
         if (no2x4Detected) {
-            //serial.println("Cutting Step 2: RETURNING_NO_2x4 state - 2x4 sensor reads HIGH. Transitioning to RETURNING_NO_2x4 state.");
             changeState(RETURNING_NO_2x4);
         } else {
-            //serial.println("Cutting Step 2: RETURNING_YES_2x4 state - 2x4 sensor reads LOW. Transitioning to RETURNING_YES_2x4 state.");
             changeState(RETURNING_YES_2x4);
         }
     }
@@ -560,6 +490,7 @@ void resetCuttingSteps() {
     homePositionErrorDetected = false;
     rotationClampActivatedThisCycle = false;
     rotationServoActivatedThisCycle = false;
+    taSignalSentThisCycle = false; // Reset TA signal flag
     cutMotorIncrementalMoveTotalInches = 0.0;
     cuttingSubStep8 = 0; // Reset position motor homing substep
 } 

@@ -78,4 +78,7 @@ extern const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
 // Rotation servo early activation offset
 extern const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
 
+// Transfer Arm signal early activation offset  
+extern const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+
 #endif // SYSTEM_CONFIG_H 

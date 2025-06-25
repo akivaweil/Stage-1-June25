@@ -81,7 +81,7 @@ const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 i
 const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.4;
 
 // Transfer Arm signal early activation offset
-const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.5;
+const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.3;
 
 //* ************************************************************************
 //* ************************ SAFETY CONSTANTS *****************************

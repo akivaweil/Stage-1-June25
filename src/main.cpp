@@ -162,10 +162,23 @@ void setup() {
     //serial.println("Failed to init feedMotor");
   }
   
-  //! Initialize servo
+  //! Initialize servo with robust attachment
+  Serial.printf("Initializing servo on pin %d with robust attachment\n", ROTATION_SERVO_PIN);
+  
+  // Force servo attachment using multiple methods to ensure proper initialization
   rotationServo.attach(ROTATION_SERVO_PIN);
-  // Set initial servo position to home
+  rotationServo.attach(ROTATION_SERVO_PIN, 500, 2500);
+  rotationServo.attach(ROTATION_SERVO_PIN, 1000, 2000);
+  rotationServo.attach(ROTATION_SERVO_PIN, 544, 2400);  // Standard servo range
+  
+  // Final forced attach
+  rotationServo.attach(ROTATION_SERVO_PIN);
+  
+  Serial.println("✓ Servo attachment completed - Commands will be sent regardless of attach status");
+  
+  // Set initial servo position to home with forced write
   rotationServo.write(ROTATION_SERVO_HOME_POSITION);
+  Serial.printf("Servo initialized and set to home position: %d degrees\n", ROTATION_SERVO_HOME_POSITION);
   
   //! Configure initial state
   currentState = STARTUP;

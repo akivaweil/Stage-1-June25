@@ -30,6 +30,11 @@ extern const float CUT_MOTOR_FAST_SPEED;
 extern const float CUT_MOTOR_SLOW_SPEED;
 extern const float CUT_MOTOR_TRANSITION_DISTANCE;
 
+// Gradual Speed Transition Settings
+extern const float CUT_MOTOR_TRANSITION_START_OFFSET;
+extern const float CUT_MOTOR_TRANSITION_COMPLETE_OFFSET;
+extern const float CUT_MOTOR_SPEED_CHANGE_STEP;
+
 // Feed Motor Speed Settings
 extern const float FEED_MOTOR_NORMAL_SPEED;
 extern const float FEED_MOTOR_NORMAL_ACCELERATION;

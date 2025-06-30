@@ -241,18 +241,13 @@ void moveCutMotorToHome() {
 void moveCutMotorToCutWithReverseAcceleration() {
     // Reverse acceleration curve: Fast speed for first and last 2.5 inches, slow speed for middle section
     if (cutMotor) {
-        // Calculate transition points
-        float firstTransitionPoint = CUT_MOTOR_TRANSITION_DISTANCE * CUT_MOTOR_STEPS_PER_INCH;
-        float secondTransitionPoint = (CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_DISTANCE) * CUT_MOTOR_STEPS_PER_INCH;
-        float finalPosition = CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH;
-        
-        // Start with fast speed for first 2.5 inches
+        // Start with fast speed for first 2.5 inches and move to the FULL distance
         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
         cutMotor->setAcceleration((uint32_t)CUT_MOTOR_NORMAL_ACCELERATION);
-        cutMotor->moveTo(firstTransitionPoint);
+        cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
         
-        // Note: The speed transitions will be handled in the cutting state logic
-        // This function just initiates the first segment of the move
+        // Speed transitions will be handled in the cutting state logic while motor is running
+        Serial.println("// Starting continuous cut motion with reverse acceleration curve");
     }
 }
 

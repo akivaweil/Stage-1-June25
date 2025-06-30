@@ -135,49 +135,37 @@ void handleCuttingStep1() {
     // Check suction sensor after cut motor has traveled the required distance
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && cutMotor->getCurrentPosition() >= (SUCTION_SENSOR_CHECK_DISTANCE_INCHES * CUT_MOTOR_STEPS_PER_INCH)) {
-        // Check if rotation servo has started rotating (been activated at least once this cycle)
-        // This checks if servo started rotating, not necessarily that it's fully back to 24 degrees
-        if (rotationServoActivatedThisCycle) { // Check if servo was activated during this cutting cycle
-            extern const int WOOD_SUCTION_CONFIRM_SENSOR; // From main.cpp
+        extern const int WOOD_SUCTION_CONFIRM_SENSOR; // From main.cpp
+        
+        // Check suction sensor - LOW means NO SUCTION (Error condition)
+        if (digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == LOW) {
+            //serial.println("Cutting Step 1: No suction detected after cut motor traveled required distance. Error detected. Returning cut motor home before manual reset.");
             
-            // Check suction sensor - LOW means NO SUCTION (Error condition)
-            if (digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == LOW) {
-                //serial.println("Cutting Step 1: Rotation servo started rotating but no suction detected. Error detected. Returning cut motor home before manual reset.");
-                
-                // Stop feed motor immediately but return cut motor home safely
-                FastAccelStepper* cutMotor = getCutMotor();
-                FastAccelStepper* feedMotor = getFeedMotor();
-                
-                if (feedMotor && feedMotor->isRunning()) {
-                    feedMotor->forceStop();
-                    //serial.println("Feed motor stopped due to suction error.");
-                }
-                
-                // Configure cut motor for safe return home
-                if (cutMotor) {
-                    configureCutMotorForReturn();
-                    moveCutMotorToHome();
-                    //serial.println("Cut motor returning home due to suction error.");
-                }
-                
-                // Set cutting cycle flag to false to prevent continuous operation
-                setCuttingCycleInProgress(false);
-                
-                // Transition to suction error recovery step
-                cuttingStep = 9; // New step for suction error recovery
-                stepStartTime = 0; // Reset step timer
-                return;
-            } else {
-                // Suction OK - proceed with cutting
-                configureCutMotorForCutting();
-                moveCutMotorToCut();
-                
-                cuttingStep = 2;
-                stepStartTime = 0; // Reset for next step
+            // Stop feed motor immediately but return cut motor home safely
+            FastAccelStepper* cutMotor = getCutMotor();
+            FastAccelStepper* feedMotor = getFeedMotor();
+            
+            if (feedMotor && feedMotor->isRunning()) {
+                feedMotor->forceStop();
+                //serial.println("Feed motor stopped due to suction error.");
             }
+            
+            // Configure cut motor for safe return home
+            if (cutMotor) {
+                configureCutMotorForReturn();
+                moveCutMotorToHome();
+                //serial.println("Cut motor returning home due to suction error.");
+            }
+            
+            // Set cutting cycle flag to false to prevent continuous operation
+            setCuttingCycleInProgress(false);
+            
+            // Transition to suction error recovery step
+            cuttingStep = 9; // New step for suction error recovery
+            stepStartTime = 0; // Reset step timer
+            return;
         } else {
-            // Servo hasn't been activated yet - continue waiting or proceed normally
-            // This handles the case where the cut motor reaches 1 inch before servo activation
+            // Suction OK - proceed with cutting
             configureCutMotorForCutting();
             moveCutMotorToCut();
             

@@ -245,8 +245,6 @@ void moveCutMotorToCutWithReverseAcceleration() {
         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
         cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Low acceleration for smooth cutting
         cutMotor->moveTo(CUT_MOTOR_TRANSITION_START_OFFSET * CUT_MOTOR_STEPS_PER_INCH);
-        
-        Serial.println("// Starting first segment at fast speed (2000 steps/sec) with low acceleration (200)");
     }
 }
 

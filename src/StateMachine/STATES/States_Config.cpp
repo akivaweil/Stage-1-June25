@@ -44,7 +44,7 @@ const float CUT_MOTOR_TRANSITION_DISTANCE = 2.5; // Distance for fast speed sect
 const float CUT_MOTOR_TRANSITION_START_OFFSET = 2.0; // Start transitioning at 2.0 inches (steps/sec)
 const float CUT_MOTOR_TRANSITION_COMPLETE_OFFSET = 3.0; // Complete transition by 3.0 inches (steps/sec)
 const float CUT_MOTOR_SPEED_CHANGE_STEP = 25;   // Speed change per update (steps/sec)
-const float CUT_MOTOR_CUTTING_ACCELERATION = 200; // Low acceleration for smooth speed transitions (steps/sec^2)
+const float CUT_MOTOR_CUTTING_ACCELERATION = 1000; // Low acceleration for smooth speed transitions (steps/sec^2)
 
 // Return Stroke (Returning State / End of Cutting State)
 const float CUT_MOTOR_RETURN_SPEED = 30000;     // Speed for returning after a cut (steps/sec)

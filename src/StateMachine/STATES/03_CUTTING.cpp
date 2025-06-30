@@ -246,21 +246,7 @@ void handleCuttingStep2() {
     extern const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES; // From main.cpp
     // CUT_TRAVEL_DISTANCE and CUT_MOTOR_STEPS_PER_INCH are already declared in General_Functions.h
     
-    // Reduced debug logging to every 1000ms to minimize stuttering
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 1000) {
-        if (cutMotor) {
-            long currentPosition = cutMotor->getCurrentPosition();
-            float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
-            Serial.print("Cut position: ");
-            Serial.print(currentPositionInches, 2);
-            Serial.print("/");
-            Serial.print(CUT_TRAVEL_DISTANCE);
-            Serial.print(" inches, Running: ");
-            Serial.println(cutMotor->isRunning() ? "YES" : "NO");
-        }
-        lastDebugTime = millis();
-    }
+    
     
     // Multi-Segment Reverse Acceleration Curve Management
     if (reverseAccelCurveActive && cutMotor) {
@@ -270,44 +256,31 @@ void handleCuttingStep2() {
         if (!cutMotor->isRunning() && !segmentTransitionPending) {
             segmentTransitionPending = true;
             
-            if (currentSegment == 0) {
-                // First segment complete (0-2.0"), start middle segment (2.0"-6.1")
-                Serial.println("// First segment complete, starting middle segment at slow speed (100 steps/sec)");
-                cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_SLOW_SPEED);
-                cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
-                cutMotor->moveTo((CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET) * CUT_MOTOR_STEPS_PER_INCH);
-                currentSegment = 1;
-                segmentTransitionPending = false;
-                
-            } else if (currentSegment == 1) {
-                // Middle segment complete (2.0"-6.1"), start final segment (6.1"-9.1")
-                Serial.println("// Middle segment complete, starting final segment at fast speed (2000 steps/sec)");
-                cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
-                cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
-                cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
-                currentSegment = 2;
-                segmentTransitionPending = false;
-                
-            } else if (currentSegment == 2) {
+                            if (currentSegment == 0) {
+                    // First segment complete (0-2.0"), start middle segment (2.0"-6.1")
+                    cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_SLOW_SPEED);
+                    cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
+                    cutMotor->moveTo((CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET) * CUT_MOTOR_STEPS_PER_INCH);
+                    currentSegment = 1;
+                    segmentTransitionPending = false;
+                    
+                } else if (currentSegment == 1) {
+                    // Middle segment complete (2.0"-6.1"), start final segment (6.1"-9.1")
+                    cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
+                    cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
+                    cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
+                    currentSegment = 2;
+                    segmentTransitionPending = false;
+                    
+                } else if (currentSegment == 2) {
                 // All segments complete
-                Serial.println("// All reverse acceleration curve segments complete");
                 reverseAccelCurveActive = false;
-                currentSegment = 0;
-                segmentTransitionPending = false;
-            }
+                    currentSegment = 0;
+                    segmentTransitionPending = false;
+                }
         }
         
-        // Debug output every 1000ms
-        static unsigned long lastSegmentDebugTime = 0;
-        if (millis() - lastSegmentDebugTime >= 1000) {
-            Serial.print("// Segment: ");
-            Serial.print(currentSegment);
-            Serial.print(", Position: ");
-            Serial.print(currentPositionInches, 2);
-            Serial.print("\", Running: ");
-            Serial.println(cutMotor->isRunning() ? "YES" : "NO");
-            lastSegmentDebugTime = millis();
-        }
+
     }
     
     // Early Rotation Clamp Activation (matching old catcher clamp logic)
@@ -315,9 +288,6 @@ void handleCuttingStep2() {
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
         extendRotationClamp();
         rotationClampActivatedThisCycle = true;
-        Serial.print("Rotation clamp activated at ");
-        Serial.print(CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES);
-        Serial.println(" inches");
     }
     
     // Early Rotation Servo Activation (matching old catcher servo logic)
@@ -325,9 +295,6 @@ void handleCuttingStep2() {
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
         activateRotationServo();
         rotationServoActivatedThisCycle = true;
-        Serial.print("Rotation servo activated at ");
-        Serial.print(CUT_TRAVEL_DISTANCE - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES);
-        Serial.println(" inches");
     }
     
     // Early TA Signal Activation - Send signal before cut completes
@@ -335,14 +302,10 @@ void handleCuttingStep2() {
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
         sendSignalToTA();
         taSignalSentThisCycle = true;
-        Serial.print("TA signal sent at ");
-        Serial.print(CUT_TRAVEL_DISTANCE - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES);
-        Serial.println(" inches (early activation)");
     }
     
     // Check if motor finished moving to cut position
     if (cutMotor && !cutMotor->isRunning() && !reverseAccelCurveActive) {
-        Serial.println("Cut cycle complete - transitioning to return sequence");
         configureCutMotorForReturn();
         
         // Reset all tracking variables
@@ -403,7 +366,7 @@ void handleCuttingStep4() {
             for (int i = 0; i < 3; i++) {
                 delay(30);
                 getCutHomingSwitch()->update();
-                Serial.print("Cut position switch read attempt "); Serial.print(i+1); Serial.print(": "); //serial.println(getCutHomingSwitch()->read());
+
                 if (getCutHomingSwitch()->read() == HIGH) {
                     sensorDetectedHome = true;
                     if (cutMotor) cutMotor->setCurrentPosition(0); // Recalibrate to 0 when switch is hit
@@ -414,9 +377,7 @@ void handleCuttingStep4() {
             if (!sensorDetectedHome) {
                 //serial.println("ERROR: Cut motor position switch did not detect home after return attempt.");
                 if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
-                    Serial.print("Attempting incremental move. Total moved: ");
-                    Serial.print(cutMotorIncrementalMoveTotalInches);
-                    //serial.println(" inches.");
+
                     cutMotor->move(-CUT_MOTOR_INCREMENTAL_MOVE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
                     cutMotorIncrementalMoveTotalInches += CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
                     // Stay in cuttingStep 4 to re-check sensor after move
@@ -549,10 +510,7 @@ void handleCuttingStep9_SuctionErrorRecovery() {
         for (int i = 0; i < 3; i++) {
             delay(30);
             getCutHomingSwitch()->update();
-            Serial.print("Cut position switch read attempt "); 
-            Serial.print(i+1); 
-            Serial.print(": "); 
-            //serial.println(getCutHomingSwitch()->read());
+            
             
             if (getCutHomingSwitch()->read() == HIGH) {
                 sensorDetectedHome = true;

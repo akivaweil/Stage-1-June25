@@ -33,8 +33,6 @@ void onEnterReturningYes2x4State() {
     
     // Increment consecutive yeswood counter
     incrementConsecutiveYeswoodCount();
-    Serial.print("DEBUG: Consecutive yeswood count: ");
-    Serial.println(getConsecutiveYeswoodCount());
     
     // Enable cut motor homing sensor monitoring during return
     extern bool cutMotorInReturningYes2x4Return;
@@ -65,9 +63,6 @@ void handleReturningYes2x4Sequence() {
     extern const float FEED_TRAVEL_DISTANCE;
     extern bool cutMotorInReturningYes2x4Return;
     
-    Serial.print("DEBUG: RETURNING_YES_2x4 SubStep: ");
-    Serial.println(returningYes2x4SubStep);
-    
     switch (returningYes2x4SubStep) {
         case 0: // Execute feed motor return sequence (without homing)
             handleFeedMotorReturnSequence();
@@ -90,7 +85,6 @@ void handleReturningYes2x4Sequence() {
                 //! ************************************************************************
                 cutMotorInReturningYes2x4Return = false;
                 
-                Serial.println("DEBUG: Cut motor stopped at -0.02, starting homing verification");
                 bool sensorDetectedHome = false;
                 
                 // Execute homing verification sequence - 3-attempt verification
@@ -98,14 +92,9 @@ void handleReturningYes2x4Sequence() {
                     delay(30);
                     getCutHomingSwitch()->update();
                     bool sensorReading = getCutHomingSwitch()->read();
-                    Serial.print("DEBUG: Cut home verification attempt ");
-                    Serial.print(i + 1);
-                    Serial.print(" of 3: ");
-                    Serial.println(sensorReading ? "HIGH" : "LOW");
                     
                     if (sensorReading == HIGH) {
                         sensorDetectedHome = true;
-                        Serial.println("DEBUG: Cut motor home position confirmed during homing sequence");
                         break;
                     }
                 }
@@ -115,7 +104,6 @@ void handleReturningYes2x4Sequence() {
                     //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED WITH FEED MOTOR
                     //! ************************************************************************
                     if (cutMotor) cutMotor->setCurrentPosition(0);
-                    Serial.println("DEBUG: Cut motor position set to 0 after homing verification");
                     
                     retract2x4SecureClamp();
                     configureFeedMotorForNormalOperation();
@@ -123,7 +111,6 @@ void handleReturningYes2x4Sequence() {
                     returningYes2x4SubStep = 3;
                 } else {
                     // Home switch not detected during homing sequence - start recovery attempt
-                    Serial.println("DEBUG: Homing sequence failed - sensor LOW - starting recovery attempt");
                     cutMotorHomingAttemptInProgress = true;
                     cutMotorHomingAttemptStartTime = millis();
                     
@@ -148,7 +135,6 @@ void handleReturningYes2x4Sequence() {
                     }
                     cutMotorHomingAttemptInProgress = false;
                     
-                    Serial.println("DEBUG: Recovery successful - position set to 0 - proceeding with feed motor");
                     retract2x4SecureClamp();
                     configureFeedMotorForNormalOperation();
                     moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
@@ -178,10 +164,6 @@ void handleReturningYes2x4Sequence() {
                 // Reset consecutive yeswood counter only when it reaches 3
                 if (getConsecutiveYeswoodCount() >= 3) {
                     resetConsecutiveYeswoodCount();
-                    Serial.println("DEBUG: Sequence complete - consecutive yeswood counter reset at 3");
-                } else {
-                    Serial.print("DEBUG: Sequence complete - consecutive yeswood count: ");
-                    Serial.println(getConsecutiveYeswoodCount());
                 }
                 
                 // Check for continuous operation mode

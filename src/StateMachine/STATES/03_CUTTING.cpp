@@ -54,22 +54,6 @@ static bool taSignalSentThisCycle = false; // Track TA signal per cycle
 static float cutMotorIncrementalMoveTotalInches = 0.0;
 static int cuttingSubStep8 = 0; // For feed motor homing sequence
 
-// Static variables for reverse acceleration curve
-static bool reverseAccelCurveActive = false;
-static bool firstSegmentComplete = false;
-static bool middleSegmentComplete = false;
-static bool finalSegmentStarted = false;
-
-// Static variables for multi-segment approach
-static int currentSegment = 0; // 0=first fast, 1=middle slow, 2=final fast
-static bool segmentTransitionPending = false;
-
-// Static variables for gradual speed transitions
-static float currentCutMotorSpeed = 0;
-static bool transitioningToSlow = false;
-static bool transitioningToFast = false;
-static unsigned long lastSpeedUpdateTime = 0;
-
 void onEnterCuttingState() {
     // Reset all step counters when entering cutting state
     resetCuttingSteps();
@@ -127,27 +111,14 @@ void executeCuttingState() {
 }
 
 void handleCuttingStep0() {
+    Serial.println("Starting cut motion");
+        
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Configure and move motor with reverse acceleration curve
-    moveCutMotorToCutWithReverseAcceleration();
-    
-    // Initialize reverse acceleration curve tracking
-    reverseAccelCurveActive = true;
-    firstSegmentComplete = false;
-    middleSegmentComplete = false;
-    finalSegmentStarted = false;
-    
-    // Initialize multi-segment tracking
-    currentSegment = 0;
-    segmentTransitionPending = false;
-    
-    // Initialize gradual speed transition tracking (legacy)
-    currentCutMotorSpeed = CUT_MOTOR_FAST_SPEED;
-    transitioningToSlow = false;
-    transitioningToFast = false;
-    lastSpeedUpdateTime = millis();
+    // Configure and move motor
+    configureCutMotorForCutting();
+    moveCutMotorToCut();
     
     rotationClampActivatedThisCycle = false; // Reset for this cut cycle
     cuttingStep = 1;
@@ -198,19 +169,8 @@ void handleCuttingStep1() {
                 return;
             } else {
                 // Suction OK - proceed with cutting
-                // Don't call moveCutMotorToCutWithReverseAcceleration() again - already started in step 0
-                
-                // Initialize reverse acceleration curve tracking if not already active
-                if (!reverseAccelCurveActive) {
-                    reverseAccelCurveActive = true;
-                    firstSegmentComplete = false;
-                    middleSegmentComplete = false;
-                    finalSegmentStarted = false;
-                    currentCutMotorSpeed = CUT_MOTOR_FAST_SPEED;
-                    transitioningToSlow = false;
-                    transitioningToFast = false;
-                    lastSpeedUpdateTime = millis();
-                }
+                configureCutMotorForCutting();
+                moveCutMotorToCut();
                 
                 cuttingStep = 2;
                 stepStartTime = 0; // Reset for next step
@@ -218,19 +178,8 @@ void handleCuttingStep1() {
         } else {
             // Servo hasn't been activated yet - continue waiting or proceed normally
             // This handles the case where the cut motor reaches 1 inch before servo activation
-            // Don't call moveCutMotorToCutWithReverseAcceleration() again - already started in step 0
-            
-            // Initialize reverse acceleration curve tracking if not already active
-            if (!reverseAccelCurveActive) {
-                reverseAccelCurveActive = true;
-                firstSegmentComplete = false;
-                middleSegmentComplete = false;
-                finalSegmentStarted = false;
-                currentCutMotorSpeed = CUT_MOTOR_FAST_SPEED;
-                transitioningToSlow = false;
-                transitioningToFast = false;
-                lastSpeedUpdateTime = millis();
-            }
+            configureCutMotorForCutting();
+            moveCutMotorToCut();
             
             cuttingStep = 2;
             stepStartTime = 0; // Reset for next step
@@ -246,41 +195,20 @@ void handleCuttingStep2() {
     extern const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES; // From main.cpp
     // CUT_TRAVEL_DISTANCE and CUT_MOTOR_STEPS_PER_INCH are already declared in General_Functions.h
     
-    
-    
-    // Multi-Segment Reverse Acceleration Curve Management
-    if (reverseAccelCurveActive && cutMotor) {
-        float currentPositionInches = (float)cutMotor->getCurrentPosition() / CUT_MOTOR_STEPS_PER_INCH;
-        
-        // Check if current segment is complete and start next segment
-        if (!cutMotor->isRunning() && !segmentTransitionPending) {
-            segmentTransitionPending = true;
-            
-                            if (currentSegment == 0) {
-                    // First segment complete (0-2.0"), start middle segment (2.0"-6.1")
-                    cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_SLOW_SPEED);
-                    cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
-                    cutMotor->moveTo((CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET) * CUT_MOTOR_STEPS_PER_INCH);
-                    currentSegment = 1;
-                    segmentTransitionPending = false;
-                    
-                } else if (currentSegment == 1) {
-                    // Middle segment complete (2.0"-6.1"), start final segment (6.1"-9.1")
-                    cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
-                    cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
-                    cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
-                    currentSegment = 2;
-                    segmentTransitionPending = false;
-                    
-                } else if (currentSegment == 2) {
-                // All segments complete
-                reverseAccelCurveActive = false;
-                    currentSegment = 0;
-                    segmentTransitionPending = false;
-                }
+    // Reduced debug logging to every 1000ms to minimize stuttering
+    static unsigned long lastDebugTime = 0;
+    if (millis() - lastDebugTime >= 1000) {
+        if (cutMotor) {
+            long currentPosition = cutMotor->getCurrentPosition();
+            float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
+            Serial.print("Cut position: ");
+            Serial.print(currentPositionInches, 2);
+            Serial.print("/");
+            Serial.print(CUT_TRAVEL_DISTANCE);
+            Serial.print(" inches, Running: ");
+            Serial.println(cutMotor->isRunning() ? "YES" : "NO");
         }
-        
-
+        lastDebugTime = millis();
     }
     
     // Early Rotation Clamp Activation (matching old catcher clamp logic)
@@ -288,6 +216,9 @@ void handleCuttingStep2() {
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
         extendRotationClamp();
         rotationClampActivatedThisCycle = true;
+        Serial.print("Rotation clamp activated at ");
+        Serial.print(CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES);
+        Serial.println(" inches");
     }
     
     // Early Rotation Servo Activation (matching old catcher servo logic)
@@ -295,6 +226,9 @@ void handleCuttingStep2() {
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
         activateRotationServo();
         rotationServoActivatedThisCycle = true;
+        Serial.print("Rotation servo activated at ");
+        Serial.print(CUT_TRAVEL_DISTANCE - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES);
+        Serial.println(" inches");
     }
     
     // Early TA Signal Activation - Send signal before cut completes
@@ -302,24 +236,15 @@ void handleCuttingStep2() {
         cutMotor->getCurrentPosition() >= ((CUT_TRAVEL_DISTANCE - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH)) {
         sendSignalToTA();
         taSignalSentThisCycle = true;
+        Serial.print("TA signal sent at ");
+        Serial.print(CUT_TRAVEL_DISTANCE - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES);
+        Serial.println(" inches (early activation)");
     }
     
     // Check if motor finished moving to cut position
-    if (cutMotor && !cutMotor->isRunning() && !reverseAccelCurveActive) {
+    if (cutMotor && !cutMotor->isRunning()) {
+        Serial.println("Cut cycle complete - transitioning to return sequence");
         configureCutMotorForReturn();
-        
-        // Reset all tracking variables
-        currentSegment = 0;
-        segmentTransitionPending = false;
-        firstSegmentComplete = false;
-        middleSegmentComplete = false;
-        finalSegmentStarted = false;
-        
-        // Reset gradual speed transition variables
-        currentCutMotorSpeed = 0;
-        transitioningToSlow = false;
-        transitioningToFast = false;
-        lastSpeedUpdateTime = 0;
         
         // Reset TA signal flag for next cycle
         taSignalSentThisCycle = false;
@@ -366,7 +291,7 @@ void handleCuttingStep4() {
             for (int i = 0; i < 3; i++) {
                 delay(30);
                 getCutHomingSwitch()->update();
-
+                Serial.print("Cut position switch read attempt "); Serial.print(i+1); Serial.print(": "); //serial.println(getCutHomingSwitch()->read());
                 if (getCutHomingSwitch()->read() == HIGH) {
                     sensorDetectedHome = true;
                     if (cutMotor) cutMotor->setCurrentPosition(0); // Recalibrate to 0 when switch is hit
@@ -377,7 +302,9 @@ void handleCuttingStep4() {
             if (!sensorDetectedHome) {
                 //serial.println("ERROR: Cut motor position switch did not detect home after return attempt.");
                 if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
-
+                    Serial.print("Attempting incremental move. Total moved: ");
+                    Serial.print(cutMotorIncrementalMoveTotalInches);
+                    //serial.println(" inches.");
                     cutMotor->move(-CUT_MOTOR_INCREMENTAL_MOVE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
                     cutMotorIncrementalMoveTotalInches += CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
                     // Stay in cuttingStep 4 to re-check sensor after move
@@ -510,7 +437,10 @@ void handleCuttingStep9_SuctionErrorRecovery() {
         for (int i = 0; i < 3; i++) {
             delay(30);
             getCutHomingSwitch()->update();
-            
+            Serial.print("Cut position switch read attempt "); 
+            Serial.print(i+1); 
+            Serial.print(": "); 
+            //serial.println(getCutHomingSwitch()->read());
             
             if (getCutHomingSwitch()->read() == HIGH) {
                 sensorDetectedHome = true;
@@ -577,20 +507,4 @@ void resetCuttingSteps() {
     taSignalSentThisCycle = false; // Reset TA signal flag
     cutMotorIncrementalMoveTotalInches = 0.0;
     cuttingSubStep8 = 0; // Reset position motor homing substep
-    
-    // Reset reverse acceleration curve variables
-    reverseAccelCurveActive = false;
-    firstSegmentComplete = false;
-    middleSegmentComplete = false;
-    finalSegmentStarted = false;
-    
-    // Reset multi-segment variables
-    currentSegment = 0;
-    segmentTransitionPending = false;
-    
-    // Reset gradual speed transition variables
-    currentCutMotorSpeed = 0;
-    transitioningToSlow = false;
-    transitioningToFast = false;
-    lastSpeedUpdateTime = 0;
-}
+} 

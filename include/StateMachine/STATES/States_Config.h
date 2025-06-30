@@ -34,6 +34,7 @@ extern const float CUT_MOTOR_TRANSITION_DISTANCE;
 extern const float CUT_MOTOR_TRANSITION_START_OFFSET;
 extern const float CUT_MOTOR_TRANSITION_COMPLETE_OFFSET;
 extern const float CUT_MOTOR_SPEED_CHANGE_STEP;
+extern const float CUT_MOTOR_CUTTING_ACCELERATION;
 
 // Feed Motor Speed Settings
 extern const float FEED_MOTOR_NORMAL_SPEED;

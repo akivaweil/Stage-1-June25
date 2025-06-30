@@ -276,6 +276,7 @@ void handleCuttingStep2() {
                 // First segment complete (0-2.0"), start middle segment (2.0"-6.1")
                 Serial.println("// First segment complete, starting middle segment at slow speed (100 steps/sec)");
                 cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_SLOW_SPEED);
+                cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
                 cutMotor->moveTo((CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET) * CUT_MOTOR_STEPS_PER_INCH);
                 currentSegment = 1;
                 segmentTransitionPending = false;
@@ -284,6 +285,7 @@ void handleCuttingStep2() {
                 // Middle segment complete (2.0"-6.1"), start final segment (6.1"-9.1")
                 Serial.println("// Middle segment complete, starting final segment at fast speed (2000 steps/sec)");
                 cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
+                cutMotor->setAcceleration((uint32_t)CUT_MOTOR_CUTTING_ACCELERATION); // Keep low acceleration
                 cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
                 currentSegment = 2;
                 segmentTransitionPending = false;
@@ -635,4 +637,4 @@ void resetCuttingSteps() {
     transitioningToSlow = false;
     transitioningToFast = false;
     lastSpeedUpdateTime = 0;
-} 
+}

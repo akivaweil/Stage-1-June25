@@ -69,7 +69,7 @@ const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2000; // 2.4 seconds (2 
 const unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds timeout
 
 // Transfer Arm signal timing
-const unsigned long TA_SIGNAL_DURATION = 1000; // Duration for Transfer Arm signal (ms)
+const unsigned long TA_SIGNAL_DURATION = 2003; // Duration for Transfer Arm signal (ms)
 
 //* ************************************************************************
 //* ************************ OPERATIONAL CONSTANTS ***********************
@@ -105,4 +105,4 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for 
 const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
 const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
 const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
-const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.5; // Distance cut motor must travel before checking suction sensor 
+const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 1; // Distance cut motor must travel before checking suction sensor 

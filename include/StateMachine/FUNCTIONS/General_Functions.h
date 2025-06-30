@@ -123,6 +123,7 @@ void configureCutMotorForReturn();
 void configureFeedMotorForNormalOperation();
 void configureFeedMotorForReturn();
 void moveCutMotorToCut();
+void moveCutMotorToCutWithReverseAcceleration();
 void moveCutMotorToHome();
 void moveFeedMotorToTravel();
 void moveFeedMotorToHome();

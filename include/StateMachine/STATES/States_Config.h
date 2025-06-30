@@ -25,6 +25,11 @@ extern const float CUT_MOTOR_NORMAL_ACCELERATION;
 extern const float CUT_MOTOR_RETURN_SPEED;
 extern const float CUT_MOTOR_HOMING_SPEED;
 
+// Reverse Acceleration Curve Settings
+extern const float CUT_MOTOR_FAST_SPEED;
+extern const float CUT_MOTOR_SLOW_SPEED;
+extern const float CUT_MOTOR_TRANSITION_DISTANCE;
+
 // Feed Motor Speed Settings
 extern const float FEED_MOTOR_NORMAL_SPEED;
 extern const float FEED_MOTOR_NORMAL_ACCELERATION;

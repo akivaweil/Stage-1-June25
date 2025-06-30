@@ -35,6 +35,11 @@ const int FEED_HOMING_DIRECTION = 1;
 const float CUT_MOTOR_NORMAL_SPEED = 850;      // Speed for the cutting pass (steps/sec)
 const float CUT_MOTOR_NORMAL_ACCELERATION = 25000; // Acceleration for the cutting pass (steps/sec^2)
 
+// Reverse Acceleration Curve Settings (Cutting State)
+const float CUT_MOTOR_FAST_SPEED = 1000;       // Speed for first and last 2.5 inches (steps/sec)
+const float CUT_MOTOR_SLOW_SPEED = 750;        // Speed for middle section (steps/sec)
+const float CUT_MOTOR_TRANSITION_DISTANCE = 2.5; // Distance for fast speed sections (inches)
+
 // Return Stroke (Returning State / End of Cutting State)
 const float CUT_MOTOR_RETURN_SPEED = 30000;     // Speed for returning after a cut (steps/sec)
 
@@ -49,9 +54,9 @@ const float FEED_MOTOR_NORMAL_SPEED = 25000;    // Speed for normal feed moves (
 const float FEED_MOTOR_NORMAL_ACCELERATION = 30000; // Acceleration for normal feed (steps/sec^2)
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
-const float FEED_MOTOR_RETURN_SPEED = 30000;    // Speed for returning to home or start position (steps/sec)
+const float FEED_MOTOR_RETURN_SPEED = 50000;    // Speed for returning to home or start position (steps/sec)
 const float FEED_MOTOR_RETURN_ACCELERATION =
- 50000; // Acceleration for return moves (steps/sec^2)
+ 40000; // Acceleration for return moves (steps/sec^2)
 
 // Homing Operation (Homing State)
 const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed motor (steps/sec)

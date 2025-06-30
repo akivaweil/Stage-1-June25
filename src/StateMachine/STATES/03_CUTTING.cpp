@@ -54,6 +54,12 @@ static bool taSignalSentThisCycle = false; // Track TA signal per cycle
 static float cutMotorIncrementalMoveTotalInches = 0.0;
 static int cuttingSubStep8 = 0; // For feed motor homing sequence
 
+// Static variables for reverse acceleration curve
+static bool reverseAccelCurveActive = false;
+static bool firstSegmentComplete = false;
+static bool middleSegmentComplete = false;
+static bool finalSegmentStarted = false;
+
 void onEnterCuttingState() {
     // Reset all step counters when entering cutting state
     resetCuttingSteps();
@@ -111,14 +117,19 @@ void executeCuttingState() {
 }
 
 void handleCuttingStep0() {
-    Serial.println("Starting cut motion");
+    Serial.println("Starting cut motion with reverse acceleration curve");
         
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Configure and move motor
-    configureCutMotorForCutting();
-    moveCutMotorToCut();
+    // Configure and move motor with reverse acceleration curve
+    moveCutMotorToCutWithReverseAcceleration();
+    
+    // Initialize reverse acceleration curve tracking
+    reverseAccelCurveActive = true;
+    firstSegmentComplete = false;
+    middleSegmentComplete = false;
+    finalSegmentStarted = false;
     
     rotationClampActivatedThisCycle = false; // Reset for this cut cycle
     cuttingStep = 1;
@@ -169,8 +180,15 @@ void handleCuttingStep1() {
                 return;
             } else {
                 // Suction OK - proceed with cutting
-                configureCutMotorForCutting();
-                moveCutMotorToCut();
+                moveCutMotorToCutWithReverseAcceleration();
+                
+                // Initialize reverse acceleration curve tracking if not already active
+                if (!reverseAccelCurveActive) {
+                    reverseAccelCurveActive = true;
+                    firstSegmentComplete = false;
+                    middleSegmentComplete = false;
+                    finalSegmentStarted = false;
+                }
                 
                 cuttingStep = 2;
                 stepStartTime = 0; // Reset for next step
@@ -178,8 +196,15 @@ void handleCuttingStep1() {
         } else {
             // Servo hasn't been activated yet - continue waiting or proceed normally
             // This handles the case where the cut motor reaches 1 inch before servo activation
-            configureCutMotorForCutting();
-            moveCutMotorToCut();
+            moveCutMotorToCutWithReverseAcceleration();
+            
+            // Initialize reverse acceleration curve tracking if not already active
+            if (!reverseAccelCurveActive) {
+                reverseAccelCurveActive = true;
+                firstSegmentComplete = false;
+                middleSegmentComplete = false;
+                finalSegmentStarted = false;
+            }
             
             cuttingStep = 2;
             stepStartTime = 0; // Reset for next step
@@ -209,6 +234,34 @@ void handleCuttingStep2() {
             Serial.println(cutMotor->isRunning() ? "YES" : "NO");
         }
         lastDebugTime = millis();
+    }
+    
+    // Reverse Acceleration Curve Speed Management
+    if (reverseAccelCurveActive && cutMotor) {
+        float currentPositionInches = (float)cutMotor->getCurrentPosition() / CUT_MOTOR_STEPS_PER_INCH;
+        
+        // Transition from fast speed (first 2.5") to slow speed (middle section)
+        if (!firstSegmentComplete && currentPositionInches >= CUT_MOTOR_TRANSITION_DISTANCE) {
+            // Wait for motor to reach first transition point, then change to slow speed
+            if (!cutMotor->isRunning()) {
+                Serial.println("// First segment complete - transitioning to slow speed for middle section");
+                cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_SLOW_SPEED);
+                cutMotor->moveTo((CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_DISTANCE) * CUT_MOTOR_STEPS_PER_INCH);
+                firstSegmentComplete = true;
+            }
+        }
+        // Transition from slow speed (middle section) to fast speed (final 2.5")
+        else if (firstSegmentComplete && !middleSegmentComplete && 
+                 currentPositionInches >= (CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_DISTANCE)) {
+            // Wait for motor to reach second transition point, then change to fast speed
+            if (!cutMotor->isRunning()) {
+                Serial.println("// Middle segment complete - transitioning to fast speed for final section");
+                cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
+                cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
+                middleSegmentComplete = true;
+                finalSegmentStarted = true;
+            }
+        }
     }
     
     // Early Rotation Clamp Activation (matching old catcher clamp logic)
@@ -243,8 +296,20 @@ void handleCuttingStep2() {
     
     // Check if motor finished moving to cut position
     if (cutMotor && !cutMotor->isRunning()) {
+        // If using reverse acceleration curve, ensure all segments are complete
+        if (reverseAccelCurveActive && (!middleSegmentComplete || !finalSegmentStarted)) {
+            // Still in progress - don't transition yet
+            return;
+        }
+        
         Serial.println("Cut cycle complete - transitioning to return sequence");
         configureCutMotorForReturn();
+        
+        // Reset reverse acceleration curve tracking
+        reverseAccelCurveActive = false;
+        firstSegmentComplete = false;
+        middleSegmentComplete = false;
+        finalSegmentStarted = false;
         
         // Reset TA signal flag for next cycle
         taSignalSentThisCycle = false;
@@ -507,4 +572,10 @@ void resetCuttingSteps() {
     taSignalSentThisCycle = false; // Reset TA signal flag
     cutMotorIncrementalMoveTotalInches = 0.0;
     cuttingSubStep8 = 0; // Reset position motor homing substep
+    
+    // Reset reverse acceleration curve variables
+    reverseAccelCurveActive = false;
+    firstSegmentComplete = false;
+    middleSegmentComplete = false;
+    finalSegmentStarted = false;
 } 

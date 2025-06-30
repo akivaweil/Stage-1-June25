@@ -417,9 +417,9 @@ void handleCommonOperations() {
                     static unsigned long lastSafetyMessage = 0;
                     if (millis() - lastSafetyMessage >= 500) { // Update message every 500ms
                         unsigned long remainingMs = ROTATION_SERVO_SAFETY_DELAY_MS - (millis() - rotationServoSafetyDelayStartTime);
-                        Serial.print("Safety delay active. Servo will return home in ");
-                        Serial.print(remainingMs);
-                        //serial.println("ms to allow operator to move hand away.");
+                                //Serial.print("Safety delay active. Servo will return home in ");
+        //Serial.print(remainingMs);
+        //serial.println("ms to allow operator to move hand away.");
                         lastSafetyMessage = millis();
                     }
                 }

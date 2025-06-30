@@ -31,19 +31,15 @@ void otaUpdateProgressLEDs(unsigned int progress, unsigned int total) {
   if (percentage < 25.0) {
     // 0-25%: Red LED
     digitalWrite(STATUS_LED_RED, HIGH);
-    Serial.printf("OTA Progress: %.1f%% (RED)\r", percentage);
   } else if (percentage < 50.0) {
     // 25-50%: Yellow LED
     digitalWrite(STATUS_LED_YELLOW, HIGH);
-    Serial.printf("OTA Progress: %.1f%% (YELLOW)\r", percentage);
   } else if (percentage < 75.0) {
     // 50-75%: Green LED
     digitalWrite(STATUS_LED_GREEN, HIGH);
-    Serial.printf("OTA Progress: %.1f%% (GREEN)\r", percentage);
   } else {
     // 75-100%: Blue LED
     digitalWrite(STATUS_LED_BLUE, HIGH);
-    Serial.printf("OTA Progress: %.1f%% (BLUE)\r", percentage);
   }
 }
 
@@ -103,7 +99,6 @@ void setupOTA() {
       otaUpdateProgressLEDs(progress, total);
     })
     .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) {
         //serial.println("Auth Failed");
       } else if (error == OTA_BEGIN_ERROR) {
@@ -129,7 +124,7 @@ void setupOTA() {
   ArduinoOTA.begin();
 
   //serial.println("OTA Initialized");
-  Serial.print("IP address: ");
+  //serial.print("IP address: ");
   //serial.println(WiFi.localIP());
 }
 

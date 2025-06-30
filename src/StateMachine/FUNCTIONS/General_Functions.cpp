@@ -30,16 +30,16 @@ void sendSignalToTA() {
     if (servo) {
       // Force servo write with robust control - no attach checks, just send the command
       servo->write(ROTATION_SERVO_ACTIVE_POSITION);
-      Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_ACTIVE_POSITION);
+      //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_ACTIVE_POSITION);
     }
     
     rotationServoActiveStartTime = millis();
     rotationServoIsActiveAndTiming = true;
-    Serial.print("Rotation servo moved to ");
-    Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
-    Serial.println(" degrees with TA signal.");
+    //Serial.print("Rotation servo moved to ");
+    //Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
+    //Serial.println(" degrees with TA signal.");
   } else {
-    Serial.println("Rotation servo already activated early - skipping normal activation.");
+    //Serial.println("Rotation servo already activated early - skipping normal activation.");
   }
 }
 
@@ -542,18 +542,18 @@ void activateRotationServo() {
         if (servo) {
             // Force servo write with robust control - no attach checks, just send the command
             servo->write(ROTATION_SERVO_ACTIVE_POSITION);
-            Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_ACTIVE_POSITION);
+            //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_ACTIVE_POSITION);
         }
         
         rotationServoActiveStartTime = millis();
         rotationServoIsActiveAndTiming = true;
         // Reset safety delay flag for new activation cycle
         setRotationServoSafetyDelayActive(false);
-        Serial.print("Rotation servo activated to ");
-        Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
-        Serial.println(" degrees.");
+        //Serial.print("Rotation servo activated to ");
+        //Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
+        //Serial.println(" degrees.");
     } else {
-        Serial.println("Rotation servo already active - skipping activation.");
+        //Serial.println("Rotation servo already active - skipping activation.");
     }
 }
 
@@ -563,12 +563,12 @@ void handleRotationServoReturn() {
     if (servo) {
         // Force servo write with robust control - no attach checks, just send the command
         servo->write(ROTATION_SERVO_HOME_POSITION);
-        Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_HOME_POSITION);
+        //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_HOME_POSITION);
     }
     
-    Serial.print("Rotation servo returned to home position (");
-    Serial.print(ROTATION_SERVO_HOME_POSITION);
-    Serial.println(" degrees).");
+    //Serial.print("Rotation servo returned to home position (");
+    //Serial.print(ROTATION_SERVO_HOME_POSITION);
+    //Serial.println(" degrees).");
 }
 
 void handleTASignalTiming() { 

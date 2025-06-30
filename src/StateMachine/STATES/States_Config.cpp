@@ -32,26 +32,26 @@ const int FEED_HOMING_DIRECTION = 1;
 //* ************************ CUT MOTOR SPEED SETTINGS ********************
 //* ************************************************************************
 // Normal Cutting Operation (Cutting State)
-const float CUT_MOTOR_NORMAL_SPEED = 700;      // Speed for the cutting pass (steps/sec)
+const float CUT_MOTOR_NORMAL_SPEED = 850;      // Speed for the cutting pass (steps/sec)
 const float CUT_MOTOR_NORMAL_ACCELERATION = 25000; // Acceleration for the cutting pass (steps/sec^2)
 
 // Return Stroke (Returning State / End of Cutting State)
 const float CUT_MOTOR_RETURN_SPEED = 30000;     // Speed for returning after a cut (steps/sec)
 
 // Homing Operation (Homing State)
-const float CUT_MOTOR_HOMING_SPEED = 1000;      // Speed for homing the cut motor (steps/sec)
+const float CUT_MOTOR_HOMING_SPEED = 1500;      // Speed for homing the cut motor (steps/sec)
 
 //* ************************************************************************
 //* ************************ FEED MOTOR SPEED SETTINGS *******************
 //* ************************************************************************
 // Normal Feed Operation (Feed State / Parts of Cutting State)
 const float FEED_MOTOR_NORMAL_SPEED = 25000;    // Speed for normal feed moves (steps/sec)
-const float FEED_MOTOR_NORMAL_ACCELERATION = 25000; // Acceleration for normal feed (steps/sec^2)
+const float FEED_MOTOR_NORMAL_ACCELERATION = 30000; // Acceleration for normal feed (steps/sec^2)
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
 const float FEED_MOTOR_RETURN_SPEED = 30000;    // Speed for returning to home or start position (steps/sec)
 const float FEED_MOTOR_RETURN_ACCELERATION =
- 30000; // Acceleration for return moves (steps/sec^2)
+ 50000; // Acceleration for return moves (steps/sec^2)
 
 // Homing Operation (Homing State)
 const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed motor (steps/sec)
@@ -60,7 +60,7 @@ const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed mot
 //* ************************ TIMING CONFIGURATION *************************
 //* ************************************************************************
 // Servo timing configuration
-const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2300;
+const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
 
 // Rotation clamp timing
 const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2000; // 2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
@@ -69,7 +69,7 @@ const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2000; // 2.4 seconds (2 
 const unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds timeout
 
 // Transfer Arm signal timing
-const unsigned long TA_SIGNAL_DURATION = 2003; // Duration for Transfer Arm signal (ms)
+const unsigned long TA_SIGNAL_DURATION = 500; // Duration for Transfer Arm signal (ms)
 
 //* ************************************************************************
 //* ************************ OPERATIONAL CONSTANTS ***********************

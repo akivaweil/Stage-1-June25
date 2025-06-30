@@ -60,6 +60,10 @@ static bool firstSegmentComplete = false;
 static bool middleSegmentComplete = false;
 static bool finalSegmentStarted = false;
 
+// Static variables for multi-segment approach
+static int currentSegment = 0; // 0=first fast, 1=middle slow, 2=final fast
+static bool segmentTransitionPending = false;
+
 // Static variables for gradual speed transitions
 static float currentCutMotorSpeed = 0;
 static bool transitioningToSlow = false;
@@ -137,7 +141,11 @@ void handleCuttingStep0() {
     middleSegmentComplete = false;
     finalSegmentStarted = false;
     
-    // Initialize gradual speed transition tracking
+    // Initialize multi-segment tracking
+    currentSegment = 0;
+    segmentTransitionPending = false;
+    
+    // Initialize gradual speed transition tracking (legacy)
     currentCutMotorSpeed = CUT_MOTOR_FAST_SPEED;
     transitioningToSlow = false;
     transitioningToFast = false;
@@ -256,93 +264,49 @@ void handleCuttingStep2() {
         lastDebugTime = millis();
     }
     
-    // Reverse Acceleration Curve Speed Management with Gradual Transitions
-    if (reverseAccelCurveActive && cutMotor && cutMotor->isRunning()) {
+    // Multi-Segment Reverse Acceleration Curve Management
+    if (reverseAccelCurveActive && cutMotor) {
         float currentPositionInches = (float)cutMotor->getCurrentPosition() / CUT_MOTOR_STEPS_PER_INCH;
-        unsigned long currentTime = millis();
         
-        // Update speed every 50ms for smooth transitions
-        if (currentTime - lastSpeedUpdateTime >= 50) {
+        // Check if current segment is complete and start next segment
+        if (!cutMotor->isRunning() && !segmentTransitionPending) {
+            segmentTransitionPending = true;
             
-            // First transition: Fast to Slow (starts at 2.0", complete by 3.0")
-            if (!firstSegmentComplete && currentPositionInches >= CUT_MOTOR_TRANSITION_START_OFFSET) {
-                if (!transitioningToSlow) {
-                    transitioningToSlow = true;
-                    Serial.println("// Starting immediate transition to slow speed");
-                }
+            if (currentSegment == 0) {
+                // First segment complete (0-2.0"), start middle segment (2.0"-6.1")
+                Serial.println("// First segment complete, starting middle segment at slow speed (100 steps/sec)");
+                cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_SLOW_SPEED);
+                cutMotor->moveTo((CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET) * CUT_MOTOR_STEPS_PER_INCH);
+                currentSegment = 1;
+                segmentTransitionPending = false;
                 
-                // Calculate how far through the transition we are (0.0 to 1.0)
-                float transitionProgress = (currentPositionInches - CUT_MOTOR_TRANSITION_START_OFFSET) / 
-                                         (CUT_MOTOR_TRANSITION_COMPLETE_OFFSET - CUT_MOTOR_TRANSITION_START_OFFSET);
-                transitionProgress = constrain(transitionProgress, 0.0, 1.0);
+            } else if (currentSegment == 1) {
+                // Middle segment complete (2.0"-6.1"), start final segment (6.1"-9.1")
+                Serial.println("// Middle segment complete, starting final segment at fast speed (2000 steps/sec)");
+                cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_FAST_SPEED);
+                cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
+                currentSegment = 2;
+                segmentTransitionPending = false;
                 
-                // Interpolate between fast and slow speeds
-                float targetSpeed = CUT_MOTOR_FAST_SPEED + (CUT_MOTOR_SLOW_SPEED - CUT_MOTOR_FAST_SPEED) * transitionProgress;
-                
-                // Set motor speed immediately to target speed
-                currentCutMotorSpeed = targetSpeed;
-                cutMotor->setSpeedInHz((uint32_t)currentCutMotorSpeed);
-                
-                // Debug output for speed changes
-                Serial.print("// Position: ");
-                Serial.print(currentPositionInches, 2);
-                Serial.print("\", Target: ");
-                Serial.print(targetSpeed, 0);
-                Serial.print(", Current: ");
-                Serial.print(currentCutMotorSpeed, 0);
-                Serial.print(", Progress: ");
-                Serial.println(transitionProgress, 2);
-                
-                // Mark first segment complete when we reach the slow speed
-                if (currentPositionInches >= CUT_MOTOR_TRANSITION_COMPLETE_OFFSET) {
-                    firstSegmentComplete = true;
-                    transitioningToSlow = false;
-                    Serial.println("// Immediate transition to slow speed complete");
-                }
+            } else if (currentSegment == 2) {
+                // All segments complete
+                Serial.println("// All reverse acceleration curve segments complete");
+                reverseAccelCurveActive = false;
+                currentSegment = 0;
+                segmentTransitionPending = false;
             }
-            
-            // Second transition: Slow to Fast (starts at 6.1", complete by 7.1")
-            else if (firstSegmentComplete && !middleSegmentComplete && 
-                     currentPositionInches >= (CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_COMPLETE_OFFSET)) {
-                if (!transitioningToFast) {
-                    transitioningToFast = true;
-                    Serial.println("// Starting immediate transition to fast speed");
-                }
-                
-                // Calculate transition progress for second transition
-                float secondTransitionStart = CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_COMPLETE_OFFSET;
-                float secondTransitionEnd = CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET;
-                float transitionProgress = (currentPositionInches - secondTransitionStart) / 
-                                         (secondTransitionEnd - secondTransitionStart);
-                transitionProgress = constrain(transitionProgress, 0.0, 1.0);
-                
-                // Interpolate between slow and fast speeds
-                float targetSpeed = CUT_MOTOR_SLOW_SPEED + (CUT_MOTOR_FAST_SPEED - CUT_MOTOR_SLOW_SPEED) * transitionProgress;
-                
-                // Set motor speed immediately to target speed
-                currentCutMotorSpeed = targetSpeed;
-                cutMotor->setSpeedInHz((uint32_t)currentCutMotorSpeed);
-                
-                // Debug output for speed changes
-                Serial.print("// Position: ");
-                Serial.print(currentPositionInches, 2);
-                Serial.print("\", Target: ");
-                Serial.print(targetSpeed, 0);
-                Serial.print(", Current: ");
-                Serial.print(currentCutMotorSpeed, 0);
-                Serial.print(", Progress: ");
-                Serial.println(transitionProgress, 2);
-                
-                // Mark middle segment complete when we reach the fast speed again
-                if (currentPositionInches >= (CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET)) {
-                    middleSegmentComplete = true;
-                    finalSegmentStarted = true;
-                    transitioningToFast = false;
-                    Serial.println("// Immediate transition to fast speed complete");
-                }
-            }
-            
-            lastSpeedUpdateTime = currentTime;
+        }
+        
+        // Debug output every 1000ms
+        static unsigned long lastSegmentDebugTime = 0;
+        if (millis() - lastSegmentDebugTime >= 1000) {
+            Serial.print("// Segment: ");
+            Serial.print(currentSegment);
+            Serial.print(", Position: ");
+            Serial.print(currentPositionInches, 2);
+            Serial.print("\", Running: ");
+            Serial.println(cutMotor->isRunning() ? "YES" : "NO");
+            lastSegmentDebugTime = millis();
         }
     }
     
@@ -377,12 +341,13 @@ void handleCuttingStep2() {
     }
     
     // Check if motor finished moving to cut position
-    if (cutMotor && !cutMotor->isRunning()) {
+    if (cutMotor && !cutMotor->isRunning() && !reverseAccelCurveActive) {
         Serial.println("Cut cycle complete - transitioning to return sequence");
         configureCutMotorForReturn();
         
-        // Reset reverse acceleration curve tracking
-        reverseAccelCurveActive = false;
+        // Reset all tracking variables
+        currentSegment = 0;
+        segmentTransitionPending = false;
         firstSegmentComplete = false;
         middleSegmentComplete = false;
         finalSegmentStarted = false;
@@ -660,6 +625,10 @@ void resetCuttingSteps() {
     firstSegmentComplete = false;
     middleSegmentComplete = false;
     finalSegmentStarted = false;
+    
+    // Reset multi-segment variables
+    currentSegment = 0;
+    segmentTransitionPending = false;
     
     // Reset gradual speed transition variables
     currentCutMotorSpeed = 0;

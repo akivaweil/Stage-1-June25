@@ -268,7 +268,7 @@ void handleCuttingStep2() {
             if (!firstSegmentComplete && currentPositionInches >= CUT_MOTOR_TRANSITION_START_OFFSET) {
                 if (!transitioningToSlow) {
                     transitioningToSlow = true;
-                    Serial.println("// Starting gradual transition to slow speed");
+                    Serial.println("// Starting immediate transition to slow speed");
                 }
                 
                 // Calculate how far through the transition we are (0.0 to 1.0)
@@ -279,15 +279,8 @@ void handleCuttingStep2() {
                 // Interpolate between fast and slow speeds
                 float targetSpeed = CUT_MOTOR_FAST_SPEED + (CUT_MOTOR_SLOW_SPEED - CUT_MOTOR_FAST_SPEED) * transitionProgress;
                 
-                // Gradually adjust current speed toward target
-                if (currentCutMotorSpeed > targetSpeed) {
-                    currentCutMotorSpeed -= CUT_MOTOR_SPEED_CHANGE_STEP;
-                    if (currentCutMotorSpeed < targetSpeed) currentCutMotorSpeed = targetSpeed;
-                } else if (currentCutMotorSpeed < targetSpeed) {
-                    currentCutMotorSpeed += CUT_MOTOR_SPEED_CHANGE_STEP;
-                    if (currentCutMotorSpeed > targetSpeed) currentCutMotorSpeed = targetSpeed;
-                }
-                
+                // Set motor speed immediately to target speed
+                currentCutMotorSpeed = targetSpeed;
                 cutMotor->setSpeedInHz((uint32_t)currentCutMotorSpeed);
                 
                 // Debug output for speed changes
@@ -304,7 +297,7 @@ void handleCuttingStep2() {
                 if (currentPositionInches >= CUT_MOTOR_TRANSITION_COMPLETE_OFFSET) {
                     firstSegmentComplete = true;
                     transitioningToSlow = false;
-                    Serial.println("// Gradual transition to slow speed complete");
+                    Serial.println("// Immediate transition to slow speed complete");
                 }
             }
             
@@ -313,7 +306,7 @@ void handleCuttingStep2() {
                      currentPositionInches >= (CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_COMPLETE_OFFSET)) {
                 if (!transitioningToFast) {
                     transitioningToFast = true;
-                    Serial.println("// Starting gradual transition to fast speed");
+                    Serial.println("// Starting immediate transition to fast speed");
                 }
                 
                 // Calculate transition progress for second transition
@@ -326,15 +319,8 @@ void handleCuttingStep2() {
                 // Interpolate between slow and fast speeds
                 float targetSpeed = CUT_MOTOR_SLOW_SPEED + (CUT_MOTOR_FAST_SPEED - CUT_MOTOR_SLOW_SPEED) * transitionProgress;
                 
-                // Gradually adjust current speed toward target
-                if (currentCutMotorSpeed > targetSpeed) {
-                    currentCutMotorSpeed -= CUT_MOTOR_SPEED_CHANGE_STEP;
-                    if (currentCutMotorSpeed < targetSpeed) currentCutMotorSpeed = targetSpeed;
-                } else if (currentCutMotorSpeed < targetSpeed) {
-                    currentCutMotorSpeed += CUT_MOTOR_SPEED_CHANGE_STEP;
-                    if (currentCutMotorSpeed > targetSpeed) currentCutMotorSpeed = targetSpeed;
-                }
-                
+                // Set motor speed immediately to target speed
+                currentCutMotorSpeed = targetSpeed;
                 cutMotor->setSpeedInHz((uint32_t)currentCutMotorSpeed);
                 
                 // Debug output for speed changes
@@ -352,7 +338,7 @@ void handleCuttingStep2() {
                     middleSegmentComplete = true;
                     finalSegmentStarted = true;
                     transitioningToFast = false;
-                    Serial.println("// Gradual transition to fast speed complete");
+                    Serial.println("// Immediate transition to fast speed complete");
                 }
             }
             

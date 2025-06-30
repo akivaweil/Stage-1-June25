@@ -36,8 +36,8 @@ const float CUT_MOTOR_NORMAL_SPEED = 850;      // Speed for the cutting pass (st
 const float CUT_MOTOR_NORMAL_ACCELERATION = 25000; // Acceleration for the cutting pass (steps/sec^2)
 
 // Reverse Acceleration Curve Settings (Cutting State)
-const float CUT_MOTOR_FAST_SPEED = 1000;       // Speed for first and last 2.5 inches (steps/sec)
-const float CUT_MOTOR_SLOW_SPEED = 750;        // Speed for middle section (steps/sec)
+const float CUT_MOTOR_FAST_SPEED = 3000;       // Speed for first and last 2.5 inches (steps/sec)
+const float CUT_MOTOR_SLOW_SPEED = 100;        // Speed for middle section (steps/sec)
 const float CUT_MOTOR_TRANSITION_DISTANCE = 2.5; // Distance for fast speed sections (inches)
 
 // Gradual Speed Transition Settings

@@ -141,13 +141,13 @@ void handleCuttingStep1() {
         if (digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == LOW) {
             //serial.println("Cutting Step 1: No suction detected after cut motor traveled required distance. Error detected. Returning cut motor home before manual reset.");
             
-            // Stop feed motor immediately but return cut motor home safely
+            // Stop feed motor with controlled deceleration but return cut motor home safely
             FastAccelStepper* cutMotor = getCutMotor();
             FastAccelStepper* feedMotor = getFeedMotor();
             
             if (feedMotor && feedMotor->isRunning()) {
-                feedMotor->forceStop();
-                //serial.println("Feed motor stopped due to suction error.");
+                feedMotor->stopMove(); // Use controlled deceleration instead of force stop
+                //serial.println("Feed motor stopping with deceleration due to suction error.");
             }
             
             // Configure cut motor for safe return home

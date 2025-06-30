@@ -69,14 +69,14 @@ void handleReturningYes2x4Sequence() {
     Serial.println(returningYes2x4SubStep);
     
     switch (returningYes2x4SubStep) {
-        case 0: // Execute feed motor return sequence
+        case 0: // Execute feed motor return sequence (without homing)
             handleFeedMotorReturnSequence();
             break;
             
-        case 1: // Wait for feed motor to complete return home
+        case 1: // Wait for feed motor to complete return movement (no homing)
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 2: FEED MOTOR HOME COMPLETE - ENGAGE FEED CLAMP
+                //! STEP 2: FEED MOTOR RETURN COMPLETE - ENGAGE FEED CLAMP
                 //! ************************************************************************
                 extendFeedClamp();
                 returningYes2x4SubStep = 2;
@@ -204,7 +204,7 @@ void handleReturningYes2x4Sequence() {
 //* ************************************************************************
 //* ****************** FEED MOTOR RETURN SEQUENCE **************************
 //* ************************************************************************
-// Handles the multi-step feed motor return sequence during simultaneous operation
+// Handles the feed motor return sequence during simultaneous operation (no homing)
 
 void handleFeedMotorReturnSequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
@@ -232,19 +232,15 @@ void handleFeedMotorReturnSequence() {
             }
             break;
             
-        case 2: // Start feed motor return to home
+        case 2: // Feed motor return sequence complete (no homing)
             //! ************************************************************************
-            //! STEP 8: RETURN FEED MOTOR TO HOME POSITION
+            //! STEP 8: FEED MOTOR RETURN SEQUENCE COMPLETE
             //! ************************************************************************
-            if (feedMotor) {
-                moveFeedMotorToHome();
-            }
+            Serial.println("DEBUG: Feed motor return sequence complete - no homing performed");
             returningYes2x4SubStep = 1;
             break;
     }
 }
-
-
 
 //* ************************************************************************
 //* ************************ UTILITY FUNCTIONS ****************************

@@ -33,7 +33,7 @@ const int FEED_HOMING_DIRECTION = 1;
 //* ************************************************************************
 // Normal Cutting Operation (Cutting State)
 const float CUT_MOTOR_NORMAL_SPEED = 700;      // Speed for the cutting pass (steps/sec)
-const float CUT_MOTOR_NORMAL_ACCELERATION = 18000; // Acceleration for the cutting pass (steps/sec^2)
+const float CUT_MOTOR_NORMAL_ACCELERATION = 25000; // Acceleration for the cutting pass (steps/sec^2)
 
 // Return Stroke (Returning State / End of Cutting State)
 const float CUT_MOTOR_RETURN_SPEED = 30000;     // Speed for returning after a cut (steps/sec)
@@ -105,4 +105,4 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for 
 const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
 const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
 const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
-const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.1; // Distance cut motor must travel before checking suction sensor 
+const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.5; // Distance cut motor must travel before checking suction sensor 

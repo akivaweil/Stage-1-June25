@@ -232,11 +232,13 @@ void handleFeedMotorReturnSequence() {
             }
             break;
             
-        case 2: // Feed motor return sequence complete (no homing)
+        case 2: // Start feed motor return to home
             //! ************************************************************************
-            //! STEP 8: FEED MOTOR RETURN SEQUENCE COMPLETE
+            //! STEP 8: RETURN FEED MOTOR TO HOME POSITION
             //! ************************************************************************
-            Serial.println("DEBUG: Feed motor return sequence complete - no homing performed");
+            if (feedMotor) {
+                moveFeedMotorToHome();
+            }
             returningYes2x4SubStep = 1;
             break;
     }

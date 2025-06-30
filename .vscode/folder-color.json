@@ -1,0 +1,73 @@
+{
+    "pathColors": [{
+            "folderPath": "src/",
+            "color": "foldercolorizer.color_0066cc",
+            "badge": "🏠"
+        },
+        {
+            "folderPath": "src/Config/",
+            "color": "foldercolorizer.color_00cc33",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "src/StateMachine/",
+            "color": "foldercolorizer.color_cc00cc",
+            "badge": "🔄"
+        },
+        {
+            "folderPath": "src/StateMachine/STATES/",
+            "color": "foldercolorizer.color_ffcc00",
+            "badge": "🔄"
+        },
+        {
+            "folderPath": "src/StateMachine/FUNCTIONS/",
+            "color": "foldercolorizer.color_00cc33",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "src/ErrorStates/",
+            "color": "foldercolorizer.color_ff0000",
+            "badge": "⚠️"
+        },
+        {
+            "folderPath": "src/OTAUpdater/",
+            "color": "foldercolorizer.color_ff6600",
+            "badge": "🔌"
+        },
+        {
+            "folderPath": "include/",
+            "color": "foldercolorizer.color_6600cc",
+            "badge": "💾"
+        },
+        {
+            "folderPath": "include/Config/",
+            "color": "foldercolorizer.color_00cc33",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "include/StateMachine/",
+            "color": "foldercolorizer.color_cc00cc",
+            "badge": "🔄"
+        },
+        {
+            "folderPath": "include/StateMachine/STATES/",
+            "color": "foldercolorizer.color_ffcc00",
+            "badge": "🔄"
+        },
+        {
+            "folderPath": "include/StateMachine/FUNCTIONS/",
+            "color": "foldercolorizer.color_00cc33",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "include/ErrorStates/",
+            "color": "foldercolorizer.color_ff0000",
+            "badge": "⚠️"
+        },
+        {
+            "folderPath": "include/OTAUpdater/",
+            "color": "foldercolorizer.color_ff6600",
+            "badge": "��"
+        }
+    ]
+}

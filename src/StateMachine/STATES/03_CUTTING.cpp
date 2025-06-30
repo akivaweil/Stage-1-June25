@@ -192,7 +192,7 @@ void handleCuttingStep1() {
                 return;
             } else {
                 // Suction OK - proceed with cutting
-                moveCutMotorToCutWithReverseAcceleration();
+                // Don't call moveCutMotorToCutWithReverseAcceleration() again - already started in step 0
                 
                 // Initialize reverse acceleration curve tracking if not already active
                 if (!reverseAccelCurveActive) {
@@ -200,6 +200,10 @@ void handleCuttingStep1() {
                     firstSegmentComplete = false;
                     middleSegmentComplete = false;
                     finalSegmentStarted = false;
+                    currentCutMotorSpeed = CUT_MOTOR_FAST_SPEED;
+                    transitioningToSlow = false;
+                    transitioningToFast = false;
+                    lastSpeedUpdateTime = millis();
                 }
                 
                 cuttingStep = 2;
@@ -208,7 +212,7 @@ void handleCuttingStep1() {
         } else {
             // Servo hasn't been activated yet - continue waiting or proceed normally
             // This handles the case where the cut motor reaches 1 inch before servo activation
-            moveCutMotorToCutWithReverseAcceleration();
+            // Don't call moveCutMotorToCutWithReverseAcceleration() again - already started in step 0
             
             // Initialize reverse acceleration curve tracking if not already active
             if (!reverseAccelCurveActive) {
@@ -216,6 +220,10 @@ void handleCuttingStep1() {
                 firstSegmentComplete = false;
                 middleSegmentComplete = false;
                 finalSegmentStarted = false;
+                currentCutMotorSpeed = CUT_MOTOR_FAST_SPEED;
+                transitioningToSlow = false;
+                transitioningToFast = false;
+                lastSpeedUpdateTime = millis();
             }
             
             cuttingStep = 2;
@@ -282,6 +290,16 @@ void handleCuttingStep2() {
                 
                 cutMotor->setSpeedInHz((uint32_t)currentCutMotorSpeed);
                 
+                // Debug output for speed changes
+                Serial.print("// Position: ");
+                Serial.print(currentPositionInches, 2);
+                Serial.print("\", Target: ");
+                Serial.print(targetSpeed, 0);
+                Serial.print(", Current: ");
+                Serial.print(currentCutMotorSpeed, 0);
+                Serial.print(", Progress: ");
+                Serial.println(transitionProgress, 2);
+                
                 // Mark first segment complete when we reach the slow speed
                 if (currentPositionInches >= CUT_MOTOR_TRANSITION_COMPLETE_OFFSET) {
                     firstSegmentComplete = true;
@@ -318,6 +336,16 @@ void handleCuttingStep2() {
                 }
                 
                 cutMotor->setSpeedInHz((uint32_t)currentCutMotorSpeed);
+                
+                // Debug output for speed changes
+                Serial.print("// Position: ");
+                Serial.print(currentPositionInches, 2);
+                Serial.print("\", Target: ");
+                Serial.print(targetSpeed, 0);
+                Serial.print(", Current: ");
+                Serial.print(currentCutMotorSpeed, 0);
+                Serial.print(", Progress: ");
+                Serial.println(transitionProgress, 2);
                 
                 // Mark middle segment complete when we reach the fast speed again
                 if (currentPositionInches >= (CUT_TRAVEL_DISTANCE - CUT_MOTOR_TRANSITION_START_OFFSET)) {

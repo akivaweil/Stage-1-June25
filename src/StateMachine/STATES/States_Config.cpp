@@ -78,7 +78,7 @@ const unsigned long TA_SIGNAL_DURATION = 500; // Duration for Transfer Arm signa
 const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
 
 // Rotation servo early activation offset
-const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.4;
+const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.5;
 
 // Transfer Arm signal early activation offset
 const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.3;
@@ -105,4 +105,4 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for 
 const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
 const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
 const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
-const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 1.5; // Distance cut motor must travel before checking suction sensor 
+const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 1.8; // Distance cut motor must travel before checking suction sensor 

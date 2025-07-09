@@ -78,7 +78,7 @@ const unsigned long TA_SIGNAL_DURATION = 500; // Duration for Transfer Arm signa
 const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.6; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
 
 // Rotation servo early activation offset
-const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.5;
+const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.4;
 
 // Transfer Arm signal early activation offset
 const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.3;

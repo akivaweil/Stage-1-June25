@@ -88,7 +88,7 @@ bool cutMotorInReturningYes2x4Return = false;
 
 void setup() {
   Serial.begin(115200);
-  //serial.println("Automated Table Saw Control System - Stage 1");
+  Serial.println("Automated Table Saw Control System - Stage 1");
   
   setupOTA();
 

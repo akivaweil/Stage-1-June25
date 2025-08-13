@@ -123,9 +123,9 @@ void setupOTA() {
 
   ArduinoOTA.begin();
 
-  //serial.println("OTA Initialized");
-  //serial.print("IP address: ");
-  //serial.println(WiFi.localIP());
+  Serial.println("OTA Initialized");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 void handleOTA() {

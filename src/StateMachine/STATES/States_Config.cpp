@@ -20,7 +20,7 @@ const int ROTATION_SERVO_ACTIVE_POSITION = 90;   // Position when activated (deg
 const float CUT_MOTOR_STEPS_PER_INCH = 500.0;  // 4x increase from 38
 const float FEED_MOTOR_STEPS_PER_INCH = 1000.0; // Steps per inch for feed motor
 const float CUT_TRAVEL_DISTANCE = 9.1; // inches
-const float FEED_TRAVEL_DISTANCE = 3.05; // inches (3.4 for 3 inch squares and 3.25 for 2.65 inch squares)
+const float FEED_TRAVEL_DISTANCE = 3.4; // inches (3.4 for 3 inch squares and 3.25 for 2.65 inch squares)
 const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1; // Inches for incremental reverse
 const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4; // Max inches for incremental reverse before error
 
@@ -102,7 +102,7 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for 
 //* ************************ TIMING CONSTANTS *****************************
 //* ************************************************************************
 // Motor operation timing
-const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
+const unsigned long CUT_MOTOR_RECOVERY_TI14MEOUT_MS = 2000; // Timeout for cut motor recovery attempts
 const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
 const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
-const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 1.8; // Distance cut motor must travel before checking suction sensor 
+const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 1.8; // Distance cut motor must travel before checking suction sensor¨

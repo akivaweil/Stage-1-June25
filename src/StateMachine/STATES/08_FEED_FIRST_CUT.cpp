@@ -3,6 +3,19 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 
 //* ************************************************************************
+//* ************************ RELEVANT CONSTANTS **************************
+//* ************************************************************************
+// Feed motor movement constants for this state (specific to this state)
+const float FEED_MOTOR_NEGATIVE_POSITION = -1.35; // inches - position for retracting feed motor
+const float FEED_MOTOR_SECOND_RUN_OFFSET = 1.4; // inches - offset for second run final position
+
+// Timing constants for this state
+const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed clamp and retracting secure clamp
+
+// Note: FEED_TRAVEL_DISTANCE, FEED_MOTOR_STEPS_PER_INCH, FEED_CLAMP, _2x4_SECURE_CLAMP, 
+// and START_CYCLE_SWITCH are already defined in Config files and accessible via includes
+
+//* ************************************************************************
 //* ********************* FEED FIRST CUT STATE **************************
 //* ************************************************************************
 // Handles the feed first cut sequence when pushwood forward switch is pressed
@@ -93,8 +106,7 @@ void onExitFeedFirstCutState() {
 
 void executeFeedFirstCutStep() {
     FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_TRAVEL_DISTANCE;
-    // FEED_MOTOR_STEPS_PER_INCH is already declared in General_Functions.h
+    // FEED_TRAVEL_DISTANCE and FEED_MOTOR_STEPS_PER_INCH are now defined locally
 
     switch (currentStep) {
         case RETRACT_FEED_CLAMP:
@@ -105,7 +117,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_NEGATIVE_ONE:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(-1.0);
+                moveFeedMotorToPosition(FEED_MOTOR_NEGATIVE_POSITION);
                 //serial.println("FeedFirstCut: Moving feed motor to -1 inch");
                 advanceToNextFeedFirstCutStep();
             }
@@ -122,7 +134,7 @@ void executeFeedFirstCutStep() {
             break;
 
         case WAIT_200MS:
-            if (millis() - stepStartTime >= 200) {
+            if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
                 //serial.println("FeedFirstCut: Waiting 200ms");
                 advanceToNextFeedFirstCutStep();
             }
@@ -151,7 +163,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_NEGATIVE_TWO:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(-1.35);
+                moveFeedMotorToPosition(FEED_MOTOR_NEGATIVE_POSITION);
                 //serial.println("FeedFirstCut: Moving feed motor to -2.25 inch (second run)");
                 advanceToNextFeedFirstCutStep();
             }
@@ -168,7 +180,7 @@ void executeFeedFirstCutStep() {
             break;
 
         case WAIT_200MS_SECOND:
-            if (millis() - stepStartTime >= 200) {
+            if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
                 //serial.println("FeedFirstCut: Waiting 200ms (second run)");
                 advanceToNextFeedFirstCutStep();
             }
@@ -176,7 +188,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - 1.4);
+                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - FEED_MOTOR_SECOND_RUN_OFFSET);
                 //serial.println("FeedFirstCut: Moving feed motor to travel distance minus 2.75 inches");
                 advanceToNextFeedFirstCutStep();
             }

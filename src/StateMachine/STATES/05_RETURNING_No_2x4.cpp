@@ -127,9 +127,9 @@ void handleReturningNo2x4Step(int step) {
             }
             break;
             
-        case 3: // Was original returningNo2x4Step 2: move feed motor to 2.0 inches
+        case 3: // Was original returningNo2x4Step 2: move feed motor to 0 inches
             configureFeedMotorForNormalOperation(); // Ensure correct config
-            moveFeedMotorToPosition(2.0);
+            moveFeedMotorToPosition(0.0);
             returningNo2x4Step = 4; // Directly advance step here as it's a command
             break;
             

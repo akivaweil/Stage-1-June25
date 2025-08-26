@@ -9,6 +9,11 @@
 // Handles the RETURNING_NO_2x4 cutting sequence when no wood is detected.
 // This state manages the multi-step process for handling material that doesn't trigger the wood sensor.
 
+//* ************************************************************************
+//* ******************** RETURNING STATE CONFIGURATION ********************
+//* ************************************************************************
+// Return stroke motor speed settings - defined in Config.h
+
 // Function declarations for RETURNING_NO_2x4 state
 void executeReturningNo2x4State();
 void onEnterReturningNo2x4State();

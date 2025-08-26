@@ -36,6 +36,26 @@
 
 #include "Arduino.h"
 
+//* ************************************************************************
+//* ************************ SERVO CONFIGURATION **************************
+//* ************************************************************************
+// Rotation servo position settings
+const int ROTATION_SERVO_HOME_POSITION = 25;     // Home position (degrees)
+const int ROTATION_SERVO_ACTIVE_POSITION = 90;   // Position when activated (degrees)
+
+// Servo timing configuration
+const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2300;
+
+// Rotation clamp timing
+const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 1800; // (was 1500)2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
+
+// Transfer Arm signal timing
+const unsigned long TA_SIGNAL_DURATION = 500; // Duration for Transfer Arm signal (ms)
+
+// Safety constants
+const unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000; // 3 seconds - threshold for extended wait due to failure to suction
+const unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 3000; // 2 seconds - additional safety delay before returning servo to home
+
 class ServoBase {
    protected:
     // The main purpose of ServoBase is to make sure that multiple instances of

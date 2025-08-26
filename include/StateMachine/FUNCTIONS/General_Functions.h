@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <Bounce2.h>
 #include <FastAccelStepper.h>
+#include "StateMachine/FUNCTIONS/Motor_Config.h"
+#include "Config/Config.h"
 // #include <ESP32Servo.h> // Removed - using function-based PWM control instead
 
 // Forward declarations and external variable references
@@ -67,24 +69,6 @@ extern const int STATUS_LED_RED;
 extern const int STATUS_LED_YELLOW;
 extern const int STATUS_LED_GREEN;
 extern const int STATUS_LED_BLUE;
-extern const int ROTATION_SERVO_ACTIVE_POSITION;
-extern const int ROTATION_SERVO_HOME_POSITION;
-extern const unsigned long TA_SIGNAL_DURATION;
-extern const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
-extern const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
-extern const float CUT_TRAVEL_DISTANCE;
-extern const float FEED_TRAVEL_DISTANCE;
-extern const float CUT_MOTOR_STEPS_PER_INCH;
-extern const float FEED_MOTOR_STEPS_PER_INCH;
-extern const float CUT_MOTOR_NORMAL_SPEED;
-extern const float CUT_MOTOR_RETURN_SPEED;
-extern const float CUT_MOTOR_HOMING_SPEED;
-extern const float CUT_MOTOR_NORMAL_ACCELERATION;
-extern const float FEED_MOTOR_NORMAL_SPEED;
-extern const float FEED_MOTOR_RETURN_SPEED;
-extern const float FEED_MOTOR_HOMING_SPEED;
-extern const float FEED_MOTOR_NORMAL_ACCELERATION;
-extern const float FEED_MOTOR_RETURN_ACCELERATION;
 
 //* ************************************************************************
 //* *********************** SIGNALING FUNCTIONS ****************************

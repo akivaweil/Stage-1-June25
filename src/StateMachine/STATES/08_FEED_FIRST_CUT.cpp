@@ -1,6 +1,7 @@
 #include "StateMachine/08_FEED_FIRST_CUT.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include <math.h>
 
 //* ************************************************************************
 //* ********************* FEED FIRST CUT STATE **************************
@@ -8,185 +9,76 @@
 // Handles the feed first cut sequence when pushwood forward switch is pressed
 // in idle state AND 2x4 sensor reads high.
 
-//! ************************************************************************
-//! STEP 1: RETRACT FEED CLAMP
-//! ************************************************************************
+// Configuration variables - easily adjustable
+const float TOTAL_WOOD_MOVEMENT = 5.0;        // Total distance wood actually moves forward (inches)
+const float BALL_SCREW_TRAVEL = 4.0;         // Maximum ball screw travel (inches)
+const float PASS_OVERLAP = 0.1;              // Overlap between passes (inches)
+const unsigned long CLAMP_DELAY_MS = 300;     // Delay after clamp operations (ms)
 
-//! ************************************************************************
-//! STEP 2: MOVE TO NEGATIVE ONE INCH
-//! ************************************************************************
+// Calculate number of passes needed
+const int TOTAL_PASSES = ceil((TOTAL_WOOD_MOVEMENT + PASS_OVERLAP) / (BALL_SCREW_TRAVEL - PASS_OVERLAP));
 
-//! ************************************************************************
-//! STEP 3: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 4: WAIT 200MS
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 5: MOVE TO TRAVEL DISTANCE
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 6: FIRST RUN COMPLETE - PREPARE FOR SECOND RUN
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 7: RETRACT FEED CLAMP (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 8: MOVE TO NEGATIVE 1.35 INCHES (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 9: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 10: WAIT 200MS (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 11: MOVE TO TRAVEL DISTANCE MINUS 1.4 INCHES
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 12: CHECK START CYCLE SWITCH AND TRANSITION TO APPROPRIATE STATE
-//! ************************************************************************
-
-// Static variables for feed first cut state tracking
+// State tracking
 enum FeedFirstCutStep {
-    RETRACT_FEED_CLAMP,
-    MOVE_TO_NEGATIVE_ONE,
-    EXTEND_FEED_CLAMP_RETRACT_SECURE,
-    WAIT_200MS,
-    MOVE_TO_TRAVEL_DISTANCE,
-    FIRST_RUN_COMPLETE,
-    RETRACT_FEED_CLAMP_SECOND,
-    MOVE_TO_NEGATIVE_TWO,
-    EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND,
-    WAIT_200MS_SECOND,
-    MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75,
-    CHECK_START_CYCLE_SWITCH
+    INIT,
+    FEED_PASS,
+    COMPLETE
 };
 
-static FeedFirstCutStep currentStep = RETRACT_FEED_CLAMP;
+static FeedFirstCutStep currentStep = INIT;
+static int currentPass = 0;
 static unsigned long stepStartTime = 0;
+static bool isFirstPass = true;
 
 void executeFeedFirstCutState() {
     executeFeedFirstCutStep();
 }
 
 void onEnterFeedFirstCutState() {
-    currentStep = RETRACT_FEED_CLAMP;
+    currentStep = INIT;
+    currentPass = 0;
     stepStartTime = 0;
+    isFirstPass = true;
     //serial.println("FeedFirstCut: Starting feed first cut sequence");
 }
 
 void onExitFeedFirstCutState() {
-    currentStep = RETRACT_FEED_CLAMP;
+    currentStep = INIT;
+    currentPass = 0;
     stepStartTime = 0;
-    //serial.println("FeedFirstCut: Feed clamp retracted");
+    isFirstPass = false;
+    //serial.println("FeedFirstCut: Sequence complete");
 }
 
 void executeFeedFirstCutStep() {
     FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_TRAVEL_DISTANCE;
-    // FEED_MOTOR_STEPS_PER_INCH is already declared in General_Functions.h
+    
+    if (!feedMotor) return;
 
     switch (currentStep) {
-        case RETRACT_FEED_CLAMP:
-            retractFeedClamp();
-            //serial.println("FeedFirstCut: Feed clamp retracted");
-            advanceToNextFeedFirstCutStep();
+        case INIT:
+            // Start first pass
+            currentPass = 1;
+            currentStep = FEED_PASS;
+            executeFeedPass();
             break;
 
-        case MOVE_TO_NEGATIVE_ONE:
-            if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(-1.0);
-                //serial.println("FeedFirstCut: Moving feed motor to -1 inch");
-                advanceToNextFeedFirstCutStep();
+        case FEED_PASS:
+            if (!feedMotor->isRunning()) {
+                if (currentPass < TOTAL_PASSES) {
+                    // Move to next pass
+                    currentPass++;
+                    executeFeedPass();
+                } else {
+                    // All passes complete
+                    currentStep = COMPLETE;
+                }
             }
             break;
 
-        case EXTEND_FEED_CLAMP_RETRACT_SECURE:
-            if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp();
-                retract2x4SecureClamp();
-                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
-                stepStartTime = millis();
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case WAIT_200MS:
-            if (millis() - stepStartTime >= 200) {
-                //serial.println("FeedFirstCut: Waiting 200ms");
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case MOVE_TO_TRAVEL_DISTANCE:
-            if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                //serial.println("FeedFirstCut: Moving feed motor to travel distance");
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case FIRST_RUN_COMPLETE:
-            if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("FeedFirstCut: First run complete, starting second run");
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case RETRACT_FEED_CLAMP_SECOND:
-            retractFeedClamp();
-            //serial.println("FeedFirstCut: Feed clamp retracted (second run)");
-            advanceToNextFeedFirstCutStep();
-            break;
-
-        case MOVE_TO_NEGATIVE_TWO:
-            if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(-1.35);
-                //serial.println("FeedFirstCut: Moving feed motor to -2.25 inch (second run)");
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND:
-            if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp();
-                retract2x4SecureClamp();
-                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
-                stepStartTime = millis();
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case WAIT_200MS_SECOND:
-            if (millis() - stepStartTime >= 200) {
-                //serial.println("FeedFirstCut: Waiting 200ms (second run)");
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
-            if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - 1.4);
-                //serial.println("FeedFirstCut: Moving feed motor to travel distance minus 2.75 inches");
-                advanceToNextFeedFirstCutStep();
-            }
-            break;
-
-        case CHECK_START_CYCLE_SWITCH:
-            if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("FeedFirstCut: Checking start cycle switch for next state");
-                
-                // Check the start cycle switch state
+        case COMPLETE:
+            if (!feedMotor->isRunning()) {
+                // Check start cycle switch and transition to appropriate state
                 if (getStartCycleSwitch()->read() == HIGH) {
                     //serial.println("FeedFirstCut: Start cycle switch HIGH - transitioning to CUTTING state");
                     changeState(CUTTING);
@@ -203,7 +95,87 @@ void executeFeedFirstCutStep() {
     }
 }
 
-void advanceToNextFeedFirstCutStep() {
-    currentStep = static_cast<FeedFirstCutStep>(static_cast<int>(currentStep) + 1);
-    stepStartTime = 0; // Reset step timer
+void executeFeedPass() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    if (!feedMotor) return;
+
+    // Calculate distances for this pass
+    float startPosition, endPosition;
+    
+    if (isFirstPass) {
+        // First pass: start from current position, move forward
+        startPosition = 0;
+        endPosition = min(TOTAL_WOOD_MOVEMENT, BALL_SCREW_TRAVEL - PASS_OVERLAP);
+        isFirstPass = false;
+    } else {
+        // Subsequent passes: start from previous end minus overlap, move forward
+        float previousEnd = (currentPass - 1) * (BALL_SCREW_TRAVEL - PASS_OVERLAP);
+        startPosition = previousEnd - PASS_OVERLAP;
+        endPosition = min(TOTAL_WOOD_MOVEMENT, currentPass * (BALL_SCREW_TRAVEL - PASS_OVERLAP));
+    }
+
+    // Execute the pass sequence
+    executeSinglePass(startPosition, endPosition);
+}
+
+void executeSinglePass(float startPos, float endPos) {
+    static enum PassStep {
+        RETRACT_CLAMP,
+        MOVE_AWAY_FROM_HOME,
+        EXTEND_CLAMP,
+        WAIT_DELAY,
+        MOVE_FORWARD_TO_PUSH_WOOD
+    } passStep = RETRACT_CLAMP;
+    
+    static bool passStepInitialized = false;
+    
+    if (!passStepInitialized) {
+        passStep = RETRACT_CLAMP;
+        passStepInitialized = true;
+        stepStartTime = 0;
+    }
+
+    FastAccelStepper* feedMotor = getFeedMotor();
+    if (!feedMotor) return;
+
+    switch (passStep) {
+        case RETRACT_CLAMP:
+            retractFeedClamp();
+            retract2x4SecureClamp();
+            passStep = MOVE_AWAY_FROM_HOME;
+            break;
+
+        case MOVE_AWAY_FROM_HOME:
+            if (!feedMotor->isRunning()) {
+                // Move feed motor away from home sensor to create space
+                moveFeedMotorToPosition(BALL_SCREW_TRAVEL - PASS_OVERLAP);
+                passStep = EXTEND_CLAMP;
+            }
+            break;
+
+        case EXTEND_CLAMP:
+            if (!feedMotor->isRunning()) {
+                extendFeedClamp();
+                retract2x4SecureClamp();
+                stepStartTime = millis();
+                passStep = WAIT_DELAY;
+            }
+            break;
+
+        case WAIT_DELAY:
+            if (millis() - stepStartTime >= CLAMP_DELAY_MS) {
+                passStep = MOVE_FORWARD_TO_PUSH_WOOD;
+            }
+            break;
+
+        case MOVE_FORWARD_TO_PUSH_WOOD:
+            if (!feedMotor->isRunning()) {
+                // Move forward to push wood the calculated distance
+                float woodPushDistance = endPos - startPos;
+                moveFeedMotorToPosition(BALL_SCREW_TRAVEL - PASS_OVERLAP - woodPushDistance);
+                // Reset for next pass
+                passStepInitialized = false;
+            }
+            break;
+    }
 }

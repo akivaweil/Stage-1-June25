@@ -81,7 +81,6 @@ void executeHomingState() {
 
     if (!cutMotorHomed) {
         //serial.println("Starting cut motor homing phase (blocking)...");
-        extern const unsigned long CUT_HOME_TIMEOUT; // This is in main.cpp
         homeCutMotorBlocking(*getCutHomingSwitch(), CUT_HOME_TIMEOUT);
         if (getCutMotor() && getCutMotor()->getCurrentPosition() == 0) { // Check if homing was successful
             cutMotorHomed = true;

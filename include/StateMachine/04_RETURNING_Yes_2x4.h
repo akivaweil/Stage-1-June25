@@ -10,6 +10,11 @@
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
 // Includes cut motor error handling with timeout and recovery logic.
 
+//* ************************************************************************
+//* ******************** RETURNING STATE CONFIGURATION ********************
+//* ************************************************************************
+// Return stroke motor speed settings - defined in Config.h
+
 // Function declarations for RETURNING_YES_2x4 state
 void executeReturningYes2x4State();
 void onEnterReturningYes2x4State();

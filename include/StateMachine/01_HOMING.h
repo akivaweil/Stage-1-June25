@@ -9,6 +9,11 @@
 // Function-based homing state handling.
 // Handles the homing sequence for all motors.
 
+//* ************************************************************************
+//* ************************ HOMING STATE CONFIGURATION *******************
+//* ************************************************************************
+// Motor settings - defined in Config.h
+
 void executeHomingState();
 void onEnterHomingState();
 void onExitHomingState();

@@ -1,7 +1,6 @@
 #include "StateMachine/03_CUTTING.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
-#include "StateMachine/STATES/States_Config.h"
 
 //* ************************************************************************
 //* ************************** CUTTING STATE *******************************
@@ -268,8 +267,6 @@ void handleCuttingStep4() {
     //serial.println("Cutting Step 4: (Logic moved to Step 7 for wood path) Feed motor at home (0).");
     FastAccelStepper* feedMotor = getFeedMotor();
     FastAccelStepper* cutMotor = getCutMotor();
-    extern const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES; // From main.cpp
-    extern const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES; // From main.cpp
     // CUT_MOTOR_STEPS_PER_INCH, FEED_TRAVEL_DISTANCE are already declared in General_Functions.h
     
     if (feedMotor && !feedMotor->isRunning()) {
@@ -342,7 +339,6 @@ void handleCuttingStep5() {
 
 void handleCuttingStep8_FeedMotorHomingSequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_MOTOR_HOMING_SPEED; // From main.cpp
     // FEED_TRAVEL_DISTANCE and FEED_MOTOR_STEPS_PER_INCH are already declared in General_Functions.h
     
     // Non-blocking feed motor homing sequence

@@ -4,8 +4,8 @@
 #include <FastAccelStepper.h>
 #include <Bounce2.h>
 #include "StateMachine/FUNCTIONS/General_Functions.h"
-#include "StateMachine/STATES/States_Config.h"
 #include "StateMachine/StateManager.h"
+#include "Config/Config.h"
 
 // External motor object references from main.cpp
 extern FastAccelStepper* cutMotor;

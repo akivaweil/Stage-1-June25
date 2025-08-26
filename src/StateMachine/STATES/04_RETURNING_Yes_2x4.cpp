@@ -5,7 +5,6 @@
 #include "../../../include/StateMachine/StateManager.h"
 #include "../../../include/StateMachine/FUNCTIONS/General_Functions.h"
 #include "../../../include/Config/Pins_Definitions.h"
-#include "../../../include/StateMachine/STATES/States_Config.h"
 
 //* ************************************************************************
 //* ******************** RETURNING YES 2X4 STATE **************************
@@ -69,7 +68,6 @@ void onExitReturningYes2x4State() {
 void handleReturningYes2x4Sequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
     FastAccelStepper* cutMotor = getCutMotor();
-    extern const float FEED_TRAVEL_DISTANCE;
     extern bool cutMotorInReturningYes2x4Return;
     
     switch (returningYes2x4SubStep) {

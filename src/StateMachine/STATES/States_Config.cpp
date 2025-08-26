@@ -102,7 +102,7 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for 
 //* ************************ TIMING CONSTANTS *****************************
 //* ************************************************************************
 // Motor operation timing
-const unsigned long CUT_MOTOR_RECOVERY_TI14MEOUT_MS = 2000; // Timeout for cut motor recovery attempts
+const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
 const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
 const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
 const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 1.8; // Distance cut motor must travel before checking suction sensor¨

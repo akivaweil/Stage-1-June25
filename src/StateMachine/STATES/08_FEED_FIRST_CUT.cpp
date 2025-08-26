@@ -103,16 +103,22 @@ void executeFeedPass() {
     float startPosition, endPosition;
     
     if (isFirstPass) {
-        // First pass: start from current position, move forward
+        // First pass: start from 0, move forward by ball screw travel minus overlap
         startPosition = 0;
-        endPosition = min(TOTAL_WOOD_MOVEMENT, BALL_SCREW_TRAVEL - PASS_OVERLAP);
+        endPosition = BALL_SCREW_TRAVEL - PASS_OVERLAP; // 3.9 inches
         isFirstPass = false;
+        //serial.println("FeedFirstCut: First pass - moving wood from 0 to 3.9 inches");
     } else {
-        // Subsequent passes: start from previous end minus overlap, move forward
-        float previousEnd = (currentPass - 1) * (BALL_SCREW_TRAVEL - PASS_OVERLAP);
-        startPosition = previousEnd - PASS_OVERLAP;
-        endPosition = min(TOTAL_WOOD_MOVEMENT, currentPass * (BALL_SCREW_TRAVEL - PASS_OVERLAP));
+        // Subsequent passes: start from previous end minus overlap, move forward by remaining distance
+        float previousEnd = BALL_SCREW_TRAVEL - PASS_OVERLAP; // 3.9 inches from first pass
+        startPosition = previousEnd - PASS_OVERLAP; // 3.8 inches
+        endPosition = TOTAL_WOOD_MOVEMENT; // 5.0 inches (full target distance)
+        //serial.println("FeedFirstCut: Second pass - moving wood from 3.8 to 5.0 inches");
     }
+
+    //serial.print("FeedFirstCut: Pass "); serial.print(currentPass); 
+    //serial.print(" - Start: "); serial.print(startPosition, 1); 
+    //serial.print(" End: "); serial.println(endPosition, 1);
 
     // Execute the pass sequence
     executeSinglePass(startPosition, endPosition);

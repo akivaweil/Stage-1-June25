@@ -26,6 +26,5 @@ void onExitFeedFirstCutState();
 // Helper function declarations
 void executeFeedFirstCutStep();
 void executeFeedPass();
-void executeSinglePass(float startPos, float endPos);
 
 #endif // FEED_FIRST_CUT_H 

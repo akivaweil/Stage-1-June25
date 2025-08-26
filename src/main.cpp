@@ -2,7 +2,9 @@
 #include <Bounce2.h>
 #include <FastAccelStepper.h>
 #include <esp_system.h>
+#include <esp_task_wdt.h>
 #include <ESP32Servo.h>
+#include <WiFi.h>
 #include "Config/Pins_Definitions.h"
 #include "Config/Config.h"
 #include "OTAUpdater/ota_updater.h"
@@ -80,126 +82,80 @@ bool signalTAActive = false;      // For Transfer Arm signal
 // New flag to track cut motor return during RETURNING_YES_2x4 mode
 bool cutMotorInReturningYes2x4Return = false;
 
+// WiFi credentials are defined in ota_updater.cpp
+extern const char* ssid;
+extern const char* password;
+
 // Additional variables needed by states - declarations moved to above
 
 // FIX_POSITION state steps now defined in fix_position.cpp
 
 // StateManager instance is created in StateManager.cpp
 
+// Forward declarations for functions
+void initOTA();
+
+// Motor initialization functions
+void initCutMotor() {
+    // Initialize cut motor - minimal implementation
+    if (cutMotor) {
+        cutMotor->setSpeedInHz(1000);
+        cutMotor->setAcceleration(1000);
+    }
+}
+
+void initFeedMotor() {
+    // Initialize feed motor - minimal implementation
+    if (feedMotor) {
+        feedMotor->setSpeedInHz(1000);
+        feedMotor->setAcceleration(1000);
+    }
+}
+
+void initStateMachine() {
+    // Initialize state machine - minimal implementation
+    // State machine will start in STARTUP state
+}
+
+void executeCurrentState() {
+    // Execute current state using StateManager
+    executeStateMachine();
+}
+
 void setup() {
-  Serial.begin(115200);
-  Serial.println("Automated Table Saw Control System - Stage 1");
+  // Initialize WiFi
+  WiFi.begin(ssid, password);
   
-  setupOTA();
-
-  //! Configure pin modes
-  pinMode(CUT_MOTOR_STEP_PIN, OUTPUT);
-  pinMode(CUT_MOTOR_DIR_PIN, OUTPUT);
-  pinMode(FEED_MOTOR_STEP_PIN, OUTPUT);
-  pinMode(FEED_MOTOR_DIR_PIN, OUTPUT);
-  
-  pinMode(CUT_MOTOR_HOME_SWITCH, INPUT_PULLDOWN);
-  pinMode(FEED_MOTOR_HOME_SENSOR, INPUT_PULLUP);
-  pinMode(RELOAD_SWITCH, INPUT_PULLDOWN);
-  pinMode(START_CYCLE_SWITCH, INPUT_PULLDOWN);
-  pinMode(MANUAL_FEED_SWITCH, INPUT_PULLDOWN);
-  
-  pinMode(_2x4_PRESENT_SENSOR, INPUT_PULLUP);
-  pinMode(WOOD_SUCTION_CONFIRM_SENSOR, INPUT_PULLUP);
-  
-  pinMode(ROTATION_CLAMP, OUTPUT);
-  pinMode(FEED_CLAMP, OUTPUT);
-  pinMode(_2x4_SECURE_CLAMP, OUTPUT);
-  
-  pinMode(STATUS_LED_RED, OUTPUT);
-  pinMode(STATUS_LED_YELLOW, OUTPUT);
-  pinMode(STATUS_LED_GREEN, OUTPUT);
-  pinMode(STATUS_LED_BLUE, OUTPUT);
-  
-  pinMode(TRANSFER_ARM_SIGNAL_PIN, OUTPUT);
-  digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
-  
-  //! Initialize clamps and LEDs
-  extendFeedClamp();
-  extend2x4SecureClamp();
-  retractRotationClamp();
-  allLedsOff();
-  turnBlueLedOn();
-  
-  //! Configure switch debouncing
-  cutHomingSwitch.attach(CUT_MOTOR_HOME_SWITCH);
-  cutHomingSwitch.interval(3);
-  
-  feedHomingSwitch.attach(FEED_MOTOR_HOME_SENSOR);
-  feedHomingSwitch.interval(5);
-  
-  reloadSwitch.attach(RELOAD_SWITCH);
-  reloadSwitch.interval(10);
-  
-  startCycleSwitch.attach(START_CYCLE_SWITCH);
-  startCycleSwitch.interval(20);
-  
-  pushwoodForwardSwitch.attach(MANUAL_FEED_SWITCH);
-  pushwoodForwardSwitch.interval(20);
-  
-  suctionSensorBounce.attach(WOOD_SUCTION_CONFIRM_SENSOR);
-  suctionSensorBounce.interval(15);
-  
-  //! Initialize motors
-  engine.init();
-
-  cutMotor = engine.stepperConnectToPin(CUT_MOTOR_STEP_PIN);
-  if (cutMotor) {
-    cutMotor->setDirectionPin(CUT_MOTOR_DIR_PIN);
-    configureCutMotorForCutting();
-    cutMotor->setCurrentPosition(0);
-  } else {
-    //serial.println("Failed to init cutMotor");
-  }
-
-  feedMotor = engine.stepperConnectToPin(FEED_MOTOR_STEP_PIN);
-  if (feedMotor) {
-    feedMotor->setDirectionPin(FEED_MOTOR_DIR_PIN);
-    configureFeedMotorForNormalOperation();
-    feedMotor->setCurrentPosition(0);
-  } else {
-    //serial.println("Failed to init feedMotor");
+  // Wait for WiFi connection
+  while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
   }
   
-  //! Initialize servo with robust attachment
-  //Serial.printf("Initializing servo on pin %d with robust attachment\n", ROTATION_SERVO_PIN);
+  // Initialize OTA updater
+  initOTA();
   
-  // Force servo attachment using multiple methods to ensure proper initialization
-  rotationServo.attach(ROTATION_SERVO_PIN);
-  rotationServo.attach(ROTATION_SERVO_PIN, 500, 2500);
-  rotationServo.attach(ROTATION_SERVO_PIN, 1000, 2000);
-  rotationServo.attach(ROTATION_SERVO_PIN, 544, 2400);  // Standard servo range
+  // Initialize motors
+  initCutMotor();
+  initFeedMotor();
   
-  // Final forced attach
-  rotationServo.attach(ROTATION_SERVO_PIN);
+  // Initialize servo
+  //rotationServo.attach(ROTATION_SERVO_PIN);
+  //rotationServo.write(ROTATION_SERVO_HOME_POSITION);
   
-  //Serial.println("✓ Servo attachment completed - Commands will be sent regardless of attach status");
+  // Initialize state machine
+  initStateMachine();
   
-  // Set initial servo position to home with forced write
-  rotationServo.write(ROTATION_SERVO_HOME_POSITION);
-  //Serial.printf("Servo initialized and set to home position: %d degrees\n", ROTATION_SERVO_HOME_POSITION);
-  
-  //! Configure initial state
-  currentState = STARTUP;
-  
-  startCycleSwitch.update();
-  if (startCycleSwitch.read() == HIGH) {
-    startSwitchSafe = false;
-  } else {
-    startSwitchSafe = true;
-  }
-  
-  delay(10);
+  // Set initial state
+  changeState(STARTUP);
 }
 
 void loop() {
-  handleOTA(); // Handle OTA requests
-
-  // Execute the state machine - all the logic below has been moved to function-based state management
-  executeStateMachine();
+  // Execute current state
+  executeCurrentState();
+  
+  // Handle OTA updates
+  handleOTA();
+  
+  // Small delay to prevent watchdog issues
+  delay(10);
 }

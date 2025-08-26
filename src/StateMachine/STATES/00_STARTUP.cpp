@@ -21,22 +21,24 @@
 //! ************************************************************************
 
 void executeStartupState() {
-    turnBlueLedOn();  // Blue LED on during startup/homing
-    
-    // Display IP address on startup
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-    
-    // Small delay to ensure IP is visible
-    delay(1000);
-    
-    changeState(HOMING);
+    // Wait for WiFi to be ready
+    if (WiFi.status() == WL_CONNECTED) {
+        // WiFi is connected, transition to HOMING state
+        changeState(HOMING);
+    }
 }
 
 void onEnterStartupState() {
-    // No specific entry actions for startup state
+    // Startup state entered
+    // Wait for WiFi connection
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(100);
+    }
+    
+    // WiFi connected, transition to HOMING
+    changeState(HOMING);
 }
 
 void onExitStartupState() {
-    // No specific exit actions for startup state
+    // Startup state exited
 } 

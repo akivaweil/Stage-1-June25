@@ -7,6 +7,13 @@
 //* ************************************************************************
 // Handles the homing sequence for all motors.
 
+// Homing phase enumeration
+enum HomingPhase {
+    CUT_MOTOR_HOMING,
+    FEED_MOTOR_HOMING,
+    FEED_MOTOR_POSITIONING
+};
+
 //! ************************************************************************
 //! STEP 1: BLINK BLUE LED TO INDICATE HOMING IN PROGRESS
 //! ************************************************************************
@@ -40,100 +47,101 @@
 //! ************************************************************************
 
 // Static variables for homing state tracking
+static HomingPhase currentHomingPhase = CUT_MOTOR_HOMING;
 static bool cutMotorHomed = false;
 static bool feedMotorHomed = false;
 static bool feedMotorMoved = false;
 static bool feedHomingPhaseInitiated = false;
+static bool isHomed = false;
 static unsigned long blinkTimer = 0;
 
+// Forward declarations for helper functions
+void executeCutMotorHoming();
+void executeFeedMotorHoming();
+void executeFeedMotorPositioning();
+
 void onEnterHomingState() {
-    // Reset homing state variables when entering
+    // Reset homing flags
     cutMotorHomed = false;
     feedMotorHomed = false;
     feedMotorMoved = false;
     feedHomingPhaseInitiated = false;
-    blinkTimer = 0;
+    
+    // Start with cut motor homing
+    currentHomingPhase = CUT_MOTOR_HOMING;
+    
+    // Turn on blue LED during homing
+    turnBlueLedOn();
 }
 
 void executeHomingState() {
-    // Blink blue LED to indicate homing in progress
-    if (millis() - blinkTimer > 500) {
-        bool blinkState = getBlinkState();
-        blinkState = !blinkState;
-        setBlinkState(blinkState);
-        if (blinkState) turnBlueLedOn(); else turnBlueLedOff();
-        blinkTimer = millis();
-    }
-
-    // Debug output to track homing progress
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 2000) {
-        Serial.print("HOMING STATE DEBUG - cutMotorHomed: ");
-        Serial.print(cutMotorHomed);
-        Serial.print(", feedMotorHomed: ");
-        Serial.print(feedMotorHomed);
-        Serial.print(", feedMotorMoved: ");
-        Serial.print(feedMotorMoved);
-        Serial.print(", feedHomingPhaseInitiated: ");
-        //serial.println(feedHomingPhaseInitiated);
-        lastDebugTime = millis();
-    }
-
-    if (!cutMotorHomed) {
-        //serial.println("Starting cut motor homing phase (blocking)...");
-        homeCutMotorBlocking(*getCutHomingSwitch(), CUT_HOME_TIMEOUT);
-        if (getCutMotor() && getCutMotor()->getCurrentPosition() == 0) { // Check if homing was successful
-            cutMotorHomed = true;
-            //serial.println("Cut motor homing marked as successful.");
-        } else {
-            //serial.println("Cut motor homing failed or timed out. Retrying or error.");
-        }
-    } else if (!feedMotorHomed) {
-        if (!feedHomingPhaseInitiated) {
-            //serial.println("Starting feed motor homing phase (blocking)..."); 
-            retractFeedClamp(); 
-            //serial.println("Feed clamp retracted for homing."); 
-            feedHomingPhaseInitiated = true;
-        }
-        //serial.println("Calling homeFeedMotorBlocking...");
-        homeFeedMotorBlocking(*getFeedHomingSwitch());
-        feedMotorHomed = true; 
-        feedHomingPhaseInitiated = false; // Reset for next potential homing cycle
-        //serial.println("Feed motor homing marked as successful.");
-    } else if (!feedMotorMoved) {
-        //serial.println("Moving feed motor to travel distance...");
-        extendFeedClamp();
-        //serial.println("Feed clamp re-extended.");
-        moveFeedMotorToTravel();
-        while(getFeedMotor()->isRunning()){
-            // Wait for feed motor to reach FEED_TRAVEL_DISTANCE
-        }
-        feedMotorMoved = true;
-        //serial.println("Feed motor moved to FEED_TRAVEL_DISTANCE (blocking complete).");
-    } else {
-        //serial.println("All homing steps complete! Transitioning to IDLE..."); 
-        cutMotorHomed = false; 
-        feedMotorHomed = false;
-        feedMotorMoved = false;
-        
-        extern bool isHomed; // This is in main.cpp
-        isHomed = true; 
-        //serial.println("isHomed flag set to true.");
-
-        turnBlueLedOff();
-        turnGreenLedOn();
-        //serial.println("LEDs updated: Blue OFF, Green ON.");
-
-        // Set initial servo position via function call
-        handleRotationServoReturn();
-        //serial.println("Servo returned to home position.");
-        
-        //serial.println("Changing state to IDLE...");
+    // Check if both motors are homed
+    if (cutMotorHomed && feedMotorHomed && feedMotorMoved) {
+        // All homing complete, transition to IDLE
         changeState(IDLE);
-        //serial.println("State change to IDLE completed.");
+        return;
+    }
+    
+    // Execute homing steps based on current phase
+    switch (currentHomingPhase) {
+        case CUT_MOTOR_HOMING:
+            executeCutMotorHoming();
+            break;
+            
+        case FEED_MOTOR_HOMING:
+            executeFeedMotorHoming();
+            break;
+            
+        case FEED_MOTOR_POSITIONING:
+            executeFeedMotorPositioning();
+            break;
     }
 }
 
 void onExitHomingState() {
-    // No specific cleanup needed for HOMING state
+    // Homing complete
+    isHomed = true;
+    
+    // Turn off blue LED, turn on green LED
+    turnBlueLedOff();
+    turnGreenLedOn();
+    
+    // Return servo to home position
+    activateRotationServo();
+}
+
+void executeCutMotorHoming() {
+    if (!cutMotorHomed) {
+        // Home cut motor
+        homeCutMotorBlocking(cutHomingSwitch, 30000);
+        cutMotorHomed = true;
+        currentHomingPhase = FEED_MOTOR_HOMING;
+    }
+}
+
+void executeFeedMotorHoming() {
+    if (!feedMotorHomed && !feedHomingPhaseInitiated) {
+        // Retract feed clamp for homing
+        retractFeedClamp();
+        feedHomingPhaseInitiated = true;
+        
+        // Start feed motor homing
+        homeFeedMotorBlocking(feedHomingSwitch);
+        feedMotorHomed = true;
+        currentHomingPhase = FEED_MOTOR_POSITIONING;
+    }
+}
+
+void executeFeedMotorPositioning() {
+    if (!feedMotorMoved) {
+        // Move feed motor to travel distance
+        FastAccelStepper* feedMotor = getFeedMotor();
+        if (feedMotor) {
+            feedMotor->moveTo((long)(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH));
+            feedMotorMoved = true;
+        }
+        
+        // Re-extend feed clamp
+        extendFeedClamp();
+    }
 } 

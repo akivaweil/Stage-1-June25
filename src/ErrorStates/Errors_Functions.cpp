@@ -134,12 +134,6 @@ void performCutMotorRealTimeHomeSensorCheck(FastAccelStepper* cutMotor, Bounce& 
                     cutMotor->setAcceleration(30000); // High deceleration for quick stop within 0.2 inch
                     cutMotor->moveTo(targetPosition);
                     
-                    Serial.print("Decelerating from position ");
-                    Serial.print(currentPosition);
-                    Serial.print(" to target position ");
-                    Serial.print(targetPosition);
-                    Serial.print(" (");
-                    Serial.print(DECELERATION_DISTANCE_INCHES);
                     //serial.println(" inch max distance)");
                     
                     realTimeCheckState = DECELERATING;
@@ -210,7 +204,6 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
     bool allowSlowRecovery
 ) {
     bool sensorDetectedHome = false;
-    Serial.print("ERROR DETECTION: Checking cut motor home position for context: ");
     //serial.println(contextDescription);
     
     // ====================================================================
@@ -220,9 +213,6 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
     for (int attemptNumber = 1; attemptNumber <= 3; attemptNumber++) {
         delay(30);  // Brief delay for sensor stabilization
         cutHomingSwitch.update();
-        Serial.print("Initial home verification attempt ");
-        Serial.print(attemptNumber);
-        Serial.print(" of 3: ");
         //serial.println(cutHomingSwitch.read() == HIGH ? "HOME DETECTED" : "NO HOME");
         
         if (cutHomingSwitch.read() == HIGH) {
@@ -230,7 +220,6 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
             if (cutMotor) {
                 cutMotor->setCurrentPosition(0); // Recalibrate position to absolute zero
             }
-            Serial.print("SUCCESS: Cut motor home position confirmed on initial check for ");
             //serial.println(contextDescription);
             return createSuccessResult();
         }
@@ -254,8 +243,6 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
             unsigned long recoveryStartTime = millis();
             bool homeFoundDuringRecovery = false;
             
-            Serial.print("Slow recovery started at homing speed (");
-            Serial.print(CUT_MOTOR_HOME_RECOVERY_SPEED);
             //serial.println(" steps/sec) with 5-second timeout...");
             
             //! MONITOR FOR HOME SENSOR DETECTION DURING RECOVERY
@@ -268,8 +255,6 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
                     homeFoundDuringRecovery = true;
                     
                     unsigned long recoveryDuration = millis() - recoveryStartTime;
-                    Serial.print("SUCCESS: Home sensor detected during slow recovery after ");
-                    Serial.print(recoveryDuration);
                     //serial.println(" ms. Cut motor position recalibrated to 0.");
                     
                     String successMessage = "Recovery successful for " + contextDescription + 
@@ -382,7 +367,6 @@ void executeCutMotorErrorStateTransition(
 //! LOG CUT MOTOR HOME ERROR RESULTS FOR DEBUGGING AND MONITORING
 void logCutMotorHomeErrorResult(const CutMotorHomeErrorResult& result) {
     if (!result.errorMessage.isEmpty()) {
-        Serial.print("Cut Motor Home Error Handler Result: ");
         //serial.println(result.errorMessage);
     }
     

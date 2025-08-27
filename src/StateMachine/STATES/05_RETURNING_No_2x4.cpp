@@ -3,6 +3,9 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "Config/Pins_Definitions.h"
 
+// Timing constants for this state
+const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
+
 //* ************************************************************************
 //* ************************ RETURNING NO 2X4 STATE ***********************
 //* ************************************************************************
@@ -30,19 +33,23 @@
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 6: MOVE FEED MOTOR TO HOME
+//! STEP 6: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION (9 MOVEMENTS)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 7: WAIT FOR FEED MOTOR HOME AND RETRACT FEED CLAMP
+//! STEP 7: MOVE FEED MOTOR TO HOME
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: MOVE FEED MOTOR TO FINAL POSITION
+//! STEP 8: WAIT FOR FEED MOTOR HOME AND RETRACT FEED CLAMP
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 9: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
+//! STEP 9: MOVE FEED MOTOR TO FINAL POSITION
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 10: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
 //! ************************************************************************
 
 // Static variables for returning no 2x4 state tracking
@@ -127,41 +134,102 @@ void handleReturningNo2x4Step(int step) {
             }
             break;
             
-        case 3: // Was original returningNo2x4Step 2: move feed motor to 0 inches
+        case 3: // Was original returningNo2x4Step 2: move feed motor to 2.0 inches
             configureFeedMotorForNormalOperation(); // Ensure correct config
-            moveFeedMotorToPosition(0.0);
+            moveFeedMotorToPosition(2.0);
             returningNo2x4Step = 4; // Directly advance step here as it's a command
             break;
             
         case 4: // Was original returningNo2x4Step 3: wait for feed motor at 2.0, extend feed clamp
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
-                cylinderActionTime = millis();
-                waitingForCylinder = true; // Increments to 5
+                //serial.println("ReturningNo2x4: Feed clamp extended at 2.0 inches");
+                returningNo2x4Step = 5; // Move to attention sequence
             }
             break;
             
-        case 5: // Was original returningNo2x4Step 4: move feed motor to home
-            configureFeedMotorForNormalOperation();
-            moveFeedMotorToHome();
-            returningNo2x4Step = 6; // Directly advance step
+        case 5: // Attention-getting sequence: retract, extend, retract, extend, retract, extend, retract, extend, retract (9 movements total)
+            static int attentionStep = 0;
+            static unsigned long attentionStartTime = 0;
+            
+            if (attentionStep == 0) {
+                // First step: retract feed clamp
+                retractFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (1/9)");
+                attentionStep = 1;
+                attentionStartTime = millis();
+            } else if (attentionStep == 1 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Second step: extend feed clamp
+                extendFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (2/9)");
+                attentionStep = 2;
+                attentionStartTime = millis();
+            } else if (attentionStep == 2 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Third step: retract feed clamp again
+                retractFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (3/9)");
+                attentionStep = 3;
+                attentionStartTime = millis();
+            } else if (attentionStep == 3 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Fourth step: extend feed clamp again
+                extendFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (4/9)");
+                attentionStep = 4;
+                attentionStartTime = millis();
+            } else if (attentionStep == 4 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Fifth step: retract feed clamp again
+                retractFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (5/9)");
+                attentionStep = 5;
+                attentionStartTime = millis();
+            } else if (attentionStep == 5 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Sixth step: extend feed clamp again
+                extendFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (6/9)");
+                attentionStep = 6;
+                attentionStartTime = millis();
+            } else if (attentionStep == 6 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Seventh step: retract feed clamp again
+                retractFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (7/9)");
+                attentionStep = 7;
+                attentionStartTime = millis();
+            } else if (attentionStep == 7 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Eighth step: extend feed clamp again
+                extendFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (8/9)");
+                attentionStep = 8;
+                attentionStartTime = millis();
+            } else if (attentionStep == 8 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+                // Ninth step: final retraction
+                retractFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - final retraction (9/9)");
+                attentionStep = 0; // Reset for next time
+                returningNo2x4Step = 6; // Move to next step
+            }
             break;
             
-        case 6: // Was original returningNo2x4Step 5: wait for feed motor at home, retract feed clamp
+        case 6: // Was original returningNo2x4Step 4: move feed motor to home
+            configureFeedMotorForNormalOperation();
+            moveFeedMotorToHome();
+            returningNo2x4Step = 7; // Directly advance step
+            break;
+            
+        case 7: // Was original returningNo2x4Step 5: wait for feed motor at home, retract feed clamp
             if (feedMotor && !feedMotor->isRunning()) {
                 retractFeedClamp();
                 cylinderActionTime = millis();
-                waitingForCylinder = true; // Increments to 7
+                waitingForCylinder = true; // Increments to 8
             }
             break;
             
-        case 7: // Was original returningNo2x4Step 6: move feed motor to final position
+        case 8: // Was original returningNo2x4Step 6: move feed motor to final position
             configureFeedMotorForNormalOperation();
             moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-            returningNo2x4Step = 8; // Directly advance step
+            returningNo2x4Step = 9; // Directly advance step
             break;
             
-        case 8: // Final step: check cut home and finish sequence
+        case 9: // Final step: check cut home and finish sequence
             if (feedMotor && !feedMotor->isRunning()) {
                 bool sensorDetectedHome = false;
                 for (int i = 0; i < 3; i++) {

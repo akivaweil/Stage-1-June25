@@ -6,7 +6,7 @@
 //* ************************ RELEVANT CONSTANTS **************************
 //* ************************************************************************
 // Feed motor movement constants for this state (specific to this state)
-const float FEED_MOTOR_NEGATIVE_POSITION = -1.35; // inches - position for retracting feed motor
+const float FEED_MOTOR_NEGATIVE_POSITION = -1.2; // inches - position for retracting feed motor (lower means less wood is fed)
 const float FEED_MOTOR_SECOND_RUN_OFFSET = 1.4; // inches - offset for second run final position
 
 // Timing constants for this state

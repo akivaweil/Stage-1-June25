@@ -26,6 +26,10 @@ bool rotationServoIsActiveAndTiming = false;
 bool rotationServoSafetyDelayActive = false;
 unsigned long rotationServoSafetyDelayStartTime = 0;
 
+// Rotation servo return delay variables
+bool rotationServoReturnDelayActive = false;
+unsigned long rotationServoReturnDelayStartTime = 0;
+
 unsigned long rotationClampExtendTime = 0;
 bool rotationClampIsExtended = false;
 

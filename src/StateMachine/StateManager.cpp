@@ -313,6 +313,17 @@ void setRotationServoSafetyDelayStartTime(unsigned long value) {
     rotationServoSafetyDelayStartTime = value;
 }
 
+// Rotation servo return delay timing functions
+unsigned long getRotationServoReturnDelayStartTime() {
+    extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
+    return rotationServoReturnDelayStartTime;
+}
+
+void setRotationServoReturnDelayStartTime(unsigned long value) {
+    extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
+    rotationServoReturnDelayStartTime = value;
+}
+
 unsigned long getRotationClampExtendTime() {
     return rotationClampExtendTime;
 }
@@ -421,11 +432,22 @@ void handleCommonOperations() {
                     rotationServoSafetyDelayStartTime = millis();
                     //serial.println("Servo was waiting for extended time due to failure to suction. Starting 2-second safety delay before returning to home.");
                 } else if (millis() - rotationServoSafetyDelayStartTime >= ROTATION_SERVO_SAFETY_DELAY_MS) {
-                    // Safety delay complete - now return servo to home
-                    handleRotationServoReturn();
-                    //serial.println("Safety delay complete. Returning rotation servo to home position.");
-                    rotationServoIsActiveAndTiming = false;
-                    rotationServoSafetyDelayActive = false; // Reset safety delay flag
+                    // Safety delay complete - now start return delay
+                    extern bool rotationServoReturnDelayActive; // From main.cpp
+                    extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
+                    if (!rotationServoReturnDelayActive) {
+                        // Start the return delay period
+                        rotationServoReturnDelayActive = true;
+                        rotationServoReturnDelayStartTime = millis();
+                        //serial.println("Safety delay complete. Starting 150ms return delay before returning servo to home.");
+                    } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS) {
+                        // Return delay complete - now return servo to home
+                        handleRotationServoReturn();
+                        //serial.println("Return delay complete. Returning rotation servo to home position.");
+                        rotationServoIsActiveAndTiming = false;
+                        rotationServoSafetyDelayActive = false; // Reset safety delay flag
+                        rotationServoReturnDelayActive = false; // Reset return delay flag
+                    }
                 } else {
                     // Still in safety delay period
                     static unsigned long lastSafetyMessage = 0;
@@ -438,10 +460,21 @@ void handleCommonOperations() {
                     }
                 }
             } else {
-                // Normal operation - no extended wait, return servo immediately
-                handleRotationServoReturn();
-                //serial.println("Servo timing completed AND WAS_WOOD_SUCTIONED_SENSOR is HIGH, returning rotation servo to home.");
-                rotationServoIsActiveAndTiming = false; // Clear flag
+                // Normal operation - no extended wait, but still apply 150ms return delay
+                extern bool rotationServoReturnDelayActive; // From main.cpp
+                extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
+                if (!rotationServoReturnDelayActive) {
+                    // Start the return delay period
+                    rotationServoReturnDelayActive = true;
+                    rotationServoReturnDelayStartTime = millis();
+                    //serial.println("Starting 150ms return delay before returning servo to home.");
+                } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS) {
+                    // Return delay complete - now return servo to home
+                    handleRotationServoReturn();
+                    //serial.println("Return delay complete. Returning rotation servo to home position.");
+                    rotationServoIsActiveAndTiming = false;
+                    rotationServoReturnDelayActive = false; // Reset return delay flag
+                }
             }
         } else {
             // Suction sensor still reads LOW - wood not grabbed by transfer arm, continue waiting

@@ -86,6 +86,9 @@ void setRotationServoSafetyDelayActive(bool value);
 unsigned long getRotationServoSafetyDelayStartTime();
 void setRotationServoSafetyDelayStartTime(unsigned long value);
 
+unsigned long getRotationServoReturnDelayStartTime();
+void setRotationServoReturnDelayStartTime(unsigned long value);
+
 unsigned long getRotationClampExtendTime();
 void setRotationClampExtendTime(unsigned long value);
 

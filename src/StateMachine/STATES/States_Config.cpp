@@ -60,7 +60,7 @@ const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed mot
 //* ************************ TIMING CONFIGURATION *************************
 //* ************************************************************************
 // Servo timing configuration
-const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2300;
+const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
 
 // Rotation clamp timing
 const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 1800; // (was 1500)2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
@@ -88,7 +88,8 @@ const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.3;
 //* ************************************************************************
 // Rotation servo safety timing
 const unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000; // 3 seconds - threshold for extended wait due to failure to suction
-const unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 3000; // 2 seconds - additional safety delay before returning servo to home 
+const unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 3000; // 2 seconds - additional safety delay before returning servo to home
+const unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150; // 150ms delay before returning servo to home regardless of suction state 
 
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************

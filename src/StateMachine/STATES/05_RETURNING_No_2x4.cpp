@@ -202,9 +202,9 @@ void handleReturningNo2x4Step(int step) {
                 attentionStep = 8;
                 attentionStartTime = millis();
             } else if (attentionStep == 8 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Ninth step: final retraction
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - final retraction (9/9)");
+                // Ninth step: final extension to ensure clamp is extended at end of attention sequence
+                extendFeedClamp();
+                //serial.println("ReturningNo2x4: Attention sequence - final extension (9/9)");
                 attentionStep = 0; // Reset for next time
                 returningNo2x4Step = 6; // Move to next step
             }

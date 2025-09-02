@@ -125,9 +125,10 @@ void executeHomingState() {
         turnGreenLedOn();
         //serial.println("LEDs updated: Blue OFF, Green ON.");
 
-        // Set initial servo position via function call
-        handleRotationServoReturn();
-        //serial.println("Servo returned to home position.");
+        // Do NOT move servo to home position during homing sequence
+        // Servo will be homed when cutting cycle starts to avoid issues with wood in rotation
+        //handleRotationServoReturn();
+        //serial.println("Servo homing skipped during startup - will be homed when cutting starts.");
         
         //serial.println("Changing state to IDLE...");
         changeState(IDLE);

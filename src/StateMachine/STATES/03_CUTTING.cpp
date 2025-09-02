@@ -112,7 +112,15 @@ void executeCuttingState() {
 
 void handleCuttingStep0() {
     Serial.println("Starting cut motion");
-        
+    
+    //! ************************************************************************
+    //! STEP 0.1: HOME ROTATION SERVO BEFORE STARTING CUT CYCLE
+    //! ************************************************************************
+    // Move rotation servo to home position at the start of cutting cycle
+    // This ensures servo is properly positioned and avoids issues with wood in rotation
+    handleRotationServoReturn();
+    //Serial.println("Rotation servo homed at start of cutting cycle.");
+    
     extend2x4SecureClamp();
     extendFeedClamp();
 

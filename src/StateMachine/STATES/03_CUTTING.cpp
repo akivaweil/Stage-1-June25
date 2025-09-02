@@ -116,17 +116,17 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // CRITICAL SAFETY CHECK: Only home the rotation servo if NO wood is detected
-    // HIGH = WOOD DETECTED by transfer arm suction - DO NOT MOVE SERVO (wood could be stuck)
-    // LOW = NO WOOD detected - SAFE TO MOVE SERVO (clear path)
+    // CRITICAL SAFETY CHECK: Only home the rotation servo if wood is properly grabbed by transfer arm
+    // LOW = NO SUCTION detected (wood not grabbed) - DO NOT MOVE SERVO (wood could be stuck)
+    // HIGH = Wood is properly grabbed by transfer arm suction - SAFE TO MOVE SERVO
     Bounce* suctionSensor = getSuctionSensorBounce();
-    if (suctionSensor && suctionSensor->read() == LOW) {
-        // No wood detected - safe to home the rotation servo
+    if (suctionSensor && suctionSensor->read() == HIGH) {
+        // Wood properly grabbed by transfer arm - safe to home the rotation servo
         handleRotationServoReturn();
-        Serial.println("Rotation servo homed for cut cycle - no wood detected, clear path");
+        Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
     } else {
-        // Wood detected - DO NOT move servo for safety (could ram into stuck wood)
-        Serial.println("WARNING: Wood detected by suction sensor - rotation servo NOT homed for safety");
+        // Wood not properly grabbed - DO NOT move servo for safety (could ram into stuck wood)
+        Serial.println("WARNING: Wood not properly grabbed by transfer arm - rotation servo NOT homed for safety");
     }
 
     // Configure and move motor

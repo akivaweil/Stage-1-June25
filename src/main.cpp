@@ -184,10 +184,9 @@ void setup() {
   
   //Serial.println("✓ Servo attachment completed - Commands will be sent regardless of attach status");
   
-  // Initialize servo but do NOT move to home position during startup
-  // Servo will be homed when cutting cycle starts to avoid issues with wood in rotation
-  //rotationServo.write(ROTATION_SERVO_HOME_POSITION);
-  //Serial.printf("Servo initialized but NOT moved to home position during startup\n");
+  // Set initial servo position to home with forced write
+  rotationServo.write(ROTATION_SERVO_HOME_POSITION);
+  //Serial.printf("Servo initialized and set to home position: %d degrees\n", ROTATION_SERVO_HOME_POSITION);
   
   //! Configure initial state
   currentState = STARTUP;

@@ -112,17 +112,15 @@ void executeCuttingState() {
 
 void handleCuttingStep0() {
     Serial.println("Starting cut motion");
-    
-    //! ************************************************************************
-    //! STEP 0.1: HOME ROTATION SERVO BEFORE STARTING CUT CYCLE
-    //! ************************************************************************
-    // Move rotation servo to home position at the start of cutting cycle
-    // This ensures servo is properly positioned and avoids issues with wood in rotation
-    handleRotationServoReturn();
-    //Serial.println("Rotation servo homed at start of cutting cycle.");
-    
+        
     extend2x4SecureClamp();
     extendFeedClamp();
+
+    // SAFETY: Home the rotation servo when manually starting a cut cycle
+    // This ensures the servo is in the correct position before cutting begins
+    // and gives the operator time to clear any stuck material
+    handleRotationServoReturn();
+    Serial.println("Rotation servo homed for cut cycle");
 
     // Configure and move motor
     configureCutMotorForCutting();
@@ -140,19 +138,9 @@ void handleCuttingStep1() {
         stepStartTime = millis();
     }
 
+    // Check suction sensor after cut motor has traveled the required distance
     FastAccelStepper* cutMotor = getCutMotor();
-    bool shouldCheckSuction = false;
-    
-    // Check suction sensor after cut motor has traveled the required distance OR after timeout
     if (cutMotor && cutMotor->getCurrentPosition() >= (SUCTION_SENSOR_CHECK_DISTANCE_INCHES * CUT_MOTOR_STEPS_PER_INCH)) {
-        shouldCheckSuction = true;
-        //serial.println("Cut motor reached suction check distance - checking sensor");
-    } else if (millis() - stepStartTime >= 5000) { // 5 second timeout for safety
-        shouldCheckSuction = true;
-        //serial.println("Suction sensor check timeout reached - checking sensor for safety");
-    }
-    
-    if (shouldCheckSuction) {
         extern const int WOOD_SUCTION_CONFIRM_SENSOR; // From main.cpp
         
         // Check suction sensor - LOW means NO SUCTION detected (Error condition)
@@ -160,7 +148,7 @@ void handleCuttingStep1() {
         // Using debounced reading with 15ms debounce time
         Bounce* suctionSensor = getSuctionSensorBounce();
         if (suctionSensor && suctionSensor->read() == LOW) {
-            //serial.println("Cutting Step 1: No suction detected. Error detected. Returning cut motor home before manual reset.");
+            //serial.println("Cutting Step 1: No suction detected after cut motor traveled required distance. Error detected. Returning cut motor home before manual reset.");
             
             // Stop feed motor with controlled deceleration but return cut motor home safely
             FastAccelStepper* cutMotor = getCutMotor();

@@ -55,6 +55,9 @@ void setContinuousModeActive(bool value);
 bool getStartSwitchSafe();
 void setStartSwitchSafe(bool value);
 
+bool getComingFromNoWoodWithSensorsClear();
+void setComingFromNoWoodWithSensorsClear(bool value);
+
 // Timer access functions
 unsigned long getLastBlinkTime();
 void setLastBlinkTime(unsigned long value);

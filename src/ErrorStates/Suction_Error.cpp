@@ -60,7 +60,6 @@ void handleSuctionErrorState() {
         turnRedLedOff();   // Turn off error LED explicitly before changing state
         
         setContinuousModeActive(false); // Ensure continuous mode is off
-        setStartSwitchSafe(false);      // Require user to cycle switch OFF then ON for a new actual start
         
         // Reset the homing flag for next time this state is entered
         hasHomedCutMotor = false;

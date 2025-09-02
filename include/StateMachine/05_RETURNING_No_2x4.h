@@ -21,4 +21,7 @@ void handleReturningNo2x4Step(int step);
 // Reset all step counters
 void resetReturningNo2x4Steps();
 
+// Sensor check function
+bool checkBothSensorsNotActive();
+
 #endif // _05_RETURNING_NO_2X4_STATE_H 

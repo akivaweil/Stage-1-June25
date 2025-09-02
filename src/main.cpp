@@ -66,6 +66,7 @@ bool errorAcknowledged = false;
 bool cuttingCycleInProgress = false;
 bool continuousModeActive = false;  // New flag for continuous operation
 bool startSwitchSafe = false;       // New flag to track if start switch is safe
+bool comingFromNoWoodWithSensorsClear = false; // Flag to track when coming from no-wood cycle with sensors clear
 
 // Timers for various operations
 unsigned long lastBlinkTime = 0;

@@ -56,22 +56,17 @@ void executeIdleState() {
 }
 
 void onEnterIdleState() {
-    // Check if start cycle switch is still active (HIGH)
-    // If it is, keep both clamps retracted to prevent interference with the next cycle
-    // If not, use normal idle state clamp configuration
-    if (getStartCycleSwitch()->read() == HIGH) {
-        // Cycle switch still active - keep both clamps retracted
-        retract2x4SecureClamp();
-        retractFeedClamp();
-        retractRotationClamp();
-        //serial.println("Idle: Cycle switch active - both clamps retracted");
-    } else {
-        // Normal idle state - secure wood clamp extended, feed clamp retracted, rotation clamp retracted
-        extend2x4SecureClamp();
-        retractFeedClamp();
-        retractRotationClamp();
-        //serial.println("Idle: Secure wood clamp extended, feed clamp retracted, rotation clamp retracted");
+    // Always retract secure clamp when entering IDLE state
+    retract2x4SecureClamp();
+    retractFeedClamp();
+    retractRotationClamp();
+    
+    // Reset the no-wood flag if it was set
+    if (getComingFromNoWoodWithSensorsClear()) {
+        setComingFromNoWoodWithSensorsClear(false);
     }
+    
+    //serial.println("Idle: All clamps retracted");
 }
 
 void onExitIdleState() {

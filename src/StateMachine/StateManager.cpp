@@ -15,6 +15,9 @@ extern Bounce startCycleSwitch;
 extern Bounce pushwoodForwardSwitch;
 extern Bounce suctionSensorBounce;
 
+// External references to global variables from main.cpp
+extern bool comingFromNoWoodWithSensorsClear;
+
 //* ************************************************************************
 //* ************************* STATE MANAGER *******************************
 //* ************************************************************************
@@ -235,6 +238,14 @@ bool getStartSwitchSafe() {
 
 void setStartSwitchSafe(bool value) {
     startSwitchSafe = value;
+}
+
+bool getComingFromNoWoodWithSensorsClear() {
+    return comingFromNoWoodWithSensorsClear;
+}
+
+void setComingFromNoWoodWithSensorsClear(bool value) {
+    comingFromNoWoodWithSensorsClear = value;
 }
 
 unsigned long getLastBlinkTime() {

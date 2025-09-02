@@ -229,7 +229,7 @@ void handleReturningNo2x4Step(int step) {
             returningNo2x4Step = 9; // Directly advance step
             break;
             
-        case 9: // Final step: check cut home and finish sequence
+        case 9: // Final step: wait for both sensors to be not active, then finish sequence
             if (feedMotor && !feedMotor->isRunning()) {
                 bool sensorDetectedHome = false;
                 for (int i = 0; i < 3; i++) {
@@ -244,23 +244,62 @@ void handleReturningNo2x4Step(int step) {
                     }
                 }
                 
-                // Complete sequence without homing
-                retract2x4SecureClamp(); 
-                extend2x4SecureClamp(); 
-                turnYellowLedOff();
-                turnBlueLedOn(); 
+                // Wait until both sensors are not active before proceeding
+                if (checkBothSensorsNotActive()) {
+                    // Both sensors not active - extend secure wood clamp and complete sequence
+                    extend2x4SecureClamp();
+                    //serial.println("ReturningNo2x4: Both sensors not active - extending secure wood clamp and completing sequence");
+                    
+                    turnYellowLedOff();
+                    turnBlueLedOn(); 
 
-                resetReturningNo2x4Steps();
-                setCuttingCycleInProgress(false);
-                changeState(IDLE);
-                
-                // Check if cycle switch is currently ON - if yes, require cycling
-                if (getStartCycleSwitch()->read() == HIGH) {
-                    setStartSwitchSafe(false);
-                } 
+                    resetReturningNo2x4Steps();
+                    setCuttingCycleInProgress(false);
+                    
+                    // Check if cycle switch is currently ON - if yes, require cycling
+                    if (getStartCycleSwitch()->read() == HIGH) {
+                        setStartSwitchSafe(false);
+                    }
+                    
+                    // Set flag to indicate we're coming from no-wood cycle with sensors clear
+                    setComingFromNoWoodWithSensorsClear(true);
+                    
+                    // Transition to IDLE state - secure clamp will remain extended
+                    changeState(IDLE);
+                } else {
+                    // At least one sensor is still active - keep waiting
+                    // Keep both clamps retracted while waiting
+                    retractFeedClamp();
+                    retract2x4SecureClamp();
+                    //serial.println("ReturningNo2x4: Waiting for both sensors to be not active...");
+                }
             }
             break;
     }
+}
+
+bool checkBothSensorsNotActive() {
+    // Read both sensors with multiple samples for reliability
+    bool firstCutSensorNotActive = true;
+    bool woodPresentSensorNotActive = true;
+    
+    // Take multiple readings for stability
+    for (int i = 0; i < 3; i++) {
+        delay(10); // Small delay between readings
+        
+        // Check FIRST_CUT_OR_WOOD_FWD_ONE sensor (HIGH = not active)
+        if (digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == LOW) {
+            firstCutSensorNotActive = false;
+        }
+        
+        // Check _2x4_PRESENT_SENSOR (HIGH = not active)  
+        if (digitalRead(_2x4_PRESENT_SENSOR) == LOW) {
+            woodPresentSensorNotActive = false;
+        }
+    }
+    
+    // Return true only if both sensors are not active (both HIGH)
+    return (firstCutSensorNotActive && woodPresentSensorNotActive);
 }
 
 void resetReturningNo2x4Steps() {

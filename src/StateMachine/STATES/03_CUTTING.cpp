@@ -116,11 +116,18 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // SAFETY: Home the rotation servo when manually starting a cut cycle
-    // This ensures the servo is in the correct position before cutting begins
-    // and gives the operator time to clear any stuck material
-    handleRotationServoReturn();
-    Serial.println("Rotation servo homed for cut cycle");
+    // CRITICAL SAFETY CHECK: Only home the rotation servo if wood suction is confirmed
+    // LOW = NO SUCTION detected (Error condition) - DO NOT MOVE SERVO
+    // HIGH = Wood is properly grabbed by transfer arm suction - SAFE TO MOVE SERVO
+    Bounce* suctionSensor = getSuctionSensorBounce();
+    if (suctionSensor && suctionSensor->read() == HIGH) {
+        // Wood suction confirmed - safe to home the rotation servo
+        handleRotationServoReturn();
+        Serial.println("Rotation servo homed for cut cycle - wood suction confirmed");
+    } else {
+        // No wood suction detected - DO NOT move servo for safety
+        Serial.println("WARNING: No wood suction detected - rotation servo NOT homed for safety");
+    }
 
     // Configure and move motor
     configureCutMotorForCutting();

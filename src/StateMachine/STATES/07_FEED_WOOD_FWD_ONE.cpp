@@ -1,6 +1,7 @@
 #include "StateMachine/07_FEED_WOOD_FWD_ONE.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/STATES/States_Config.h"
 
 //* ************************************************************************
 //* ********************* FEED WOOD FWD ONE STATE **************************
@@ -99,7 +100,7 @@ void executeFeedWoodFwdOneStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPositionWithClampControl(FEED_TRAVEL_DISTANCE);
+                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_TRAVEL_POSITION);
                 //serial.println("FeedWoodFwdOne: Moving feed motor to travel distance");
                 advanceToNextFeedWoodFwdOneStep();
             }

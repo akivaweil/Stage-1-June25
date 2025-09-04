@@ -2,6 +2,7 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "Config/Pins_Definitions.h"
+#include "StateMachine/STATES/States_Config.h"
 
 //* ************************************************************************
 //* ************************ CONFIGURATION CONSTANTS *********************
@@ -14,8 +15,10 @@ const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30;    // Delay between senso
 const unsigned long SENSOR_READING_DELAY_MS = 10;         // Delay between sensor readings for stability
 
 // Movement Configuration
-const float FEED_MOTOR_MOVEMENT_1_DISTANCE = 1.0;          // inches - Intermediate position for no-wood sequence (safe distance)
-const float FEED_MOTOR_MOVEMENT_2_DISTANCE = 1.0;          // inches - Final position (safe distance within travel limits)
+// Note: Feed motor position constants are now defined in States_Config.cpp:
+// - FEED_MOTOR_MOVEMENT_1_DISTANCE (1.0 inches)
+// - FEED_MOTOR_MOVEMENT_2_DISTANCE (1.0 inches)
+// - FEED_MOTOR_HOME_POSITION (0.0 inches)
 
 // Sequence Configuration
 const int ATTENTION_SEQUENCE_TOTAL_MOVEMENTS = 5;         // Total number of movements in attention sequence

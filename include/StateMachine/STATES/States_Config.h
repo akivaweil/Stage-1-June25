@@ -57,6 +57,27 @@ extern const float FEED_MOTOR_RETURN_DISTANCE;
 extern const float FEED_MOTOR_OFFSET_FROM_SENSOR;
 
 //* ************************************************************************
+//* ************************ FEED MOTOR POSITION CONSTANTS ****************
+//* ************************************************************************
+// Feed motor specific position constants for all states
+
+// Home and reference positions
+extern const float FEED_MOTOR_HOME_POSITION;
+extern const float FEED_MOTOR_TRAVEL_POSITION;
+
+// Feed First Cut State positions
+extern const float FEED_MOTOR_RETRACT_POSITION;
+extern const float FEED_MOTOR_SECOND_RUN_OFFSET;
+
+// Returning No 2x4 State positions
+extern const float FEED_MOTOR_MOVEMENT_1_DISTANCE;
+extern const float FEED_MOTOR_MOVEMENT_2_DISTANCE;
+
+// Position ranges and limits
+extern const float FEED_MOTOR_MIN_POSITION;
+extern const float FEED_MOTOR_MAX_POSITION;
+
+//* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************
 //* ************************************************************************
 // Motor operation timing

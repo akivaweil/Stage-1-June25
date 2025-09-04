@@ -100,6 +100,27 @@ const float FEED_MOTOR_RETURN_DISTANCE = 0.0; // Distance for feed motor return 
 const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for working zero (inches)
 
 //* ************************************************************************
+//* ************************ FEED MOTOR POSITION CONSTANTS ****************
+//* ************************************************************************
+// Feed motor specific position constants for all states
+
+// Home and reference positions
+const float FEED_MOTOR_HOME_POSITION = 0.0;                    // Home position (inches)
+const float FEED_MOTOR_TRAVEL_POSITION = 3.4;                  // Travel distance position (inches)
+
+// Feed First Cut State positions
+const float FEED_MOTOR_RETRACT_POSITION = 4.6;                 // Retract position for feed first cut (inches)
+const float FEED_MOTOR_SECOND_RUN_OFFSET = 1.4;                // Second run final position offset (inches)
+
+// Returning No 2x4 State positions
+const float FEED_MOTOR_MOVEMENT_1_DISTANCE = 1.0;              // Intermediate position for no-wood sequence (inches)
+const float FEED_MOTOR_MOVEMENT_2_DISTANCE = 1.0;              // Final position for no-wood sequence (inches)
+
+// Position ranges and limits
+const float FEED_MOTOR_MIN_POSITION = 0.0;                     // Minimum allowed position (inches)
+const float FEED_MOTOR_MAX_POSITION = 4.75;                    // Maximum allowed position (inches)
+
+//* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************
 //* ************************************************************************
 // Motor operation timing

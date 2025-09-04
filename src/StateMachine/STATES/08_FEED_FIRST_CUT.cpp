@@ -1,19 +1,21 @@
 #include "StateMachine/08_FEED_FIRST_CUT.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/STATES/States_Config.h"
 
 //* ************************************************************************
 //* ************************ RELEVANT CONSTANTS **************************
 //* ************************************************************************
-// Feed motor movement constants for this state (specific to this state)
-const float FEED_MOTOR_RETRACT_POSITION = 4.6; // inches - position for retracting feed motor (maintains same physical movement as original home=3.4 system, within 0-4.75 bounds)
-const float FEED_MOTOR_SECOND_RUN_OFFSET = 1.4; // inches - offset for second run final position
-
 // Timing constants for this state
 const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed clamp and retracting secure clamp
 
-// Note: FEED_TRAVEL_DISTANCE, FEED_MOTOR_STEPS_PER_INCH, FEED_CLAMP, _2x4_SECURE_CLAMP, 
-// and START_CYCLE_SWITCH are already defined in Config files and accessible via includes
+// Note: All feed motor position constants are now defined in States_Config.cpp:
+// - FEED_MOTOR_RETRACT_POSITION (4.6 inches)
+// - FEED_MOTOR_SECOND_RUN_OFFSET (1.4 inches) 
+// - FEED_MOTOR_HOME_POSITION (0.0 inches)
+// - FEED_MOTOR_TRAVEL_POSITION (3.4 inches)
+// - FEED_TRAVEL_DISTANCE, FEED_MOTOR_STEPS_PER_INCH, FEED_CLAMP, _2x4_SECURE_CLAMP, 
+//   and START_CYCLE_SWITCH are already defined in Config files and accessible via includes
 
 //* ************************************************************************
 //* ********************* FEED FIRST CUT STATE **************************
@@ -141,7 +143,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPositionWithClampControl(0.0);
+                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_HOME_POSITION);
                 //serial.println("FeedFirstCut: Moving feed motor to travel distance");
                 advanceToNextFeedFirstCutStep();
             }

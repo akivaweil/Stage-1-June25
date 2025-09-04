@@ -30,7 +30,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 3: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP
+//! STEP 3: RETRACT SECURE WOOD CLAMP
 //! ************************************************************************
 
 //! ************************************************************************
@@ -38,7 +38,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: MOVE TO TRAVEL DISTANCE
+//! STEP 5: EXTEND FEED CLAMP AND MOVE TO TRAVEL DISTANCE
 //! ************************************************************************
 
 //! ************************************************************************
@@ -54,7 +54,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 9: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP (SECOND RUN)
+//! STEP 9: RETRACT SECURE WOOD CLAMP (SECOND RUN)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -62,7 +62,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 11: MOVE TO TRAVEL DISTANCE MINUS 1.4 INCHES
+//! STEP 11: EXTEND FEED CLAMP AND MOVE TO 1.4 INCHES
 //! ************************************************************************
 
 //! ************************************************************************
@@ -125,9 +125,8 @@ void executeFeedFirstCutStep() {
 
         case EXTEND_FEED_CLAMP_RETRACT_SECURE:
             if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp();
                 retract2x4SecureClamp();
-                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
+                //serial.println("FeedFirstCut: Secure wood clamp retracted");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
             }
@@ -142,6 +141,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
+                extendFeedClamp(); // Extend clamp when moving towards home
                 moveFeedMotorToPosition(0.0);
                 //serial.println("FeedFirstCut: Moving feed motor to travel distance");
                 advanceToNextFeedFirstCutStep();
@@ -171,9 +171,8 @@ void executeFeedFirstCutStep() {
 
         case EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND:
             if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp();
                 retract2x4SecureClamp();
-                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
+                //serial.println("FeedFirstCut: Secure wood clamp retracted (second run)");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
             }
@@ -188,6 +187,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
             if (feedMotor && !feedMotor->isRunning()) {
+                extendFeedClamp(); // Extend clamp when moving towards home
                 moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_OFFSET);
                 //serial.println("FeedFirstCut: Moving feed motor to 1.4 inches");
                 advanceToNextFeedFirstCutStep();

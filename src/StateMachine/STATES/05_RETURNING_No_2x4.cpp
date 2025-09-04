@@ -3,8 +3,36 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "Config/Pins_Definitions.h"
 
-// Timing constants for this state
-const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
+//* ************************************************************************
+//* ************************ CONFIGURATION CONSTANTS *********************
+//* ************************************************************************
+
+// Timing Configuration
+const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 125;    // Delay between feed clamp movements in attention sequence
+const unsigned long CYLINDER_ACTION_DELAY_MS = 150;       // Delay for cylinder actions
+const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30;    // Delay between sensor verification attempts
+const unsigned long SENSOR_READING_DELAY_MS = 10;         // Delay between sensor readings for stability
+
+// Movement Configuration
+const float FEED_MOTOR_MOVEMENT_1_DISTANCE = 2.0;         // inches - Intermediate position for no-wood sequence
+const float FEED_MOTOR_MOVEMENT_2_DISTANCE = 3.4;         // inches - Final position (matches FEED_TRAVEL_DISTANCE)
+
+// Sequence Configuration
+const int ATTENTION_SEQUENCE_TOTAL_MOVEMENTS = 9;         // Total number of movements in attention sequence
+const int SENSOR_VERIFICATION_ATTEMPTS = 3;               // Number of attempts for sensor verification
+
+//* ************************************************************************
+//* ************************ STATE VARIABLES ******************************
+//* ************************************************************************
+
+// Main sequence tracking
+static int currentStep = 0;
+static unsigned long cylinderActionTime = 0;
+static bool waitingForCylinder = false;
+
+// Attention sequence tracking
+static int attentionStep = 0;
+static unsigned long attentionStartTime = 0;
 
 //* ************************************************************************
 //* ************************ RETURNING NO 2X4 STATE ***********************
@@ -26,15 +54,15 @@ const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clam
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 4: MOVE FEED MOTOR TO 2.0 INCHES
+//! STEP 4: MOVE FEED MOTOR TO MOVEMENT 1 POSITION
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: WAIT FOR FEED MOTOR AT 2.0 AND EXTEND FEED CLAMP
+//! STEP 5: WAIT FOR FEED MOTOR AT MOVEMENT 1 POSITION AND EXTEND FEED CLAMP
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 6: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION (9 MOVEMENTS)
+//! STEP 6: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION
 //! ************************************************************************
 
 //! ************************************************************************
@@ -53,16 +81,27 @@ const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clam
 //! STEP 10: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
 //! ************************************************************************
 
-// Static variables for returning no 2x4 state tracking
-static int returningNo2x4Step = 0;
-static unsigned long cylinderActionTime = 0;
-static bool waitingForCylinder = false;
+//* ************************************************************************
+//* ************************ PUBLIC INTERFACE *****************************
+//* ************************************************************************
 
 void executeReturningNo2x4State() {
     handleReturningNo2x4Sequence(); 
 }
 
 void onEnterReturningNo2x4State() {
+    initializeReturningNo2x4Sequence();
+}
+
+void onExitReturningNo2x4State() {
+    resetReturningNo2x4Steps();
+}
+
+//* ************************************************************************
+//* ************************ INITIALIZATION *******************************
+//* ************************************************************************
+
+void initializeReturningNo2x4Sequence() {
     //! ************************************************************************
     //! STEP 1: INITIALIZE RETURNING NO 2X4 SEQUENCE
     //! ************************************************************************
@@ -79,203 +118,211 @@ void onEnterReturningNo2x4State() {
     turnYellowLedOff();
     
     // Initialize step tracking
-    returningNo2x4Step = 0;
+    currentStep = 0;
     cylinderActionTime = 0;
     waitingForCylinder = false;
+    attentionStep = 0;
+    attentionStartTime = 0;
 }
 
-void onExitReturningNo2x4State() {
-    resetReturningNo2x4Steps();
-}
+//* ************************************************************************
+//* ************************ MAIN SEQUENCE HANDLER ************************
+//* ************************************************************************
 
 void handleReturningNo2x4Sequence() {
-    // RETURNING_NO_2x4 sequence logic
     FastAccelStepper* feedMotor = getFeedMotor();
-    const unsigned long CYLINDER_ACTION_DELAY_MS = 150;
     
-    if (returningNo2x4Step == 0) { // First time entering this specific RETURNING_NO_2x4 logic path
+    // First time entering this specific RETURNING_NO_2x4 logic path
+    if (currentStep == 0) {
         retract2x4SecureClamp();
-        if (feedMotor) {
-            if (feedMotor->getCurrentPosition() != 0 || feedMotor->isRunning()) {
-                feedMotor->moveTo(0);
-            }
+        if (feedMotor && (feedMotor->getCurrentPosition() != 0 || feedMotor->isRunning())) {
+            feedMotor->moveTo(0);
         }
-        returningNo2x4Step = 1;
+        currentStep = 1;
     }
 
+    // Handle cylinder action delays
     if (waitingForCylinder && (millis() - cylinderActionTime >= CYLINDER_ACTION_DELAY_MS)) {
         waitingForCylinder = false;
-        returningNo2x4Step++; 
+        currentStep++; 
     }
     
+    // Process current step if not waiting for cylinder
     if (!waitingForCylinder) {
-        handleReturningNo2x4Step(returningNo2x4Step);
+        processCurrentStep(currentStep);
     }
 }
 
-void handleReturningNo2x4Step(int step) {
-    FastAccelStepper* cutMotor = getCutMotor();
-    FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_TRAVEL_DISTANCE; // From main.cpp
-    
-    switch (step) { 
-        case 1: // New Step: Wait for cut motor, then extend feed clamp
-            if (cutMotor && !cutMotor->isRunning()) {
-                extendFeedClamp();
-                cylinderActionTime = millis();
-                waitingForCylinder = true; // Will cause returningNo2x4Step to increment to 2 after delay
-            }
-            break;
-            
-        case 2: // Was original returningNo2x4Step 1: wait for feed motor, then retract feed clamp
-            if (feedMotor && !feedMotor->isRunning()) {
-                retractFeedClamp();
-                cylinderActionTime = millis();
-                waitingForCylinder = true; // Increments to 3
-            }
-            break;
-            
-        case 3: // Was original returningNo2x4Step 2: move feed motor to -2.0 inches
-            configureFeedMotorForNormalOperation(); // Ensure correct config
-            moveFeedMotorToPosition(-2.0);
-            returningNo2x4Step = 4; // Directly advance step here as it's a command
-            break;
-            
-        case 4: // Was original returningNo2x4Step 3: wait for feed motor at -2.0, extend feed clamp
-            if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Feed clamp extended at -2.0 inches");
-                returningNo2x4Step = 5; // Move to attention sequence
-            }
-            break;
-            
-        case 5: // Attention-getting sequence: retract, extend, retract, extend, retract, extend, retract, extend, retract (9 movements total)
-            static int attentionStep = 0;
-            static unsigned long attentionStartTime = 0;
-            
-            if (attentionStep == 0) {
-                // First step: retract feed clamp
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (1/9)");
-                attentionStep = 1;
-                attentionStartTime = millis();
-            } else if (attentionStep == 1 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Second step: extend feed clamp
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (2/9)");
-                attentionStep = 2;
-                attentionStartTime = millis();
-            } else if (attentionStep == 2 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Third step: retract feed clamp again
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (3/9)");
-                attentionStep = 3;
-                attentionStartTime = millis();
-            } else if (attentionStep == 3 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Fourth step: extend feed clamp again
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (4/9)");
-                attentionStep = 4;
-                attentionStartTime = millis();
-            } else if (attentionStep == 4 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Fifth step: retract feed clamp again
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (5/9)");
-                attentionStep = 5;
-                attentionStartTime = millis();
-            } else if (attentionStep == 5 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Sixth step: extend feed clamp again
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (6/9)");
-                attentionStep = 6;
-                attentionStartTime = millis();
-            } else if (attentionStep == 6 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Seventh step: retract feed clamp again
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (7/9)");
-                attentionStep = 7;
-                attentionStartTime = millis();
-            } else if (attentionStep == 7 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Eighth step: extend feed clamp again
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (8/9)");
-                attentionStep = 8;
-                attentionStartTime = millis();
-            } else if (attentionStep == 8 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Ninth step: final extension to ensure clamp is extended at end of attention sequence
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - final extension (9/9)");
-                attentionStep = 0; // Reset for next time
-                returningNo2x4Step = 6; // Move to next step
-            }
-            break;
-            
-        case 6: // Was original returningNo2x4Step 4: move feed motor to home
-            configureFeedMotorForNormalOperation();
-            moveFeedMotorToHome();
-            returningNo2x4Step = 7; // Directly advance step
-            break;
-            
-        case 7: // Was original returningNo2x4Step 5: wait for feed motor at home, retract feed clamp
-            if (feedMotor && !feedMotor->isRunning()) {
-                retractFeedClamp();
-                cylinderActionTime = millis();
-                waitingForCylinder = true; // Increments to 8
-            }
-            break;
-            
-        case 8: // Was original returningNo2x4Step 6: move feed motor to final position
-            configureFeedMotorForNormalOperation();
-            moveFeedMotorToPosition(-FEED_TRAVEL_DISTANCE);
-            returningNo2x4Step = 9; // Directly advance step
-            break;
-            
-        case 9: // Final step: wait for both sensors to be not active, then finish sequence
-            if (feedMotor && !feedMotor->isRunning()) {
-                bool sensorDetectedHome = false;
-                for (int i = 0; i < 3; i++) {
-                    delay(30);  
-                    getCutHomingSwitch()->update();
-                    bool sensorReading = getCutHomingSwitch()->read();
-                    
-                    if (sensorReading == HIGH) {
-                        sensorDetectedHome = true;
-                        if (cutMotor) cutMotor->setCurrentPosition(0); 
-                        break;  
-                    }
-                }
-                
-                // Wait until both sensors are not active before proceeding
-                if (checkBothSensorsNotActive()) {
-                    // Both sensors not active - extend secure wood clamp and complete sequence
-                    extend2x4SecureClamp();
-                    //serial.println("ReturningNo2x4: Both sensors not active - extending secure wood clamp and completing sequence");
-                    
-                    turnYellowLedOff();
-                    turnBlueLedOn(); 
+//* ************************************************************************
+//* ************************ STEP PROCESSING ******************************
+//* ************************************************************************
 
-                    resetReturningNo2x4Steps();
-                    setCuttingCycleInProgress(false);
-                    
-                    // Check if cycle switch is currently ON - if yes, require cycling
-                    if (getStartCycleSwitch()->read() == HIGH) {
-                        setStartSwitchSafe(false);
-                    }
-                    
-                    // Set flag to indicate we're coming from no-wood cycle with sensors clear
-                    setComingFromNoWoodWithSensorsClear(true);
-                    
-                    // Transition to IDLE state - secure clamp will remain extended
-                    changeState(IDLE);
-                } else {
-                    // At least one sensor is still active - keep waiting
-                    // Keep both clamps retracted while waiting
-                    retractFeedClamp();
-                    retract2x4SecureClamp();
-                    //serial.println("ReturningNo2x4: Waiting for both sensors to be not active...");
-                }
-            }
+void processCurrentStep(int step) {
+    switch (step) { 
+        case 1: // Wait for cut motor, then extend feed clamp
+            handleCutMotorWaitAndExtendFeedClamp();
             break;
+            
+        case 2: // Wait for feed motor, then retract feed clamp
+            handleFeedMotorWaitAndRetractFeedClamp();
+            break;
+            
+        case 3: // Move feed motor to Movement 1 position
+            handleFeedMotorMoveToPosition1();
+            break;
+            
+        case 4: // Wait for feed motor at Movement 1 position, extend feed clamp
+            handleFeedMotorWaitAtPosition1AndExtendClamp();
+            break;
+            
+        case 5: // Attention-getting sequence
+            handleAttentionSequence();
+            break;
+            
+        case 6: // Move feed motor to home
+            handleFeedMotorMoveToHome();
+            break;
+            
+        case 7: // Wait for feed motor at home, retract feed clamp
+            handleFeedMotorWaitAtHomeAndRetractClamp();
+            break;
+            
+        case 8: // Move feed motor to Movement 2 position
+            handleFeedMotorMoveToPosition2();
+            break;
+            
+        case 9: // Final step: verify sensors and complete sequence
+            handleFinalVerificationAndCompletion();
+            break;
+    }
+}
+
+//* ************************************************************************
+//* ************************ STEP HANDLERS ********************************
+//* ************************************************************************
+
+void handleCutMotorWaitAndExtendFeedClamp() {
+    FastAccelStepper* cutMotor = getCutMotor();
+    
+    if (cutMotor && !cutMotor->isRunning()) {
+        extendFeedClamp();
+        cylinderActionTime = millis();
+        waitingForCylinder = true; // Will cause currentStep to increment to 2 after delay
+    }
+}
+
+void handleFeedMotorWaitAndRetractFeedClamp() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    
+    if (feedMotor && !feedMotor->isRunning()) {
+        retractFeedClamp();
+        cylinderActionTime = millis();
+        waitingForCylinder = true; // Increments to 3
+    }
+}
+
+void handleFeedMotorMoveToPosition1() {
+    configureFeedMotorForNormalOperation(); // Ensure correct config
+    moveFeedMotorToPosition(FEED_MOTOR_MOVEMENT_1_DISTANCE);
+    currentStep = 4; // Directly advance step here as it's a command
+}
+
+void handleFeedMotorWaitAtPosition1AndExtendClamp() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    
+    if (feedMotor && !feedMotor->isRunning()) {
+        extendFeedClamp();
+        currentStep = 5; // Move to attention sequence
+    }
+}
+
+void handleAttentionSequence() {
+    if (attentionStep == 0) {
+        // First step: retract feed clamp
+        retractFeedClamp();
+        attentionStep = 1;
+        attentionStartTime = millis();
+    } else if (attentionStep < ATTENTION_SEQUENCE_TOTAL_MOVEMENTS && 
+               millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
+        
+        // Alternate between extend and retract
+        if (attentionStep % 2 == 1) {
+            extendFeedClamp();
+        } else {
+            retractFeedClamp();
+        }
+        
+        attentionStep++;
+        attentionStartTime = millis();
+        
+        // Check if sequence is complete
+        if (attentionStep >= ATTENTION_SEQUENCE_TOTAL_MOVEMENTS) {
+            // Ensure clamp is extended at end of attention sequence
+            extendFeedClamp();
+            attentionStep = 0; // Reset for next time
+            currentStep = 6; // Move to next step
+        }
+    }
+}
+
+void handleFeedMotorMoveToHome() {
+    configureFeedMotorForNormalOperation();
+    moveFeedMotorToHome();
+    currentStep = 7; // Directly advance step
+}
+
+void handleFeedMotorWaitAtHomeAndRetractClamp() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    
+    if (feedMotor && !feedMotor->isRunning()) {
+        retractFeedClamp();
+        cylinderActionTime = millis();
+        waitingForCylinder = true; // Increments to 8
+    }
+}
+
+void handleFeedMotorMoveToPosition2() {
+    configureFeedMotorForNormalOperation();
+    moveFeedMotorToPosition(FEED_MOTOR_MOVEMENT_2_DISTANCE);
+    currentStep = 9; // Directly advance step
+}
+
+void handleFinalVerificationAndCompletion() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    FastAccelStepper* cutMotor = getCutMotor();
+    
+    if (feedMotor && !feedMotor->isRunning()) {
+        // Verify cut home position
+        verifyCutHomePosition(cutMotor);
+        
+        // Wait until both sensors are not active before proceeding
+        if (checkBothSensorsNotActive()) {
+            completeReturningNo2x4Sequence();
+        } else {
+            // At least one sensor is still active - keep waiting
+            retractFeedClamp();
+            retract2x4SecureClamp();
+        }
+    }
+}
+
+//* ************************************************************************
+//* ************************ SENSOR VERIFICATION **************************
+//* ************************************************************************
+
+void verifyCutHomePosition(FastAccelStepper* cutMotor) {
+    bool sensorDetectedHome = false;
+    
+    for (int i = 0; i < SENSOR_VERIFICATION_ATTEMPTS; i++) {
+        delay(SENSOR_VERIFICATION_DELAY_MS);  
+        getCutHomingSwitch()->update();
+        bool sensorReading = getCutHomingSwitch()->read();
+        
+        if (sensorReading == HIGH) {
+            sensorDetectedHome = true;
+            if (cutMotor) cutMotor->setCurrentPosition(0); 
+            break;  
+        }
     }
 }
 
@@ -285,8 +332,8 @@ bool checkBothSensorsNotActive() {
     bool woodPresentSensorNotActive = true;
     
     // Take multiple readings for stability
-    for (int i = 0; i < 3; i++) {
-        delay(10); // Small delay between readings
+    for (int i = 0; i < SENSOR_VERIFICATION_ATTEMPTS; i++) {
+        delay(SENSOR_READING_DELAY_MS); // Small delay between readings
         
         // Check FIRST_CUT_OR_WOOD_FWD_ONE sensor (HIGH = not active)
         if (digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == LOW) {
@@ -303,8 +350,40 @@ bool checkBothSensorsNotActive() {
     return (firstCutSensorNotActive && woodPresentSensorNotActive);
 }
 
+//* ************************************************************************
+//* ************************ SEQUENCE COMPLETION **************************
+//* ************************************************************************
+
+void completeReturningNo2x4Sequence() {
+    // Both sensors not active - extend secure wood clamp and complete sequence
+    extend2x4SecureClamp();
+    
+    turnYellowLedOff();
+    turnBlueLedOn(); 
+
+    resetReturningNo2x4Steps();
+    setCuttingCycleInProgress(false);
+    
+    // Check if cycle switch is currently ON - if yes, require cycling
+    if (getStartCycleSwitch()->read() == HIGH) {
+        setStartSwitchSafe(false);
+    }
+    
+    // Set flag to indicate we're coming from no-wood cycle with sensors clear
+    setComingFromNoWoodWithSensorsClear(true);
+    
+    // Transition to IDLE state - secure clamp will remain extended
+    changeState(IDLE);
+}
+
+//* ************************************************************************
+//* ************************ UTILITY FUNCTIONS ****************************
+//* ************************************************************************
+
 void resetReturningNo2x4Steps() {
-    returningNo2x4Step = 0;
+    currentStep = 0;
     cylinderActionTime = 0;
     waitingForCylinder = false;
-} 
+    attentionStep = 0;
+    attentionStartTime = 0;
+}

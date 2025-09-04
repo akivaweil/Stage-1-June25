@@ -254,6 +254,10 @@ void moveFeedMotorToHome() {
 
 void moveFeedMotorToPosition(float targetPositionInches) {
     if (feedMotor) {
+        // Safety check: ensure position is never negative
+        if (targetPositionInches < 0) {
+            targetPositionInches = 0;
+        }
         feedMotor->moveTo(targetPositionInches * FEED_MOTOR_STEPS_PER_INCH);
     }
 }

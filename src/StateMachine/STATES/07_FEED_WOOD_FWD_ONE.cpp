@@ -1,7 +1,13 @@
 #include "StateMachine/07_FEED_WOOD_FWD_ONE.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
-#include "StateMachine/STATES/States_Config.h"
+
+//* ************************************************************************
+//* ************************ RELEVANT CONSTANTS **************************
+//* ************************************************************************
+// Feed motor movement constants for this state (specific to this state)
+const float FEED_MOTOR_HOME_POSITION = 0.0; // inches - home position
+const float FEED_MOTOR_TRAVEL_POSITION = 3.4; // inches - travel distance position
 
 //* ************************************************************************
 //* ********************* FEED WOOD FWD ONE STATE **************************

@@ -603,11 +603,11 @@ void moveFeedMotorToHomeWithClampControl() {
 
 void moveFeedMotorToPositionWithClampControl(float targetPositionInches) {
     if (feedMotor) {
-        // Safety check: ensure position is within allowed range
-        if (targetPositionInches < FEED_MOTOR_MIN_POSITION) {
-            targetPositionInches = FEED_MOTOR_MIN_POSITION;
-        } else if (targetPositionInches > FEED_MOTOR_MAX_POSITION) {
-            targetPositionInches = FEED_MOTOR_MAX_POSITION;
+        // Safety check: ensure position is within allowed range (0.0 to 4.75 inches)
+        if (targetPositionInches < 0.0) {
+            targetPositionInches = 0.0;
+        } else if (targetPositionInches > 4.75) {
+            targetPositionInches = 4.75;
         }
         
         // Determine if moving toward home (0) or away from home
@@ -628,6 +628,6 @@ void moveFeedMotorToPositionWithClampControl(float targetPositionInches) {
 void moveFeedMotorToTravelWithClampControl() {
     if (feedMotor) {
         retractFeedClamp(); // Retract when moving away from home
-        moveFeedMotorToPosition(FEED_MOTOR_TRAVEL_POSITION);
+        moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
     }
 } 

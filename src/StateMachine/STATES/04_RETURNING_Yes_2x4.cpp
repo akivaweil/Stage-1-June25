@@ -219,7 +219,7 @@ void handleFeedMotorReturnSequence() {
             //! ************************************************************************
             configureFeedMotorForReturn();
             if (feedMotor) {
-                feedMotor->move(-FEED_MOTOR_RETURN_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotor->move(FEED_MOTOR_RETURN_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
             }
             feedMotorReturnSubStep = 1;
             break;

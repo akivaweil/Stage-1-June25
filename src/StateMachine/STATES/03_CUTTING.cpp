@@ -393,7 +393,7 @@ void handleCuttingStep8_FeedMotorHomingSequence() {
         case 3: // Wait for positioning move to complete, then set new zero
             if (feedMotor && !feedMotor->isRunning()) {
                 //serial.println("Feed Motor Homing Step 8.3: Setting new working zero position.");
-                feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
+                feedMotor->setCurrentPosition(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
                 //serial.println("Feed motor homed: 0.2 inch from sensor set as position 0.");
                 
                 configureFeedMotorForNormalOperation();

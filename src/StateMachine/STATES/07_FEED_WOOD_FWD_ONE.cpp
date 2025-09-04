@@ -99,7 +99,7 @@ void executeFeedWoodFwdOneStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                moveFeedMotorToPosition(-FEED_TRAVEL_DISTANCE);
                 //serial.println("FeedWoodFwdOne: Moving feed motor to travel distance");
                 advanceToNextFeedWoodFwdOneStep();
             }

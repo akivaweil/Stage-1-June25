@@ -135,16 +135,16 @@ void handleReturningNo2x4Step(int step) {
             }
             break;
             
-        case 3: // Was original returningNo2x4Step 2: move feed motor to 2.0 inches
+        case 3: // Was original returningNo2x4Step 2: move feed motor to -2.0 inches
             configureFeedMotorForNormalOperation(); // Ensure correct config
-            moveFeedMotorToPosition(2.0);
+            moveFeedMotorToPosition(-2.0);
             returningNo2x4Step = 4; // Directly advance step here as it's a command
             break;
             
-        case 4: // Was original returningNo2x4Step 3: wait for feed motor at 2.0, extend feed clamp
+        case 4: // Was original returningNo2x4Step 3: wait for feed motor at -2.0, extend feed clamp
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
-                //serial.println("ReturningNo2x4: Feed clamp extended at 2.0 inches");
+                //serial.println("ReturningNo2x4: Feed clamp extended at -2.0 inches");
                 returningNo2x4Step = 5; // Move to attention sequence
             }
             break;
@@ -226,7 +226,7 @@ void handleReturningNo2x4Step(int step) {
             
         case 8: // Was original returningNo2x4Step 6: move feed motor to final position
             configureFeedMotorForNormalOperation();
-            moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+            moveFeedMotorToPosition(-FEED_TRAVEL_DISTANCE);
             returningNo2x4Step = 9; // Directly advance step
             break;
             

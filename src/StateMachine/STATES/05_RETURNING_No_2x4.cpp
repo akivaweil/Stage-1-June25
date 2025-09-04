@@ -8,7 +8,7 @@
 //* ************************************************************************
 
 // Movement Configuration
-const float FEED_MOTOR_RETURN_DISTANCE = 4.5;             // inches - Distance to move feed motor away from home
+const float FEED_MOTOR_RETURN_DISTANCE = 3.0;             // inches - Distance to move feed motor away from home (within safe limits)
 const float FEED_MOTOR_HOME_POSITION = 0.0;                // inches - home position
 
 //* ************************************************************************
@@ -29,7 +29,7 @@ static int currentStep = 0;
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 2: MOVE FEED MOTOR 4.5 INCHES AWAY FROM HOME WITH CLAMPS SET
+//! STEP 2: MOVE FEED MOTOR 3.0 INCHES AWAY FROM HOME WITH CLAMPS SET
 //! ************************************************************************
 
 //! ************************************************************************
@@ -124,7 +124,7 @@ void handleFeedMotorMoveWithClamps() {
         extendFeedClamp();
         retract2x4SecureClamp();
         
-        // Move feed motor 4.5 inches away from home
+        // Move feed motor 3.0 inches away from home
         moveFeedMotorToPosition(FEED_MOTOR_RETURN_DISTANCE);
         currentStep = 2; // Move to final step
     }

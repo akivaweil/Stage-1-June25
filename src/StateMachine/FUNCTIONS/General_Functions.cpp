@@ -587,4 +587,40 @@ void moveFeedMotorToPostCutHome() {
         feedMotor->moveTo(0);
         //serial.println("Feed motor moving to post-cut home position (0 inches)");
     }
+}
+
+//* ************************************************************************
+//* ******************** FEED CLAMP DIRECTION CONTROL *********************
+//* ************************************************************************
+// Functions to control feed clamp based on feed motor movement direction
+
+void moveFeedMotorToHomeWithClampControl() {
+    if (feedMotor) {
+        extendFeedClamp(); // Extend when moving toward home
+        moveFeedMotorToHome();
+    }
+}
+
+void moveFeedMotorToPositionWithClampControl(float targetPositionInches) {
+    if (feedMotor) {
+        // Determine if moving toward home (0) or away from home
+        float currentPosition = feedMotor->getCurrentPosition() / FEED_MOTOR_STEPS_PER_INCH;
+        
+        if (targetPositionInches < currentPosition) {
+            // Moving toward home - extend clamp
+            extendFeedClamp();
+        } else {
+            // Moving away from home - retract clamp
+            retractFeedClamp();
+        }
+        
+        moveFeedMotorToPosition(targetPositionInches);
+    }
+}
+
+void moveFeedMotorToTravelWithClampControl() {
+    if (feedMotor) {
+        retractFeedClamp(); // Retract when moving away from home
+        moveFeedMotorToTravel();
+    }
 } 

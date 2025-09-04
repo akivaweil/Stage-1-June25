@@ -74,7 +74,7 @@ void executeFeedWoodFwdOneStep() {
 
         case MOVE_POSITION_MOTOR_TO_ZERO:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToHome();
+                moveFeedMotorToHomeWithClampControl();
                 //serial.println("FeedWoodFwdOne: Moving feed motor to 0");
                 advanceToNextFeedWoodFwdOneStep();
             }
@@ -99,7 +99,7 @@ void executeFeedWoodFwdOneStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                moveFeedMotorToPositionWithClampControl(FEED_TRAVEL_DISTANCE);
                 //serial.println("FeedWoodFwdOne: Moving feed motor to travel distance");
                 advanceToNextFeedWoodFwdOneStep();
             }

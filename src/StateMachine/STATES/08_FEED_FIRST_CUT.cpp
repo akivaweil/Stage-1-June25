@@ -117,7 +117,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_NEGATIVE_ONE:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_MOTOR_RETRACT_POSITION);
+                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_RETRACT_POSITION);
                 //serial.println("FeedFirstCut: Moving feed motor to 4.6 inch");
                 advanceToNextFeedFirstCutStep();
             }
@@ -141,8 +141,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp(); // Extend clamp when moving towards home
-                moveFeedMotorToPosition(0.0);
+                moveFeedMotorToPositionWithClampControl(0.0);
                 //serial.println("FeedFirstCut: Moving feed motor to travel distance");
                 advanceToNextFeedFirstCutStep();
             }
@@ -163,7 +162,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_NEGATIVE_TWO:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_MOTOR_RETRACT_POSITION);
+                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_RETRACT_POSITION);
                 //serial.println("FeedFirstCut: Moving feed motor to 4.6 inch (second run)");
                 advanceToNextFeedFirstCutStep();
             }
@@ -187,8 +186,7 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
             if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp(); // Extend clamp when moving towards home
-                moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_OFFSET);
+                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_SECOND_RUN_OFFSET);
                 //serial.println("FeedFirstCut: Moving feed motor to 1.4 inches");
                 advanceToNextFeedFirstCutStep();
             }

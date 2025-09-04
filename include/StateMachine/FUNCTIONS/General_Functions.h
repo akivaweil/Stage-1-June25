@@ -156,4 +156,11 @@ void handleTASignalTiming();
 void handleRotationClampRetract();
 void moveFeedMotorToPostCutHome();
 
+//* ************************************************************************
+//* ******************** FEED CLAMP DIRECTION CONTROL *********************
+//* ************************************************************************
+void moveFeedMotorToHomeWithClampControl();
+void moveFeedMotorToPositionWithClampControl(float targetPositionInches);
+void moveFeedMotorToTravelWithClampControl();
+
 #endif // GENERAL_FUNCTIONS_H 

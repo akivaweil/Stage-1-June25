@@ -240,7 +240,7 @@ void handleFeedMotorReturnSequence() {
             //! STEP 8: RETURN FEED MOTOR TO HOME POSITION
             //! ************************************************************************
             if (feedMotor) {
-                moveFeedMotorToHome();
+                moveFeedMotorToHomeWithClampControl();
             }
             returningYes2x4SubStep = 1;
             break;

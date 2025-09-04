@@ -255,7 +255,7 @@ void handleFeedMotorWaitAndRetractFeedClamp() {
 
 void handleFeedMotorMoveToPosition1() {
     configureFeedMotorForNormalOperation(); // Ensure correct config
-    moveFeedMotorToPosition(FEED_MOTOR_MOVEMENT_1_DISTANCE);
+    moveFeedMotorToPositionWithClampControl(FEED_MOTOR_MOVEMENT_1_DISTANCE);
     currentStep = 4; // Directly advance step here as it's a command
 }
 
@@ -270,7 +270,7 @@ void handleFeedMotorWaitAtPosition1AndExtendClamp() {
 
 void handleFeedMotorMoveBackToHome() {
     configureFeedMotorForNormalOperation();
-    moveFeedMotorToHome();
+    moveFeedMotorToHomeWithClampControl();
     currentStep = 6; // Directly advance step
 }
 
@@ -313,7 +313,7 @@ void handleAttentionSequence() {
 
 void handleFeedMotorMoveToHome() {
     configureFeedMotorForNormalOperation();
-    moveFeedMotorToHome();
+    moveFeedMotorToHomeWithClampControl();
     currentStep = 9; // Directly advance step
 }
 
@@ -329,13 +329,13 @@ void handleFeedMotorWaitAtHomeAndRetractClamp() {
 
 void handleFeedMotorMoveToPosition2() {
     configureFeedMotorForNormalOperation();
-    moveFeedMotorToPosition(FEED_MOTOR_MOVEMENT_2_DISTANCE);
+    moveFeedMotorToPositionWithClampControl(FEED_MOTOR_MOVEMENT_2_DISTANCE);
     currentStep = 11; // Directly advance step
 }
 
 void handleFeedMotorMoveBackToHomeAfterPosition2() {
     configureFeedMotorForNormalOperation();
-    moveFeedMotorToHome();
+    moveFeedMotorToHomeWithClampControl();
     currentStep = 12; // Directly advance step
 }
 

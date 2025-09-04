@@ -26,6 +26,8 @@ void handleCutMotorWaitAndExtendFeedClamp();
 void handleFeedMotorWaitAndRetractFeedClamp();
 void handleFeedMotorMoveToPosition1();
 void handleFeedMotorWaitAtPosition1AndExtendClamp();
+void handleFeedMotorMoveBackToHome();
+void handleFeedMotorWaitAtHomeForAttention();
 void handleAttentionSequence();
 void handleFeedMotorMoveToHome();
 void handleFeedMotorWaitAtHomeAndRetractClamp();

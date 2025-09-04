@@ -14,11 +14,11 @@ const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30;    // Delay between senso
 const unsigned long SENSOR_READING_DELAY_MS = 10;         // Delay between sensor readings for stability
 
 // Movement Configuration
-const float FEED_MOTOR_MOVEMENT_1_DISTANCE = 2.0;         // inches - Intermediate position for no-wood sequence
-const float FEED_MOTOR_MOVEMENT_2_DISTANCE = 3.4;         // inches - Final position (matches FEED_TRAVEL_DISTANCE)
+const float FEED_MOTOR_MOVEMENT_1_DISTANCE = 4.75;         // inches - Intermediate position for no-wood sequence
+const float FEED_MOTOR_MOVEMENT_2_DISTANCE = 4.75;         // inches - Final position (matches FEED_TRAVEL_DISTANCE)
 
 // Sequence Configuration
-const int ATTENTION_SEQUENCE_TOTAL_MOVEMENTS = 9;         // Total number of movements in attention sequence
+const int ATTENTION_SEQUENCE_TOTAL_MOVEMENTS = 5;         // Total number of movements in attention sequence
 const int SENSOR_VERIFICATION_ATTEMPTS = 3;               // Number of attempts for sensor verification
 
 //* ************************************************************************
@@ -62,23 +62,31 @@ static unsigned long attentionStartTime = 0;
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 6: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION
+//! STEP 6: MOVE FEED MOTOR BACK TO HOME POSITION
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 7: MOVE FEED MOTOR TO HOME
+//! STEP 7: WAIT FOR FEED MOTOR AT HOME AND START ATTENTION SEQUENCE
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: WAIT FOR FEED MOTOR HOME AND RETRACT FEED CLAMP
+//! STEP 8: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 9: MOVE FEED MOTOR TO FINAL POSITION
+//! STEP 9: MOVE FEED MOTOR TO HOME (AFTER ATTENTION SEQUENCE)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 10: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
+//! STEP 10: WAIT FOR FEED MOTOR HOME AND RETRACT FEED CLAMP
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 11: MOVE FEED MOTOR TO FINAL POSITION
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 12: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
 //! ************************************************************************
 
 //* ************************************************************************
@@ -175,23 +183,31 @@ void processCurrentStep(int step) {
             handleFeedMotorWaitAtPosition1AndExtendClamp();
             break;
             
-        case 5: // Attention-getting sequence
+        case 5: // Move feed motor back to home position
+            handleFeedMotorMoveBackToHome();
+            break;
+            
+        case 6: // Wait for feed motor at home, then start attention sequence
+            handleFeedMotorWaitAtHomeForAttention();
+            break;
+            
+        case 7: // Attention-getting sequence
             handleAttentionSequence();
             break;
             
-        case 6: // Move feed motor to home
+        case 8: // Move feed motor to home (after attention sequence)
             handleFeedMotorMoveToHome();
             break;
             
-        case 7: // Wait for feed motor at home, retract feed clamp
+        case 9: // Wait for feed motor at home, retract feed clamp
             handleFeedMotorWaitAtHomeAndRetractClamp();
             break;
             
-        case 8: // Move feed motor to Movement 2 position
+        case 10: // Move feed motor to Movement 2 position
             handleFeedMotorMoveToPosition2();
             break;
             
-        case 9: // Final step: verify sensors and complete sequence
+        case 11: // Final step: verify sensors and complete sequence
             handleFinalVerificationAndCompletion();
             break;
     }
@@ -232,7 +248,21 @@ void handleFeedMotorWaitAtPosition1AndExtendClamp() {
     
     if (feedMotor && !feedMotor->isRunning()) {
         extendFeedClamp();
-        currentStep = 5; // Move to attention sequence
+        currentStep = 5; // Move to move back to home
+    }
+}
+
+void handleFeedMotorMoveBackToHome() {
+    configureFeedMotorForNormalOperation();
+    moveFeedMotorToHome();
+    currentStep = 6; // Directly advance step
+}
+
+void handleFeedMotorWaitAtHomeForAttention() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    
+    if (feedMotor && !feedMotor->isRunning()) {
+        currentStep = 7; // Move to attention sequence
     }
 }
 
@@ -260,7 +290,7 @@ void handleAttentionSequence() {
             // Ensure clamp is extended at end of attention sequence
             extendFeedClamp();
             attentionStep = 0; // Reset for next time
-            currentStep = 6; // Move to next step
+            currentStep = 8; // Move to next step
         }
     }
 }
@@ -268,7 +298,7 @@ void handleAttentionSequence() {
 void handleFeedMotorMoveToHome() {
     configureFeedMotorForNormalOperation();
     moveFeedMotorToHome();
-    currentStep = 7; // Directly advance step
+    currentStep = 9; // Directly advance step
 }
 
 void handleFeedMotorWaitAtHomeAndRetractClamp() {
@@ -277,14 +307,14 @@ void handleFeedMotorWaitAtHomeAndRetractClamp() {
     if (feedMotor && !feedMotor->isRunning()) {
         retractFeedClamp();
         cylinderActionTime = millis();
-        waitingForCylinder = true; // Increments to 8
+        waitingForCylinder = true; // Increments to 10
     }
 }
 
 void handleFeedMotorMoveToPosition2() {
     configureFeedMotorForNormalOperation();
     moveFeedMotorToPosition(FEED_MOTOR_MOVEMENT_2_DISTANCE);
-    currentStep = 9; // Directly advance step
+    currentStep = 11; // Directly advance step
 }
 
 void handleFinalVerificationAndCompletion() {

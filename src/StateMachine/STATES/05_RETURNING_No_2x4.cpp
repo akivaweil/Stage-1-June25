@@ -14,8 +14,8 @@ const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30;    // Delay between senso
 const unsigned long SENSOR_READING_DELAY_MS = 10;         // Delay between sensor readings for stability
 
 // Movement Configuration
-const float FEED_MOTOR_MOVEMENT_1_DISTANCE = 4.75;         // inches - Intermediate position for no-wood sequence
-const float FEED_MOTOR_MOVEMENT_2_DISTANCE = 4.75;         // inches - Final position (matches FEED_TRAVEL_DISTANCE)
+const float FEED_MOTOR_MOVEMENT_1_DISTANCE = 1.0;          // inches - Intermediate position for no-wood sequence (safe distance)
+const float FEED_MOTOR_MOVEMENT_2_DISTANCE = 1.0;          // inches - Final position (safe distance within travel limits)
 
 // Sequence Configuration
 const int ATTENTION_SEQUENCE_TOTAL_MOVEMENTS = 5;         // Total number of movements in attention sequence

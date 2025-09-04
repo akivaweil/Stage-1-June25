@@ -28,7 +28,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 2: MOVE TO 4.6 INCHES
+//! STEP 2: MOVE TO RETRACT POSITION
 //! ************************************************************************
 
 //! ************************************************************************
@@ -36,11 +36,11 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 4: WAIT 200MS
+//! STEP 4: WAIT FOR CLAMP DELAY
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: EXTEND FEED CLAMP AND MOVE TO TRAVEL DISTANCE
+//! STEP 5: EXTEND FEED CLAMP AND MOVE TO HOME POSITION
 //! ************************************************************************
 
 //! ************************************************************************
@@ -52,7 +52,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: MOVE TO 4.6 INCHES (SECOND RUN)
+//! STEP 8: MOVE TO RETRACT POSITION (SECOND RUN)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -60,11 +60,11 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 10: WAIT 200MS (SECOND RUN)
+//! STEP 10: WAIT FOR CLAMP DELAY (SECOND RUN)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 11: EXTEND FEED CLAMP AND MOVE TO 1.4 INCHES
+//! STEP 11: EXTEND FEED CLAMP AND MOVE TO FINAL POSITION
 //! ************************************************************************
 
 //! ************************************************************************
@@ -74,16 +74,16 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 // Static variables for feed first cut state tracking
 enum FeedFirstCutStep {
     RETRACT_FEED_CLAMP,
-    MOVE_TO_NEGATIVE_ONE,
+    MOVE_TO_RETRACT_POSITION,
     EXTEND_FEED_CLAMP_RETRACT_SECURE,
-    WAIT_200MS,
-    MOVE_TO_TRAVEL_DISTANCE,
+    WAIT_FOR_CLAMP_DELAY,
+    MOVE_TO_HOME_POSITION,
     FIRST_RUN_COMPLETE,
     RETRACT_FEED_CLAMP_SECOND,
-    MOVE_TO_NEGATIVE_TWO,
+    MOVE_TO_RETRACT_POSITION_SECOND,
     EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND,
-    WAIT_200MS_SECOND,
-    MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75,
+    WAIT_FOR_CLAMP_DELAY_SECOND,
+    MOVE_TO_FINAL_POSITION,
     CHECK_START_CYCLE_SWITCH
 };
 
@@ -117,10 +117,10 @@ void executeFeedFirstCutStep() {
             advanceToNextFeedFirstCutStep();
             break;
 
-        case MOVE_TO_NEGATIVE_ONE:
+        case MOVE_TO_RETRACT_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPositionWithClampControl(FEED_MOTOR_RETRACT_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to 4.6 inch");
+                //serial.println("FeedFirstCut: Moving feed motor to retract position");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -134,17 +134,17 @@ void executeFeedFirstCutStep() {
             }
             break;
 
-        case WAIT_200MS:
+        case WAIT_FOR_CLAMP_DELAY:
             if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
-                //serial.println("FeedFirstCut: Waiting 200ms");
+                //serial.println("FeedFirstCut: Waiting for clamp delay");
                 advanceToNextFeedFirstCutStep();
             }
             break;
 
-        case MOVE_TO_TRAVEL_DISTANCE:
+        case MOVE_TO_HOME_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPositionWithClampControl(FEED_MOTOR_HOME_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to travel distance");
+                //serial.println("FeedFirstCut: Moving feed motor to home position");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -162,10 +162,10 @@ void executeFeedFirstCutStep() {
             advanceToNextFeedFirstCutStep();
             break;
 
-        case MOVE_TO_NEGATIVE_TWO:
+        case MOVE_TO_RETRACT_POSITION_SECOND:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPositionWithClampControl(FEED_MOTOR_RETRACT_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to 4.6 inch (second run)");
+                //serial.println("FeedFirstCut: Moving feed motor to retract position (second run)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -179,17 +179,17 @@ void executeFeedFirstCutStep() {
             }
             break;
 
-        case WAIT_200MS_SECOND:
+        case WAIT_FOR_CLAMP_DELAY_SECOND:
             if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
-                //serial.println("FeedFirstCut: Waiting 200ms (second run)");
+                //serial.println("FeedFirstCut: Waiting for clamp delay (second run)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
 
-        case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
+        case MOVE_TO_FINAL_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPositionWithClampControl(FEED_MOTOR_SECOND_RUN_OFFSET);
-                //serial.println("FeedFirstCut: Moving feed motor to 1.4 inches");
+                //serial.println("FeedFirstCut: Moving feed motor to final position");
                 advanceToNextFeedFirstCutStep();
             }
             break;

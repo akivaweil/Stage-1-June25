@@ -347,7 +347,7 @@ void handleCuttingStep5() {
         //serial.println("Feed clamp retracted. Starting feed motor homing sequence...");
         
         // Transition to new step 8 for feed motor homing sequence
-        cuttingStep = 8;
+        cuttingStep = 8;  
         cuttingSubStep8 = 0; // Initialize homing substep
         //serial.println("Transitioning to feed motor homing sequence (Step 8)."); 
     }

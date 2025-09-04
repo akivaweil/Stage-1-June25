@@ -6,10 +6,9 @@
 //* ************************ RELEVANT CONSTANTS **************************
 //* ************************************************************************
 // Feed motor movement constants for this state (specific to this state)
-const float FEED_MOTOR_RETRACT_POSITION = 0; // inches - position for retracting feed motor (maintains same physical movement as original home=3.4 system, within 0-4.75 bounds)
-const float FEED_MOTOR_SECOND_RUN_OFFSET = 4.75; // inches - offset for second run final position
+const float FEED_MOTOR_POSITION_1 = -4.75; // inches - position 1 for feed motor (maintains same physical movement as original home=3.4 system, within 0-4.75 bounds)
+const float FEED_MOTOR_SECOND_RUN_OFFSET = -4.75; // inches - offset for second run final position
 const float FEED_MOTOR_HOME_POSITION = 0.0; // inches - home position
-const float FEED_MOTOR_TRAVEL_POSITION = 3.4; // inches - travel distance position
 
 // Timing constants for this state
 const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed clamp and retracting secure clamp
@@ -23,64 +22,16 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 // Handles the feed first cut sequence when pushwood forward switch is pressed
 // in idle state AND 2x4 sensor reads high.
 
-//! ************************************************************************
-//! STEP 1: RETRACT FEED CLAMP
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 2: MOVE TO RETRACT POSITION
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 3: RETRACT SECURE WOOD CLAMP
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 4: WAIT FOR CLAMP DELAY
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 5: EXTEND FEED CLAMP AND MOVE TO HOME POSITION
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 6: FIRST RUN COMPLETE - PREPARE FOR SECOND RUN
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 7: RETRACT FEED CLAMP (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 8: MOVE TO RETRACT POSITION (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 9: RETRACT SECURE WOOD CLAMP (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 10: WAIT FOR CLAMP DELAY (SECOND RUN)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 11: EXTEND FEED CLAMP AND MOVE TO FINAL POSITION
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 12: CHECK START CYCLE SWITCH AND TRANSITION TO APPROPRIATE STATE
-//! ************************************************************************
-
 // Static variables for feed first cut state tracking
 enum FeedFirstCutStep {
     RETRACT_FEED_CLAMP,
-    MOVE_TO_RETRACT_POSITION,
+    MOVE_TO_POSITION_1,
     EXTEND_FEED_CLAMP_RETRACT_SECURE,
     WAIT_FOR_CLAMP_DELAY,
     MOVE_TO_HOME_POSITION,
     FIRST_RUN_COMPLETE,
     RETRACT_FEED_CLAMP_SECOND,
-    MOVE_TO_RETRACT_POSITION_SECOND,
+    MOVE_TO_POSITION_2,
     EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND,
     WAIT_FOR_CLAMP_DELAY_SECOND,
     MOVE_TO_FINAL_POSITION,
@@ -117,10 +68,12 @@ void executeFeedFirstCutStep() {
             advanceToNextFeedFirstCutStep();
             break;
 
-        case MOVE_TO_RETRACT_POSITION:
+        case MOVE_TO_POSITION_1:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_RETRACT_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to retract position");
+                configureFeedMotorForNormalOperation();
+                retractFeedClamp();
+                moveFeedMotorToPosition(FEED_MOTOR_POSITION_1);
+                //serial.println("FeedFirstCut: Moving feed motor to position 1");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -128,6 +81,7 @@ void executeFeedFirstCutStep() {
         case EXTEND_FEED_CLAMP_RETRACT_SECURE:
             if (feedMotor && !feedMotor->isRunning()) {
                 retract2x4SecureClamp();
+                extendFeedClamp();
                 //serial.println("FeedFirstCut: Secure wood clamp retracted");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
@@ -143,7 +97,8 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_HOME_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_HOME_POSITION);
+                configureFeedMotorForNormalOperation();
+                moveFeedMotorToPosition(FEED_MOTOR_HOME_POSITION);
                 //serial.println("FeedFirstCut: Moving feed motor to home position");
                 advanceToNextFeedFirstCutStep();
             }
@@ -158,14 +113,16 @@ void executeFeedFirstCutStep() {
 
         case RETRACT_FEED_CLAMP_SECOND:
             retractFeedClamp();
+            extend2x4SecureClamp();
             //serial.println("FeedFirstCut: Feed clamp retracted (second run)");
             advanceToNextFeedFirstCutStep();
             break;
 
-        case MOVE_TO_RETRACT_POSITION_SECOND:
+        case MOVE_TO_POSITION_2:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_RETRACT_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to retract position (second run)");
+                configureFeedMotorForNormalOperation();
+                moveFeedMotorToPosition(FEED_MOTOR_POSITION_1);
+                //serial.println("FeedFirstCut: Moving feed motor to position 2");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -173,6 +130,7 @@ void executeFeedFirstCutStep() {
         case EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND:
             if (feedMotor && !feedMotor->isRunning()) {
                 retract2x4SecureClamp();
+                extendFeedClamp();
                 //serial.println("FeedFirstCut: Secure wood clamp retracted (second run)");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
@@ -188,7 +146,8 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_FINAL_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPositionWithClampControl(FEED_MOTOR_SECOND_RUN_OFFSET);
+                configureFeedMotorForNormalOperation();
+                moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_OFFSET);
                 //serial.println("FeedFirstCut: Moving feed motor to final position");
                 advanceToNextFeedFirstCutStep();
             }

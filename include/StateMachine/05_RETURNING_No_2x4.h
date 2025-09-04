@@ -16,29 +16,14 @@ void onExitReturningNo2x4State();
 
 // Main sequence handlers
 void handleReturningNo2x4Sequence();
-void processCurrentStep(int step);
 
 // Initialization
 void initializeReturningNo2x4Sequence();
 
 // Step handlers
-void handleCutMotorWaitAndExtendFeedClamp();
-void handleFeedMotorWaitAndRetractFeedClamp();
-void handleFeedMotorMoveToPosition1();
-void handleFeedMotorWaitAtPosition1AndExtendClamp();
-void handleFeedMotorMoveBackToHome();
-void handleFeedMotorWaitAtHomeForAttention();
-void handleAttentionSequence();
-void handleFeedMotorMoveToHome();
-void handleFeedMotorWaitAtHomeAndRetractClamp();
-void handleFeedMotorMoveToPosition2();
-void handleFeedMotorMoveBackToHomeAfterPosition2();
-void handleFeedMotorWaitAtHomeAfterPosition2();
-void handleFinalVerificationAndCompletion();
-
-// Sensor verification
-void verifyCutHomePosition(FastAccelStepper* cutMotor);
-bool checkBothSensorsNotActive();
+void handleCutMotorReturnHome();
+void handleFeedMotorMoveWithClamps();
+void handleRetractClampsAndComplete();
 
 // Sequence completion
 void completeReturningNo2x4Sequence();

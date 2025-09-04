@@ -32,6 +32,8 @@ void handleAttentionSequence();
 void handleFeedMotorMoveToHome();
 void handleFeedMotorWaitAtHomeAndRetractClamp();
 void handleFeedMotorMoveToPosition2();
+void handleFeedMotorMoveBackToHomeAfterPosition2();
+void handleFeedMotorWaitAtHomeAfterPosition2();
 void handleFinalVerificationAndCompletion();
 
 // Sensor verification

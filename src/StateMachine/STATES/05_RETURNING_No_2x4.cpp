@@ -82,11 +82,19 @@ static unsigned long attentionStartTime = 0;
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 11: MOVE FEED MOTOR TO FINAL POSITION
+//! STEP 11: MOVE FEED MOTOR TO FINAL POSITION (4.75 INCHES)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 12: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
+//! STEP 12: MOVE FEED MOTOR BACK TO HOME AFTER FINAL POSITION
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 13: WAIT FOR FEED MOTOR AT HOME AFTER FINAL POSITION
+//! ************************************************************************
+
+//! ************************************************************************
+//! STEP 14: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
 //! ************************************************************************
 
 //* ************************************************************************
@@ -207,7 +215,15 @@ void processCurrentStep(int step) {
             handleFeedMotorMoveToPosition2();
             break;
             
-        case 11: // Final step: verify sensors and complete sequence
+        case 11: // Move feed motor back to home after Movement 2
+            handleFeedMotorMoveBackToHomeAfterPosition2();
+            break;
+            
+        case 12: // Wait for feed motor at home after Movement 2
+            handleFeedMotorWaitAtHomeAfterPosition2();
+            break;
+            
+        case 13: // Final step: verify sensors and complete sequence
             handleFinalVerificationAndCompletion();
             break;
     }
@@ -315,6 +331,20 @@ void handleFeedMotorMoveToPosition2() {
     configureFeedMotorForNormalOperation();
     moveFeedMotorToPosition(FEED_MOTOR_MOVEMENT_2_DISTANCE);
     currentStep = 11; // Directly advance step
+}
+
+void handleFeedMotorMoveBackToHomeAfterPosition2() {
+    configureFeedMotorForNormalOperation();
+    moveFeedMotorToHome();
+    currentStep = 12; // Directly advance step
+}
+
+void handleFeedMotorWaitAtHomeAfterPosition2() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    
+    if (feedMotor && !feedMotor->isRunning()) {
+        currentStep = 13; // Move to final verification
+    }
 }
 
 void handleFinalVerificationAndCompletion() {

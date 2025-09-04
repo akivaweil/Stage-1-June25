@@ -6,7 +6,7 @@
 //* ************************ RELEVANT CONSTANTS **************************
 //* ************************************************************************
 // Feed motor movement constants for this state (specific to this state)
-const float FEED_MOTOR_RETRACT_POSITION = -4.6; // inches - position for retracting feed motor (maintains same physical movement as original home=3.4 system)
+const float FEED_MOTOR_RETRACT_POSITION = 4.6; // inches - position for retracting feed motor (maintains same physical movement as original home=3.4 system, within 0-4.75 bounds)
 const float FEED_MOTOR_SECOND_RUN_OFFSET = 1.4; // inches - offset for second run final position
 
 // Timing constants for this state
@@ -26,7 +26,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 2: MOVE TO NEGATIVE 4.6 INCHES
+//! STEP 2: MOVE TO 4.6 INCHES
 //! ************************************************************************
 
 //! ************************************************************************
@@ -50,7 +50,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: MOVE TO NEGATIVE 4.6 INCHES (SECOND RUN)
+//! STEP 8: MOVE TO 4.6 INCHES (SECOND RUN)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -118,7 +118,7 @@ void executeFeedFirstCutStep() {
         case MOVE_TO_NEGATIVE_ONE:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_MOTOR_RETRACT_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to -4.6 inch");
+                //serial.println("FeedFirstCut: Moving feed motor to 4.6 inch");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -164,7 +164,7 @@ void executeFeedFirstCutStep() {
         case MOVE_TO_NEGATIVE_TWO:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_MOTOR_RETRACT_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to -4.6 inch (second run)");
+                //serial.println("FeedFirstCut: Moving feed motor to 4.6 inch (second run)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -188,8 +188,8 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(-FEED_MOTOR_SECOND_RUN_OFFSET);
-                //serial.println("FeedFirstCut: Moving feed motor to travel distance minus 1.4 inches");
+                moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_OFFSET);
+                //serial.println("FeedFirstCut: Moving feed motor to 1.4 inches");
                 advanceToNextFeedFirstCutStep();
             }
             break;

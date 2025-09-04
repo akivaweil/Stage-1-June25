@@ -20,10 +20,7 @@ void handleReturningNo2x4Sequence();
 // Initialization
 void initializeReturningNo2x4Sequence();
 
-// Step handlers
-void handleCutMotorReturnHome();
-void handleFeedMotorMoveWithClamps();
-void handleRetractClampsAndComplete();
+// No individual step handlers - everything happens sequentially in main function
 
 // Sequence completion
 void completeReturningNo2x4Sequence();

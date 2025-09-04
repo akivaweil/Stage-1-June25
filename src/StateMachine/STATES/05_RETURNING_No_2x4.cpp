@@ -14,9 +14,7 @@ const float FEED_MOTOR_HOME_POSITION = 0.0;                // inches - home posi
 //* ************************************************************************
 //* ************************ STATE VARIABLES ******************************
 //* ************************************************************************
-
-// Main sequence tracking
-static int currentStep = 0;
+// No state variables needed - everything happens sequentially in one function
 
 //* ************************************************************************
 //* ************************ RETURNING NO 2X4 STATE ***********************
@@ -71,9 +69,6 @@ void initializeReturningNo2x4Sequence() {
     // Set up LED indicators
     turnBlueLedOn();
     turnYellowLedOff();
-    
-    // Initialize step tracking
-    currentStep = 0;
 }
 
 //* ************************************************************************
@@ -81,68 +76,45 @@ void initializeReturningNo2x4Sequence() {
 //* ************************************************************************
 
 void handleReturningNo2x4Sequence() {
-    FastAccelStepper* cutMotor = getCutMotor();
-    FastAccelStepper* feedMotor = getFeedMotor();
-    
-    switch (currentStep) {
-        case 0: // Step 1: Return cut motor home
-            handleCutMotorReturnHome();
-            break;
-            
-        case 1: // Step 2: Move feed motor 4.5 inches with clamps set
-            handleFeedMotorMoveWithClamps();
-            break;
-            
-        case 2: // Step 3: Retract both clamps and switch to idle
-            handleRetractClampsAndComplete();
-            break;
-    }
-}
-
-//* ************************************************************************
-//* ************************ STEP HANDLERS ********************************
-//* ************************************************************************
-
-void handleCutMotorReturnHome() {
-    FastAccelStepper* cutMotor = getCutMotor();
-    
-    if (currentStep == 0) {
-        // Start cut motor homing and retract secure clamp
-        retract2x4SecureClamp();
-        moveCutMotorToHome();
-        currentStep = 1; // Move to next step
-    }
-}
-
-void handleFeedMotorMoveWithClamps() {
-    FastAccelStepper* cutMotor = getCutMotor();
-    FastAccelStepper* feedMotor = getFeedMotor();
+    //! ************************************************************************
+    //! STEP 1: RETURN CUT MOTOR HOME AND RETRACT SECURE CLAMP
+    //! ************************************************************************
+    retract2x4SecureClamp();
+    moveCutMotorToHome();
     
     // Wait for cut motor to finish homing
-    if (cutMotor && !cutMotor->isRunning()) {
-        // Set up clamps: extend feed clamp, retract secure clamp
-        extendFeedClamp();
-        retract2x4SecureClamp();
-        
-        // Move feed motor 3.0 inches away from home
-        moveFeedMotorToPosition(FEED_MOTOR_RETURN_DISTANCE);
-        currentStep = 2; // Move to final step
+    FastAccelStepper* cutMotor = getCutMotor();
+    while (cutMotor && cutMotor->isRunning()) {
+        // Wait for cut motor to complete
     }
-}
-
-void handleRetractClampsAndComplete() {
-    FastAccelStepper* feedMotor = getFeedMotor();
+    
+    //! ************************************************************************
+    //! STEP 2: MOVE FEED MOTOR 3.0 INCHES WITH CLAMPS SET
+    //! ************************************************************************
+    // Set up clamps: extend feed clamp, retract secure clamp
+    extendFeedClamp();
+    retract2x4SecureClamp();
+    
+    // Move feed motor 3.0 inches away from home
+    moveFeedMotorToPosition(FEED_MOTOR_RETURN_DISTANCE);
     
     // Wait for feed motor to finish moving
-    if (feedMotor && !feedMotor->isRunning()) {
-        // Retract both clamps
-        retractFeedClamp();
-        retract2x4SecureClamp();
-        
-        // Complete sequence and switch to idle
-        completeReturningNo2x4Sequence();
+    FastAccelStepper* feedMotor = getFeedMotor();
+    while (feedMotor && feedMotor->isRunning()) {
+        // Wait for feed motor to complete
     }
+    
+    //! ************************************************************************
+    //! STEP 3: RETRACT BOTH CLAMPS AND SWITCH TO IDLE
+    //! ************************************************************************
+    // Retract both clamps
+    retractFeedClamp();
+    retract2x4SecureClamp();
+    
+    // Complete sequence and switch to idle
+    completeReturningNo2x4Sequence();
 }
+
 
 
 
@@ -175,5 +147,5 @@ void completeReturningNo2x4Sequence() {
 //* ************************************************************************
 
 void resetReturningNo2x4Steps() {
-    currentStep = 0;
+    // No state variables to reset - everything happens in one function
 }

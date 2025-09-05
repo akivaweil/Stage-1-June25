@@ -25,6 +25,8 @@
 //! ************************************************************************
 //! STEP 3: WAIT FOR CUT MOTOR TO COMPLETE TRAVEL
 //! ************************************************************************
+// NOTE: Steps 3-9 below contain functionality that should be moved to RETURNING states
+// The CUTTING state should only handle the actual cutting operation (steps 0-2)
 
 //! ************************************************************************
 //! STEP 4: DETERMINE WOOD PRESENCE AND TRANSITION TO APPROPRIATE STATE

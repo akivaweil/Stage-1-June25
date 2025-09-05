@@ -53,8 +53,6 @@ static bool homePositionErrorDetected = false;
 static bool rotationClampActivatedThisCycle = false;
 static bool rotationServoActivatedThisCycle = false;
 static bool taSignalSentThisCycle = false; // Track TA signal per cycle
-static float cutMotorIncrementalMoveTotalInches = 0.0;
-static int cuttingSubStep8 = 0; // For feed motor homing sequence
 
 void onEnterCuttingState() {
     // Reset all step counters when entering cutting state
@@ -94,21 +92,7 @@ void executeCuttingState() {
         case 2: 
             handleCuttingStep2();
             break;
-        case 3: 
-            handleCuttingStep3();
-            break;
-        case 4: 
-            handleCuttingStep4();
-            break;
-        case 5: 
-            handleCuttingStep5();
-            break;
-        case 8:
-            handleCuttingStep8_FeedMotorHomingSequence();
-            break;
-        case 9:
-            handleCuttingStep9_SuctionErrorRecovery();
-            break;
+        // Steps 3-9 removed - functionality moved to RETURNING states
     }
 }
 
@@ -267,212 +251,28 @@ void handleCuttingStep2() {
 }
 
 void handleCuttingStep3() {
-    //serial.println("Cutting Step 3: (Should be bypassed for wood path) Initial position move complete.");
-    FastAccelStepper* feedMotor = getFeedMotor();
-    if (feedMotor && !feedMotor->isRunning()) {
-        retract2x4SecureClamp();
-        //serial.println("Feed clamp and 2x4 secure clamp retracted.");
-
-        configureFeedMotorForReturn();
-        moveFeedMotorToHome();
-        //serial.println("Feed motor moving to home (0).");
-    }
+    // This step is no longer used - functionality moved to RETURNING states
+    // CUTTING state now only handles steps 0-2 (actual cutting operation)
 }
 
 void handleCuttingStep4() {
-    //serial.println("Cutting Step 4: (Logic moved to Step 7 for wood path) Feed motor at home (0).");
-    FastAccelStepper* feedMotor = getFeedMotor();
-    FastAccelStepper* cutMotor = getCutMotor();
-    extern const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES; // From main.cpp
-    extern const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES; // From main.cpp
-    // CUT_MOTOR_STEPS_PER_INCH, FEED_TRAVEL_DISTANCE are already declared in General_Functions.h
-    
-    if (feedMotor && !feedMotor->isRunning()) {
-        retract2x4SecureClamp();
-        //serial.println("Feed clamp retracted.");
-
-        if (cutMotor && !cutMotor->isRunning()) {
-            //serial.println("Cut motor also at home. Checking cut motor position switch.");
-            bool sensorDetectedHome = false;
-            for (int i = 0; i < 3; i++) {
-                delay(30);
-                getCutHomingSwitch()->update();
-                Serial.print("Cut position switch read attempt "); Serial.print(i+1); Serial.print(": "); //serial.println(getCutHomingSwitch()->read());
-                if (getCutHomingSwitch()->read() == HIGH) {
-                    sensorDetectedHome = true;
-                    if (cutMotor) cutMotor->setCurrentPosition(0); // Recalibrate to 0 when switch is hit
-                    //serial.println("Cut motor position switch detected HIGH. Position recalibrated to 0.");
-                    break;
-                }
-            }
-            if (!sensorDetectedHome) {
-                //serial.println("ERROR: Cut motor position switch did not detect home after return attempt.");
-                if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
-                    Serial.print("Attempting incremental move. Total moved: ");
-                    Serial.print(cutMotorIncrementalMoveTotalInches);
-                    //serial.println(" inches.");
-                    cutMotor->move(-CUT_MOTOR_INCREMENTAL_MOVE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
-                    cutMotorIncrementalMoveTotalInches += CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
-                    // Stay in cuttingStep 4 to re-check sensor after move
-                } else {
-                    //serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
-                    stopCutMotor();
-                    stopFeedMotor();
-                    extend2x4SecureClamp();
-                    turnRedLedOn();
-                    turnYellowLedOff();
-                    changeState(ERROR);
-                    setErrorStartTime(millis());
-                    resetCuttingSteps();
-                    cutMotorIncrementalMoveTotalInches = 0.0; // Reset for next attempt
-                    //serial.println("Transitioning to ERROR state due to cut motor homing failure after cut.");
-                }
-            } else {
-                //serial.println("Cut motor position switch confirmed home. Moving feed motor to final position.");
-                cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                cuttingStep = 5; 
-            }
-        }
-    }
+    // This step is no longer used - functionality moved to RETURNING states
+    // CUTTING state now only handles steps 0-2 (actual cutting operation)
 }
 
 void handleCuttingStep5() {
-    FastAccelStepper* feedMotor = getFeedMotor();
-    if (feedMotor && !feedMotor->isRunning()) {
-        //serial.println("Cutting Step 5: Feed motor at final position. Starting end-of-cycle feed motor homing sequence."); 
-        
-        //! ************************************************************************
-        //! STEP 6: RETRACT FEED CLAMP AND START FEED MOTOR HOMING SEQUENCE
-        //! ************************************************************************
-        retract2x4SecureClamp();
-        //serial.println("Feed clamp retracted. Starting feed motor homing sequence...");
-        
-        // Transition to new step 8 for feed motor homing sequence
-        cuttingStep = 8;  
-        cuttingSubStep8 = 0; // Initialize homing substep
-        //serial.println("Transitioning to feed motor homing sequence (Step 8)."); 
-    }
+    // This step is no longer used - functionality moved to RETURNING states
+    // CUTTING state now only handles steps 0-2 (actual cutting operation)
 }
 
 void handleCuttingStep8_FeedMotorHomingSequence() {
-    FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_MOTOR_HOMING_SPEED; // From main.cpp
-    // FEED_TRAVEL_DISTANCE and FEED_MOTOR_STEPS_PER_INCH are already declared in General_Functions.h
-    
-    // Non-blocking feed motor homing sequence
-    switch (cuttingSubStep8) {
-        case 0: // Start homing - move toward home sensor
-            //serial.println("Feed Motor Homing Step 8.0: Moving toward home sensor.");
-            if (feedMotor) {
-                feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-                feedMotor->moveTo(10000 * FEED_MOTOR_STEPS_PER_INCH); // Large positive move toward sensor
-            }
-            cuttingSubStep8 = 1;
-            break;
-            
-        case 1: // Wait for home sensor to trigger
-            getFeedHomingSwitch()->update();
-            if (getFeedHomingSwitch()->read() == LOW) {
-                //serial.println("Feed Motor Homing Step 8.1: Home sensor triggered. Stopping motor.");
-                if (feedMotor) {
-                    feedMotor->stopMove();
-                    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-                }
-                //serial.println("Feed motor hit home sensor.");
-                cuttingSubStep8 = 2;
-            }
-            break;
-            
-        case 2: // Wait for motor to stop, then move to -0.2 inch from sensor
-            if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("Feed Motor Homing Step 8.2: Moving to -0.2 inch from home sensor to establish working zero.");
-                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.1 * FEED_MOTOR_STEPS_PER_INCH);
-                cuttingSubStep8 = 3;
-            }
-            break;
-            
-        case 3: // Wait for positioning move to complete, then set new zero
-            if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("Feed Motor Homing Step 8.3: Setting new working zero position.");
-                feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
-                //serial.println("Feed motor homed: 0.2 inch from sensor set as position 0.");
-                
-                configureFeedMotorForNormalOperation();
-                cuttingSubStep8 = 4;
-            }
-            break;
-            
-        case 4: // Homing complete - check for continuous mode or finish cycle
-            //serial.println("Feed Motor Homing Step 8.4: Homing sequence complete.");
-            extend2x4SecureClamp();
-            //serial.println("2x4 secure clamp extended."); 
-            turnYellowLedOff();
-            setCuttingCycleInProgress(false);
-            
-            // Check if start cycle switch is active for continuous operation
-            if (getStartCycleSwitch()->read() == HIGH && getStartSwitchSafe()) {
-                //serial.println("Start cycle switch is active - continuing with another cut cycle.");
-                // Prepare for next cycle
-                extend2x4SecureClamp();
-                extendRotationClamp(); // Extend rotation clamp for next cutting cycle
-                configureCutMotorForCutting(); // Ensure cut motor is set to proper cutting speed
-                turnYellowLedOn();
-                setCuttingCycleInProgress(true);
-                changeState(CUTTING);
-                resetCuttingSteps();
-                //serial.println("Transitioning to CUTTING state for continuous operation.");
-            } else {
-                //serial.println("Cycle complete. Transitioning to IDLE state.");
-                changeState(IDLE);
-                resetCuttingSteps();
-            }
-            break;
-    }
+    // This step is no longer used - functionality moved to RETURNING states
+    // CUTTING state now only handles steps 0-2 (actual cutting operation)
 }
 
 void handleCuttingStep9_SuctionErrorRecovery() {
-    // CUTTING (Step 9): Suction Error Recovery - Wait for cut motor to return home, then transition to error hold
-    FastAccelStepper* cutMotor = getCutMotor();
-    
-    if (cutMotor && !cutMotor->isRunning()) {
-        //serial.println("Cutting Step 9: Cut motor returned home after suction error. Checking home sensor.");
-        
-        // Check cut motor home sensor
-        bool sensorDetectedHome = false;
-        for (int i = 0; i < 3; i++) {
-            delay(30);
-            getCutHomingSwitch()->update();
-            Serial.print("Cut position switch read attempt "); 
-            Serial.print(i+1); 
-            Serial.print(": "); 
-            //serial.println(getCutHomingSwitch()->read());
-            
-            if (getCutHomingSwitch()->read() == HIGH) {
-                sensorDetectedHome = true;
-                if (cutMotor) cutMotor->setCurrentPosition(0); // Recalibrate to 0 when switch is hit
-                //serial.println("Cut motor position switch detected HIGH after suction error recovery.");
-                break;
-            }
-        }
-        
-        if (sensorDetectedHome) {
-            //serial.println("Cut motor successfully returned home after suction error. Transitioning to SUCTION_ERROR for manual reset.");
-            changeState(SUCTION_ERROR);
-            resetCuttingSteps();
-        } else {
-            //serial.println("WARNING: Cut motor home sensor not detected after suction error recovery. Proceeding to SUCTION_ERROR anyway.");
-            changeState(SUCTION_ERROR);
-            resetCuttingSteps();
-        }
-    } else if (cutMotor) {
-        // Motor still running - provide status update
-        static unsigned long lastStatusTime = 0;
-        if (millis() - lastStatusTime >= 1000) {
-            //serial.println("Cutting Step 9: Cut motor returning home after suction error...");
-            lastStatusTime = millis();
-        }
-    }
+    // This step is no longer used - functionality moved to RETURNING states
+    // CUTTING state now only handles steps 0-2 (actual cutting operation)
 }
 
 void handleHomePositionError() {
@@ -511,6 +311,4 @@ void resetCuttingSteps() {
     rotationClampActivatedThisCycle = false;
     rotationServoActivatedThisCycle = false;
     taSignalSentThisCycle = false; // Reset TA signal flag
-    cutMotorIncrementalMoveTotalInches = 0.0;
-    cuttingSubStep8 = 0; // Reset position motor homing substep
 } 

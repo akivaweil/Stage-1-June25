@@ -17,6 +17,8 @@ void onExitReturningNo2x4State();
 // Helper function declarations for RETURNING_NO_2x4 sequence
 void handleReturningNo2x4Sequence();
 void handleReturningNo2x4Step(int step);
+void handleCutMotorHomingWithIncrementalMoves();
+void handleFeedMotorHomingSequenceNo2x4();
 
 // Reset all step counters
 void resetReturningNo2x4Steps();

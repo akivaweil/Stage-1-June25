@@ -24,6 +24,10 @@ static int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
 // Cut motor homing recovery timing
 static unsigned long cutMotorHomingAttemptStartTime = 0;
 static bool cutMotorHomingAttemptInProgress = false;
+static float cutMotorIncrementalMoveTotalInches = 0.0;
+
+// Feed motor homing sequence tracking
+static int feedMotorHomingSubStep = 0;
 
 // Feed clamp extension timing to prevent interference with cut motor
 static unsigned long feedClampExtensionTime = 0;
@@ -53,6 +57,8 @@ void onEnterReturningYes2x4State() {
     feedMotorReturnSubStep = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
+    cutMotorIncrementalMoveTotalInches = 0.0;
+    feedMotorHomingSubStep = 0;
     feedClampExtensionTime = 0;
     feedClampExtensionDelayActive = false;
 }
@@ -125,55 +131,49 @@ void handleReturningYes2x4Sequence() {
                     //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED WITH FEED MOTOR
                     //! ************************************************************************
                     if (cutMotor) cutMotor->setCurrentPosition(0);
+                    cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
                     
                     retract2x4SecureClamp();
                     configureFeedMotorForNormalOperation();
                     moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                     returningYes2x4SubStep = 3;
                 } else {
-                    // Home switch not detected during homing sequence - start recovery attempt
-                    cutMotorHomingAttemptInProgress = true;
-                    cutMotorHomingAttemptStartTime = millis();
+                    // Home switch not detected - try incremental move recovery
+                    extern const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
+                    extern const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
+                    extern const float CUT_MOTOR_STEPS_PER_INCH;
                     
-                    // Move cut motor toward home switch
-                    if (cutMotor) {
-                        cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_HOMING_SPEED);
-                        cutMotor->moveTo(-LARGE_POSITION_VALUE); // Move toward home switch
+                    if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
+                        Serial.print("Attempting incremental move. Total moved: ");
+                        Serial.print(cutMotorIncrementalMoveTotalInches);
+                        Serial.println(" inches.");
+                        if (cutMotor) {
+                            cutMotor->move(-CUT_MOTOR_INCREMENTAL_MOVE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
+                            cutMotorIncrementalMoveTotalInches += CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
+                        }
+                        // Stay in same step to re-check sensor after move
+                    } else {
+                        // Max incremental moves exceeded - transition to error
+                        Serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
+                        if (cutMotor) cutMotor->forceStop();
+                        if (feedMotor) feedMotor->forceStop();
+                        extend2x4SecureClamp();
+                        turnRedLedOn();
+                        turnYellowLedOff();
+                        changeState(ERROR);
+                        setErrorStartTime(millis());
+                        resetReturningYes2x4Steps();
+                        return;
                     }
-                }
-            }
-            
-            // Handle cut motor homing recovery attempt
-            if (cutMotorHomingAttemptInProgress) {
-                getCutHomingSwitch()->update();
-                bool sensorReading = getCutHomingSwitch()->read();
-                
-                if (sensorReading == HIGH) {
-                    // Recovery successful - set position to 0 and proceed
-                    if (cutMotor) {
-                        cutMotor->forceStop();
-                        cutMotor->setCurrentPosition(0);
-                    }
-                    cutMotorHomingAttemptInProgress = false;
-                    
-                    retract2x4SecureClamp();
-                    configureFeedMotorForNormalOperation();
-                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                    returningYes2x4SubStep = 3;
-                    
-                } else if (millis() - cutMotorHomingAttemptStartTime > CUT_MOTOR_RECOVERY_TIMEOUT_MS) {
-                    // Timeout exceeded - transition to error state
-                    if (cutMotor) cutMotor->forceStop();
-                    cutMotorHomingAttemptInProgress = false;
-                    
-                    changeState(Cut_Motor_Homing_Error);
-                    resetReturningYes2x4Steps();
-                    return;
                 }
             }
             break;
             
-        case 3: // Complete sequence without homing
+        case 3: // Execute feed motor homing sequence
+            handleFeedMotorHomingSequence();
+            break;
+            
+        case 4: // Complete sequence - check for continuous operation or return to IDLE
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
                 //! STEP 5: SEQUENCE COMPLETE - CHECK FOR CONTINUOUS OPERATION OR RETURN TO IDLE
@@ -248,6 +248,60 @@ void handleFeedMotorReturnSequence() {
 }
 
 //* ************************************************************************
+//* ****************** FEED MOTOR HOMING SEQUENCE **************************
+//* ************************************************************************
+// Handles the comprehensive feed motor homing sequence
+
+void handleFeedMotorHomingSequence() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    extern const float FEED_MOTOR_HOMING_SPEED;
+    extern const float FEED_TRAVEL_DISTANCE;
+    extern const float FEED_MOTOR_STEPS_PER_INCH;
+    
+    // Non-blocking feed motor homing sequence
+    switch (feedMotorHomingSubStep) {
+        case 0: // Start homing - move toward home sensor
+            if (feedMotor) {
+                feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
+                feedMotor->moveTo(10000 * FEED_MOTOR_STEPS_PER_INCH); // Large positive move toward sensor
+            }
+            feedMotorHomingSubStep = 1;
+            break;
+            
+        case 1: // Wait for home sensor to trigger
+            getFeedHomingSwitch()->update();
+            if (getFeedHomingSwitch()->read() == LOW) {
+                if (feedMotor) {
+                    feedMotor->stopMove();
+                    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+                }
+                feedMotorHomingSubStep = 2;
+            }
+            break;
+            
+        case 2: // Wait for motor to stop, then move to -0.1 inch from sensor
+            if (feedMotor && !feedMotor->isRunning()) {
+                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.1 * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotorHomingSubStep = 3;
+            }
+            break;
+            
+        case 3: // Wait for positioning move to complete, then set new zero
+            if (feedMotor && !feedMotor->isRunning()) {
+                feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
+                configureFeedMotorForNormalOperation();
+                feedMotorHomingSubStep = 4;
+            }
+            break;
+            
+        case 4: // Homing complete - transition to final step
+            extend2x4SecureClamp();
+            returningYes2x4SubStep = 4; // Move to final completion step
+            break;
+    }
+}
+
+//* ************************************************************************
 //* ************************ UTILITY FUNCTIONS ****************************
 //* ************************************************************************
 
@@ -256,6 +310,8 @@ void resetReturningYes2x4Steps() {
     feedMotorReturnSubStep = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
+    cutMotorIncrementalMoveTotalInches = 0.0;
+    feedMotorHomingSubStep = 0;
     feedClampExtensionTime = 0;
     feedClampExtensionDelayActive = false;
 } 

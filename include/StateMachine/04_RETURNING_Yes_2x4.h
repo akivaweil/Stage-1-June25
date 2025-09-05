@@ -18,7 +18,7 @@ void onExitReturningYes2x4State();
 // Helper function declarations for RETURNING_YES_2x4 sequence
 void handleReturningYes2x4Sequence();
 void handleFeedMotorReturnSequence();
-void handleReturningYes2x4FeedMotorHoming();
+void handleFeedMotorHomingSequence();
 
 // Reset all step counters
 void resetReturningYes2x4Steps();

@@ -65,4 +65,13 @@ extern const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
 extern const unsigned long SENSOR_STABILIZATION_DELAY_MS;
 extern const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
 
+//* ************************************************************************
+//* ******************** PRE-CALCULATED STEP VALUES ***********************
+//* ************************************************************************
+// Pre-calculated step values for cutting state to avoid repeated calculations
+extern const long SUCTION_SENSOR_CHECK_DISTANCE_STEPS;
+extern const long ROTATION_CLAMP_ACTIVATION_POSITION_STEPS;
+extern const long ROTATION_SERVO_ACTIVATION_POSITION_STEPS;
+extern const long TA_SIGNAL_ACTIVATION_POSITION_STEPS;
+
 #endif // STATES_CONFIG_H 

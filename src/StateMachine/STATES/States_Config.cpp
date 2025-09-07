@@ -106,4 +106,13 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5; // Offset from home sensor for 
 const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
 const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
 const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
-const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2; // Distance cut motor must travel before checking suction sensor¨
+const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2; // Distance cut motor must travel before checking suction sensor
+
+//* ************************************************************************
+//* ******************** PRE-CALCULATED STEP VALUES ***********************
+//* ************************************************************************
+// Pre-calculated step values for cutting state to avoid repeated calculations
+const long SUCTION_SENSOR_CHECK_DISTANCE_STEPS = SUCTION_SENSOR_CHECK_DISTANCE_INCHES * CUT_MOTOR_STEPS_PER_INCH;
+const long ROTATION_CLAMP_ACTIVATION_POSITION_STEPS = (CUT_TRAVEL_DISTANCE - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH;
+const long ROTATION_SERVO_ACTIVATION_POSITION_STEPS = (CUT_TRAVEL_DISTANCE - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH;
+const long TA_SIGNAL_ACTIVATION_POSITION_STEPS = (CUT_TRAVEL_DISTANCE - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH;

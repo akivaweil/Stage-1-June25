@@ -32,7 +32,7 @@ const int FEED_HOMING_DIRECTION = 1;
 //* ************************ CUT MOTOR SPEED SETTINGS ********************
 //* ************************************************************************
 // Normal Cutting Operation (Cutting State)
-const float CUT_MOTOR_NORMAL_SPEED = 700;      // Speed for the cutting pass (steps/sec)
+const float CUT_MOTOR_NORMAL_SPEED = 650;      // Speed for the cutting pass (steps/sec)
 const float CUT_MOTOR_NORMAL_ACCELERATION = 17000; // Acceleration for the cutting pass (steps/sec^2)
 
 // Return Stroke (Returning State / End of Cutting State)

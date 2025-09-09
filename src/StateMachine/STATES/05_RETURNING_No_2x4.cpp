@@ -181,13 +181,13 @@ void handleReturningNo2x4Step(int step) {
             handleWaitForMotorAndCylinderAction(feedMotor, true); // true = extend
             break;
             
-        case STEP_FINAL_COMPLETION: // Final step: wait for both sensors to be not active, then finish sequence
+        case STEP_FINAL_COMPLETION: // Final step: wait for wood present sensor to be not active, then finish sequence
             if (feedMotor && !feedMotor->isRunning()) {
-                // Wait until both sensors are not active before proceeding
-                if (checkBothSensorsNotActive()) {
-                    // Both sensors not active - extend secure wood clamp and complete sequence
+                // Wait until wood present sensor is not active before proceeding
+                if (checkWoodPresentSensorNotActive()) {
+                    // Wood present sensor not active - extend secure wood clamp and complete sequence
                     extend2x4SecureClamp();
-                    //serial.println("ReturningNo2x4: Both sensors not active - extending secure wood clamp and completing sequence");
+                    //serial.println("ReturningNo2x4: Wood present sensor not active - extending secure wood clamp and completing sequence");
                     
                     turnYellowLedOff();
                     turnBlueLedOn(); 
@@ -206,39 +206,33 @@ void handleReturningNo2x4Step(int step) {
                     // Transition to IDLE state - secure clamp will remain extended
                     changeState(IDLE);
                 } else {
-                    // At least one sensor is still active - keep waiting
+                    // Wood present sensor is still active - keep waiting
                     // Keep both clamps retracted while waiting
                     retractFeedClamp();
                     retract2x4SecureClamp();
-                    //serial.println("ReturningNo2x4: Waiting for both sensors to be not active...");
+                    //serial.println("ReturningNo2x4: Waiting for wood present sensor to be not active...");
                 }
             }
             break;
     }
 }
 
-bool checkBothSensorsNotActive() {
-    // Read both sensors with multiple samples for reliability
-    bool firstCutSensorNotActive = true;
+bool checkWoodPresentSensorNotActive() {
+    // Read wood present sensor with multiple samples for reliability
     bool woodPresentSensorNotActive = true;
     
     // Take multiple readings for stability
     for (int i = 0; i < 3; i++) {
         delay(10); // Small delay between readings
         
-        // Check FIRST_CUT_OR_WOOD_FWD_ONE sensor (HIGH = not active)
-        if (digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == LOW) {
-            firstCutSensorNotActive = false;
-        }
-        
-        // Check _2x4_PRESENT_SENSOR (HIGH = not active)  
+        // Check _2x4_PRESENT_SENSOR (HIGH = not active, LOW = active)  
         if (digitalRead(_2x4_PRESENT_SENSOR) == LOW) {
             woodPresentSensorNotActive = false;
         }
     }
     
-    // Return true only if both sensors are not active (both HIGH)
-    return (firstCutSensorNotActive && woodPresentSensorNotActive);
+    // Return true only if wood present sensor is not active (HIGH)
+    return woodPresentSensorNotActive;
 }
 
 

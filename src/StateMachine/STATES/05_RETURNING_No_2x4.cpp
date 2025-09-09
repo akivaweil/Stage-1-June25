@@ -53,7 +53,7 @@ enum ReturningNo2x4Step {
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 4: MOVE FEED MOTOR TO 0 WITH FEED CLAMP EXTENDED
+//! STEP 4: MOVE FEED MOTOR TO 0 (NEGATIVE DIRECTION - EXTEND CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -65,7 +65,7 @@ enum ReturningNo2x4Step {
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 7: MOVE FEED MOTOR TO 3.4 (HOME) WITH CLAMP RETRACTED
+//! STEP 7: MOVE FEED MOTOR TO 3.4 (POSITIVE DIRECTION - RETRACT CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -73,7 +73,7 @@ enum ReturningNo2x4Step {
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 9: MOVE FEED MOTOR TO 0 AGAIN
+//! STEP 9: MOVE FEED MOTOR TO 0 AGAIN (NEGATIVE DIRECTION - EXTEND CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -155,13 +155,14 @@ void handleReturningNo2x4Step(int step) {
             handleWaitForMotorAndCylinderAction(feedMotor, false); // false = retract
             break;
             
-        case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to 0 with feed clamp extended
+        case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to 0 (negative direction - extend clamp)
             configureFeedMotorForNormalOperation(); // Ensure correct config
+            extendFeedClamp(); // Extend clamp for negative direction movement
             moveFeedMotorToPosition(FEED_MOTOR_2ND_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP; // Directly advance step here as it's a command
             break;
             
-        case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at 0, extend feed clamp
+        case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at 0, ensure clamp extended
             handleWaitForFeedMotorAndExtendClamp();
             break;
             
@@ -169,23 +170,25 @@ void handleReturningNo2x4Step(int step) {
             handleAttentionSequence();
             break;
             
-        case STEP_MOVE_FEED_MOTOR_TO_HOME: // Move feed motor to 3.4 (home) with clamp retracted
+        case STEP_MOVE_FEED_MOTOR_TO_HOME: // Move feed motor to 3.4 (positive direction - retract clamp)
             configureFeedMotorForNormalOperation();
+            retractFeedClamp(); // Retract clamp for positive direction movement
             moveFeedMotorToPosition(FEED_MOTOR_HOME_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP; // Directly advance step
             break;
             
-        case STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP: // Wait for feed motor at 3.4, retract feed clamp
+        case STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP: // Wait for feed motor at 3.4, ensure clamp retracted
             handleWaitForMotorAndCylinderAction(feedMotor, false); // false = retract
             break;
             
-        case STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION: // Move feed motor to 0 again
+        case STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION: // Move feed motor to 0 again (negative direction - extend clamp)
             configureFeedMotorForNormalOperation();
+            extendFeedClamp(); // Extend clamp for negative direction movement
             moveFeedMotorToPosition(FEED_MOTOR_FINAL_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP; // Directly advance to wait step
             break;
             
-        case STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP: // Wait for feed motor at 0, extend feed clamp
+        case STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP: // Wait for feed motor at 0, ensure clamp extended
             handleWaitForMotorAndCylinderAction(feedMotor, true); // true = extend
             break;
             

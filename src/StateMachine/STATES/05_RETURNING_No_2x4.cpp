@@ -183,22 +183,24 @@ void handleReturningNo2x4Step(int step) {
             
         case STEP_FINAL_COMPLETION: // Final step: check wood present sensor and extend secure clamp if not active
             if (feedMotor && !feedMotor->isRunning()) {
-                // Check if wood present sensor is not active
+                // Check if wood present sensor is not active (sensor is Active HIGH when nothing present)
                 if (digitalRead(_2x4_PRESENT_SENSOR) == HIGH) {
                     // Wood present sensor not active - extend secure wood clamp
                     extend2x4SecureClamp();
-                    
-                    // Complete sequence and transition to IDLE
-                    resetReturningNo2x4Steps();
-                    setCuttingCycleInProgress(false);
-                    
-                    // Check if cycle switch is currently ON - if yes, require cycling
-                    if (getStartCycleSwitch()->read() == HIGH) {
-                        setStartSwitchSafe(false);
-                    }
-                    
-                    changeState(IDLE);
+                    // Set flag to prevent IDLE from retracting the clamp
+                    setComingFromNoWoodWithSensorsClear(true);
                 }
+                
+                // Complete sequence and transition to IDLE
+                resetReturningNo2x4Steps();
+                setCuttingCycleInProgress(false);
+                
+                // Check if cycle switch is currently ON - if yes, require cycling
+                if (getStartCycleSwitch()->read() == HIGH) {
+                    setStartSwitchSafe(false);
+                }
+                
+                changeState(IDLE);
             }
             break;
     }

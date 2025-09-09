@@ -56,8 +56,13 @@ void executeIdleState() {
 }
 
 void onEnterIdleState() {
-    // Always retract secure clamp when entering IDLE state
-    retract2x4SecureClamp();
+    // Check if coming from no2x4 with no wood detected - if so, keep secure clamp extended
+    if (!getComingFromNoWoodWithSensorsClear()) {
+        // Only retract secure clamp if not coming from no2x4 with no wood
+        retract2x4SecureClamp();
+    }
+    
+    // Always retract other clamps
     retractFeedClamp();
     retractRotationClamp();
     

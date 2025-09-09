@@ -198,6 +198,9 @@ void executeFeedFirstCutStep() {
             if (feedMotor && !feedMotor->isRunning()) {
                 //serial.println("FeedFirstCut: Checking start cycle switch for next state");
                 
+                // Set start switch safety flag as if user flipped the switch
+                setStartSwitchSafe(true);
+                
                 // Check the start cycle switch state
                 if (getStartCycleSwitch()->read() == HIGH) {
                     //serial.println("FeedFirstCut: Start cycle switch HIGH - transitioning to CUTTING state");

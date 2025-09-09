@@ -31,7 +31,5 @@ void handleCutMotorHomingError();
 // Reset all step counters
 void resetReturningNo2x4Steps();
 
-// Sensor check function
-bool checkWoodPresentSensorNotActive();
 
 #endif // _05_RETURNING_NO_2X4_STATE_H 

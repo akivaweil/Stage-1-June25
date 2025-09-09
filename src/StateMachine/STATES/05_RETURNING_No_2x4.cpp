@@ -8,9 +8,9 @@ const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clam
 const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
 
 // Feed motor position constants
-const float FEED_MOTOR_2ND_POSITION = 0.0; // Position for 2nd position movement (0)
+const float FEED_MOTOR_2ND_POSITION = -1.0; // Position for 2nd position movement (0)
 const float FEED_MOTOR_HOME_POSITION = 3.4; // Home position (3.4)
-const float FEED_MOTOR_FINAL_POSITION = 0.0; // Final position (0 again)
+const float FEED_MOTOR_FINAL_POSITION = -1.0; // Final position (0 again)
 
 // Step enumeration for better readability
 enum ReturningNo2x4Step {
@@ -158,6 +158,7 @@ void handleReturningNo2x4Step(int step) {
         case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to 0 (negative direction - extend clamp)
             configureFeedMotorForNormalOperation(); // Ensure correct config
             extendFeedClamp(); // Extend clamp for negative direction movement
+            delay(50); // 50ms delay between cylinder extension and feed motor movement
             moveFeedMotorToPosition(FEED_MOTOR_2ND_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP; // Directly advance step here as it's a command
             break;
@@ -173,6 +174,7 @@ void handleReturningNo2x4Step(int step) {
         case STEP_MOVE_FEED_MOTOR_TO_HOME: // Move feed motor to 3.4 (positive direction - retract clamp)
             configureFeedMotorForNormalOperation();
             retractFeedClamp(); // Retract clamp for positive direction movement
+            delay(50); // 50ms delay between cylinder retraction and feed motor movement
             moveFeedMotorToPosition(FEED_MOTOR_HOME_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP; // Directly advance step
             break;
@@ -184,6 +186,7 @@ void handleReturningNo2x4Step(int step) {
         case STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION: // Move feed motor to 0 again (negative direction - extend clamp)
             configureFeedMotorForNormalOperation();
             extendFeedClamp(); // Extend clamp for negative direction movement
+            delay(50); // 50ms delay between cylinder extension and feed motor movement
             moveFeedMotorToPosition(FEED_MOTOR_FINAL_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP; // Directly advance to wait step
             break;

@@ -14,8 +14,7 @@
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
 // Includes final feed motor homing sequence before transitioning to next cycle or IDLE.
 // 
-// IMPORTANT: Feed clamp extension is delayed by 100ms after feed motor completion
-// to prevent electrical interference that causes cut motor stuttering during homing.
+// Feed clamp extension occurs immediately after feed motor completion.
 
 // Static variables for returning yes 2x4 state tracking
 static int returningYes2x4SubStep = 0;
@@ -29,9 +28,7 @@ static float cutMotorIncrementalMoveTotalInches = 0.0;
 // Feed motor homing sequence tracking
 static int feedMotorHomingSubStep = 0;
 
-// Feed clamp extension timing to prevent interference with cut motor
-static unsigned long feedClampExtensionTime = 0;
-static bool feedClampExtensionDelayActive = false;
+// Feed clamp extension variables (no delay needed)
 
 void executeReturningYes2x4State() {
     handleReturningYes2x4Sequence();
@@ -59,8 +56,6 @@ void onEnterReturningYes2x4State() {
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
     feedMotorHomingSubStep = 0;
-    feedClampExtensionTime = 0;
-    feedClampExtensionDelayActive = false;
 }
 
 void onExitReturningYes2x4State() {
@@ -86,27 +81,16 @@ void handleReturningYes2x4Sequence() {
         case 1: // Wait for feed motor to complete return movement (no homing)
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 2: FEED MOTOR RETURN COMPLETE - START FEED CLAMP EXTENSION DELAY
+                //! STEP 2: FEED MOTOR RETURN COMPLETE - EXTEND FEED CLAMP IMMEDIATELY
                 //! ************************************************************************
-                // Start delay to prevent electrical interference with cut motor homing
-                feedClampExtensionTime = millis();
-                feedClampExtensionDelayActive = true;
+                extendFeedClamp();
                 returningYes2x4SubStep = 2;
             }
             break;
 
-        case 2: // Handle delayed feed clamp extension and wait for cut motor completion
-            // Handle delayed feed clamp extension to prevent electrical interference
-            if (feedClampExtensionDelayActive && (millis() - feedClampExtensionTime >= 100)) {
-                //! ************************************************************************
-                //! STEP 2A: DELAYED FEED CLAMP EXTENSION (AFTER 100MS DELAY)
-                //! ************************************************************************
-                extendFeedClamp();
-                feedClampExtensionDelayActive = false;
-            }
-            
+        case 2: // Wait for cut motor completion
             // Wait for cut motor to complete return home, then execute homing sequence
-            if (cutMotor && !cutMotor->isRunning() && !cutMotorHomingAttemptInProgress && !feedClampExtensionDelayActive) {
+            if (cutMotor && !cutMotor->isRunning() && !cutMotorHomingAttemptInProgress) {
                 //! ************************************************************************
                 //! STEP 3: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE
                 //! ************************************************************************
@@ -312,6 +296,4 @@ void resetReturningYes2x4Steps() {
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
     feedMotorHomingSubStep = 0;
-    feedClampExtensionTime = 0;
-    feedClampExtensionDelayActive = false;
 } 

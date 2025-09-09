@@ -5,13 +5,36 @@
 
 // Timing constants for this state
 const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
+const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
+
+// Step enumeration for better readability
+enum ReturningNo2x4Step {
+    STEP_INITIALIZE = 0,
+    STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP = 1,
+    STEP_WAIT_FEED_MOTOR_RETRACT_FEED_CLAMP = 2,
+    STEP_MOVE_FEED_MOTOR_TO_2_INCHES = 3,
+    STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP = 4,
+    STEP_ATTENTION_SEQUENCE = 5,
+    STEP_MOVE_FEED_MOTOR_TO_HOME = 6,
+    STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP = 7,
+    STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION = 8,
+    STEP_CUT_MOTOR_HOMING = 9,
+    STEP_FEED_MOTOR_HOMING = 10,
+    STEP_FINAL_COMPLETION = 11
+};
 
 //* ************************************************************************
 //* ************************ RETURNING NO 2X4 STATE ***********************
 //* ************************************************************************
 // Handles the RETURNING_NO_2x4 cutting sequence when no wood is detected.
 // This state manages the multi-step process for handling material that doesn't trigger the wood sensor.
-// Latest working code - committed: 2025-09-02 14:56:20
+// 
+// REFACTORED: 2025-01-XX - Major refactoring to reduce if-else complexity:
+// - Replaced 9 consecutive if-else statements in attention sequence with a loop
+// - Added step enumeration for better readability and maintainability
+// - Extracted common patterns into reusable helper functions
+// - Consolidated error handling into dedicated functions
+// - Improved code organization and reduced duplication
 
 //! ************************************************************************
 //! STEP 1: INITIALIZE SEQUENCE - MOVE CUT MOTOR HOME AND RETRACT 2X4 CLAMP
@@ -101,14 +124,14 @@ void handleReturningNo2x4Sequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
     const unsigned long CYLINDER_ACTION_DELAY_MS = 150;
     
-    if (returningNo2x4Step == 0) { // First time entering this specific RETURNING_NO_2x4 logic path
+    if (returningNo2x4Step == STEP_INITIALIZE) { // First time entering this specific RETURNING_NO_2x4 logic path
         retract2x4SecureClamp();
         if (feedMotor) {
             if (feedMotor->getCurrentPosition() != 0 || feedMotor->isRunning()) {
                 feedMotor->moveTo(0);
             }
         }
-        returningNo2x4Step = 1;
+        returningNo2x4Step = STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP;
     }
 
     if (waitingForCylinder && (millis() - cylinderActionTime >= CYLINDER_ACTION_DELAY_MS)) {
@@ -127,126 +150,53 @@ void handleReturningNo2x4Step(int step) {
     extern const float FEED_TRAVEL_DISTANCE; // From main.cpp
     
     switch (step) { 
-        case 1: // New Step: Wait for cut motor, then extend feed clamp
-            if (cutMotor && !cutMotor->isRunning()) {
-                extendFeedClamp();
-                cylinderActionTime = millis();
-                waitingForCylinder = true; // Will cause returningNo2x4Step to increment to 2 after delay
-            }
+        case STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP: // Wait for cut motor, then extend feed clamp
+            handleWaitForMotorAndCylinderAction(cutMotor, true); // true = extend
             break;
             
-        case 2: // Was original returningNo2x4Step 1: wait for feed motor, then retract feed clamp
-            if (feedMotor && !feedMotor->isRunning()) {
-                retractFeedClamp();
-                cylinderActionTime = millis();
-                waitingForCylinder = true; // Increments to 3
-            }
+        case STEP_WAIT_FEED_MOTOR_RETRACT_FEED_CLAMP: // Wait for feed motor, then retract feed clamp
+            handleWaitForMotorAndCylinderAction(feedMotor, false); // false = retract
             break;
             
-        case 3: // Was original returningNo2x4Step 2: move feed motor to 2.0 inches
+        case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to 2.0 inches
             configureFeedMotorForNormalOperation(); // Ensure correct config
             moveFeedMotorToPosition(2.0);
-            returningNo2x4Step = 4; // Directly advance step here as it's a command
+            returningNo2x4Step = STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP; // Directly advance step here as it's a command
             break;
             
-        case 4: // Was original returningNo2x4Step 3: wait for feed motor at 2.0, extend feed clamp
-            if (feedMotor && !feedMotor->isRunning()) {
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Feed clamp extended at 2.0 inches");
-                returningNo2x4Step = 5; // Move to attention sequence
-            }
+        case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at 2.0, extend feed clamp
+            handleWaitForFeedMotorAndExtendClamp();
             break;
             
-        case 5: // Attention-getting sequence: retract, extend, retract, extend, retract, extend, retract, extend, retract (9 movements total)
-            static int attentionStep = 0;
-            static unsigned long attentionStartTime = 0;
-            
-            if (attentionStep == 0) {
-                // First step: retract feed clamp
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (1/9)");
-                attentionStep = 1;
-                attentionStartTime = millis();
-            } else if (attentionStep == 1 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Second step: extend feed clamp
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (2/9)");
-                attentionStep = 2;
-                attentionStartTime = millis();
-            } else if (attentionStep == 2 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Third step: retract feed clamp again
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (3/9)");
-                attentionStep = 3;
-                attentionStartTime = millis();
-            } else if (attentionStep == 3 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Fourth step: extend feed clamp again
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (4/9)");
-                attentionStep = 4;
-                attentionStartTime = millis();
-            } else if (attentionStep == 4 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Fifth step: retract feed clamp again
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (5/9)");
-                attentionStep = 5;
-                attentionStartTime = millis();
-            } else if (attentionStep == 5 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Sixth step: extend feed clamp again
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (6/9)");
-                attentionStep = 6;
-                attentionStartTime = millis();
-            } else if (attentionStep == 6 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Seventh step: retract feed clamp again
-                retractFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - retracting feed clamp (7/9)");
-                attentionStep = 7;
-                attentionStartTime = millis();
-            } else if (attentionStep == 7 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Eighth step: extend feed clamp again
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - extending feed clamp (8/9)");
-                attentionStep = 8;
-                attentionStartTime = millis();
-            } else if (attentionStep == 8 && millis() - attentionStartTime >= ATTENTION_SEQUENCE_DELAY_MS) {
-                // Ninth step: final extension to ensure clamp is extended at end of attention sequence
-                extendFeedClamp();
-                //serial.println("ReturningNo2x4: Attention sequence - final extension (9/9)");
-                attentionStep = 0; // Reset for next time
-                returningNo2x4Step = 6; // Move to next step
-            }
+        case STEP_ATTENTION_SEQUENCE: // Attention-getting sequence: 9 movements total
+            handleAttentionSequence();
             break;
             
-        case 6: // Was original returningNo2x4Step 4: move feed motor to home
+        case STEP_MOVE_FEED_MOTOR_TO_HOME: // Move feed motor to home
             configureFeedMotorForNormalOperation();
             moveFeedMotorToHome();
-            returningNo2x4Step = 7; // Directly advance step
+            returningNo2x4Step = STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP; // Directly advance step
             break;
             
-        case 7: // Was original returningNo2x4Step 5: wait for feed motor at home, retract feed clamp
-            if (feedMotor && !feedMotor->isRunning()) {
-                retractFeedClamp();
-                cylinderActionTime = millis();
-                waitingForCylinder = true; // Increments to 8
-            }
+        case STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP: // Wait for feed motor at home, retract feed clamp
+            handleWaitForMotorAndCylinderAction(feedMotor, false); // false = retract
             break;
             
-        case 8: // Was original returningNo2x4Step 6: move feed motor to final position
+        case STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION: // Move feed motor to final position
             configureFeedMotorForNormalOperation();
             moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-            returningNo2x4Step = 9; // Directly advance step
+            returningNo2x4Step = STEP_CUT_MOTOR_HOMING; // Directly advance step
             break;
             
-        case 9: // Execute comprehensive cut motor homing with incremental moves
+        case STEP_CUT_MOTOR_HOMING: // Execute comprehensive cut motor homing with incremental moves
             handleCutMotorHomingWithIncrementalMoves();
             break;
             
-        case 10: // Execute feed motor homing sequence
+        case STEP_FEED_MOTOR_HOMING: // Execute feed motor homing sequence
             handleFeedMotorHomingSequenceNo2x4();
             break;
             
-        case 11: // Final step: wait for both sensors to be not active, then finish sequence
+        case STEP_FINAL_COMPLETION: // Final step: wait for both sensors to be not active, then finish sequence
             if (feedMotor && !feedMotor->isRunning()) {
                 // Wait until both sensors are not active before proceeding
                 if (checkBothSensorsNotActive()) {
@@ -327,7 +277,7 @@ void handleCutMotorHomingWithIncrementalMoves() {
             sensorDetectedHome = true;
             if (cutMotor) cutMotor->setCurrentPosition(0); 
             cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
-            returningNo2x4Step = 10; // Move to feed motor homing
+            returningNo2x4Step = STEP_FEED_MOTOR_HOMING; // Move to feed motor homing
             break;  
         }
     }
@@ -344,14 +294,7 @@ void handleCutMotorHomingWithIncrementalMoves() {
             // Stay in same step to re-check sensor after move
         } else {
             // Max incremental moves exceeded - transition to error
-            Serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
-            if (cutMotor) cutMotor->forceStop();
-            extend2x4SecureClamp();
-            turnRedLedOn();
-            turnYellowLedOff();
-            changeState(ERROR);
-            setErrorStartTime(millis());
-            resetReturningNo2x4Steps();
+            handleCutMotorHomingError();
         }
     }
 }
@@ -404,8 +347,87 @@ void handleFeedMotorHomingSequenceNo2x4() {
             break;
             
         case 4: // Homing complete - transition to final step
-            returningNo2x4Step = 11; // Move to final completion step
+            returningNo2x4Step = STEP_FINAL_COMPLETION; // Move to final completion step
             break;
+    }
+}
+
+//* ************************************************************************
+//* ****************** HELPER FUNCTIONS FOR STEP HANDLING ******************
+//* ************************************************************************
+
+// Error handling function for cut motor homing failures
+void handleCutMotorHomingError() {
+    FastAccelStepper* cutMotor = getCutMotor();
+    Serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
+    if (cutMotor) cutMotor->forceStop();
+    extend2x4SecureClamp();
+    turnRedLedOn();
+    turnYellowLedOff();
+    changeState(ERROR);
+    setErrorStartTime(millis());
+    resetReturningNo2x4Steps();
+}
+
+// Generic function to wait for a motor to stop and then perform a cylinder action
+void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendClamp) {
+    if (motor && !motor->isRunning()) {
+        if (extendClamp) {
+            extendFeedClamp();
+        } else {
+            retractFeedClamp();
+        }
+        cylinderActionTime = millis();
+        waitingForCylinder = true; // Will cause step increment after delay
+    }
+}
+
+// Specific function for waiting for feed motor and extending clamp at 2.0 inches
+void handleWaitForFeedMotorAndExtendClamp() {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    if (feedMotor && !feedMotor->isRunning()) {
+        extendFeedClamp();
+        //serial.println("ReturningNo2x4: Feed clamp extended at 2.0 inches");
+        returningNo2x4Step = STEP_ATTENTION_SEQUENCE; // Move to attention sequence
+    }
+}
+
+//* ************************************************************************
+//* ****************** ATTENTION SEQUENCE HANDLER **************************
+//* ************************************************************************
+// Handles the attention-getting sequence with 9 movements
+
+void handleAttentionSequence() {
+    static int attentionStep = 0;
+    static unsigned long attentionStartTime = 0;
+    
+    // Check if we need to wait for the delay
+    if (attentionStep > 0 && millis() - attentionStartTime < ATTENTION_SEQUENCE_DELAY_MS) {
+        return; // Still waiting
+    }
+    
+    // Execute the current movement
+    if (attentionStep < ATTENTION_SEQUENCE_MOVEMENTS) {
+        // Alternate between retract and extend, starting with retract
+        if (attentionStep % 2 == 0) {
+            retractFeedClamp();
+        } else {
+            extendFeedClamp();
+        }
+        
+        //serial.println("ReturningNo2x4: Attention sequence - " + 
+        //    (attentionStep % 2 == 0 ? "retracting" : "extending") + 
+        //    " feed clamp (" + String(attentionStep + 1) + "/" + String(ATTENTION_SEQUENCE_MOVEMENTS) + ")");
+        
+        attentionStep++;
+        attentionStartTime = millis();
+    } else {
+        // Sequence complete - ensure clamp is extended and move to next step
+        extendFeedClamp();
+        //serial.println("ReturningNo2x4: Attention sequence - final extension (" + String(ATTENTION_SEQUENCE_MOVEMENTS) + "/" + String(ATTENTION_SEQUENCE_MOVEMENTS) + ")");
+        
+        attentionStep = 0; // Reset for next time
+        returningNo2x4Step = STEP_MOVE_FEED_MOTOR_TO_HOME;
     }
 }
 

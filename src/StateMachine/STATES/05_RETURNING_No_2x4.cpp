@@ -191,6 +191,12 @@ void handleReturningNo2x4Step(int step) {
                     // Complete sequence and transition to IDLE
                     resetReturningNo2x4Steps();
                     setCuttingCycleInProgress(false);
+                    
+                    // Check if cycle switch is currently ON - if yes, require cycling
+                    if (getStartCycleSwitch()->read() == HIGH) {
+                        setStartSwitchSafe(false);
+                    }
+                    
                     changeState(IDLE);
                 }
             }

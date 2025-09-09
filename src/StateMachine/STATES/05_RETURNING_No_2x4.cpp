@@ -7,6 +7,11 @@
 const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
 const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
 
+// Feed motor position constants
+const float FEED_MOTOR_2ND_POSITION = 0.0; // Position for 2nd position movement
+const float FEED_MOTOR_HOME_POSITION = 0.0; // Home position
+const float FEED_MOTOR_FINAL_POSITION = FEED_TRAVEL_DISTANCE; // Final position (using external constant)
+
 // Step enumeration for better readability
 enum ReturningNo2x4Step {
     STEP_INITIALIZE = 0,
@@ -47,11 +52,11 @@ enum ReturningNo2x4Step {
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 4: MOVE FEED MOTOR TO 2.0 INCHES
+//! STEP 4: MOVE FEED MOTOR TO 2ND POSITION
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: WAIT FOR FEED MOTOR AT 2.0 AND EXTEND FEED CLAMP
+//! STEP 5: WAIT FOR FEED MOTOR AT 2ND POSITION AND EXTEND FEED CLAMP
 //! ************************************************************************
 
 //! ************************************************************************
@@ -114,8 +119,8 @@ void handleReturningNo2x4Sequence() {
     if (returningNo2x4Step == STEP_INITIALIZE) { // First time entering this specific RETURNING_NO_2x4 logic path
         retract2x4SecureClamp();
         if (feedMotor) {
-            if (feedMotor->getCurrentPosition() != 0 || feedMotor->isRunning()) {
-                feedMotor->moveTo(0);
+            if (feedMotor->getCurrentPosition() != FEED_MOTOR_HOME_POSITION || feedMotor->isRunning()) {
+                feedMotor->moveTo(FEED_MOTOR_HOME_POSITION);
             }
         }
         returningNo2x4Step = STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP;
@@ -145,13 +150,13 @@ void handleReturningNo2x4Step(int step) {
             handleWaitForMotorAndCylinderAction(feedMotor, false); // false = retract
             break;
             
-        case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to 2.0 inches
+        case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to 2nd position
             configureFeedMotorForNormalOperation(); // Ensure correct config
-            moveFeedMotorToPosition(2.0);
+            moveFeedMotorToPosition(FEED_MOTOR_2ND_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP; // Directly advance step here as it's a command
             break;
             
-        case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at 2.0, extend feed clamp
+        case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at 2nd position, extend feed clamp
             handleWaitForFeedMotorAndExtendClamp();
             break;
             
@@ -161,7 +166,7 @@ void handleReturningNo2x4Step(int step) {
             
         case STEP_MOVE_FEED_MOTOR_TO_HOME: // Move feed motor to home
             configureFeedMotorForNormalOperation();
-            moveFeedMotorToHome();
+            moveFeedMotorToPosition(FEED_MOTOR_HOME_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP; // Directly advance step
             break;
             
@@ -254,12 +259,12 @@ void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendCla
     }
 }
 
-// Specific function for waiting for feed motor and extending clamp at 2.0 inches
+// Specific function for waiting for feed motor and extending clamp at 2nd position
 void handleWaitForFeedMotorAndExtendClamp() {
     FastAccelStepper* feedMotor = getFeedMotor();
     if (feedMotor && !feedMotor->isRunning()) {
         extendFeedClamp();
-        //serial.println("ReturningNo2x4: Feed clamp extended at 2.0 inches");
+        //serial.println("ReturningNo2x4: Feed clamp extended at 2nd position");
         returningNo2x4Step = STEP_ATTENTION_SEQUENCE; // Move to attention sequence
     }
 }

@@ -195,7 +195,8 @@ void handleReturningNo2x4Step(int step) {
                 resetReturningNo2x4Steps();
                 setCuttingCycleInProgress(false);
                 
-                // Check if cycle switch is currently ON - if yes, require cycling
+                // When no wood is detected, require manual reset of cycle switch
+                // This prevents automatic restart when no wood is present
                 if (getStartCycleSwitch()->read() == HIGH) {
                     setStartSwitchSafe(false);
                 }

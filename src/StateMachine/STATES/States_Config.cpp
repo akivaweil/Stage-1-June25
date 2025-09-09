@@ -10,7 +10,7 @@
 //* ************************ SERVO CONFIGURATION **************************
 //* ************************************************************************
 // Rotation servo position settings
-const int ROTATION_SERVO_HOME_POSITION = 24;     // Home position (degrees)
+const int ROTATION_SERVO_HOME_POSITION = 23;     // Home position (degrees)
 const int ROTATION_SERVO_ACTIVE_POSITION = 90;   // Position when activated (degrees)
 
 //* ************************************************************************

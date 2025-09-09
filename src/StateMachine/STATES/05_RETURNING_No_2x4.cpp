@@ -18,9 +18,7 @@ enum ReturningNo2x4Step {
     STEP_MOVE_FEED_MOTOR_TO_HOME = 6,
     STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP = 7,
     STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION = 8,
-    STEP_CUT_MOTOR_HOMING = 9,
-    STEP_FEED_MOTOR_HOMING = 10,
-    STEP_FINAL_COMPLETION = 11
+    STEP_FINAL_COMPLETION = 9
 };
 
 //* ************************************************************************
@@ -69,11 +67,7 @@ enum ReturningNo2x4Step {
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 9: MOVE FEED MOTOR TO FINAL POSITION
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 10: VERIFY CUT HOME POSITION AND COMPLETE SEQUENCE
+//! STEP 9: MOVE FEED MOTOR TO FINAL POSITION AND COMPLETE SEQUENCE
 //! ************************************************************************
 
 // Static variables for returning no 2x4 state tracking
@@ -81,11 +75,6 @@ static int returningNo2x4Step = 0;
 static unsigned long cylinderActionTime = 0;
 static bool waitingForCylinder = false;
 
-// Cut motor homing recovery tracking
-static float cutMotorIncrementalMoveTotalInches = 0.0;
-
-// Feed motor homing sequence tracking
-static int feedMotorHomingSubStep = 0;
 
 void executeReturningNo2x4State() {
     handleReturningNo2x4Sequence(); 
@@ -111,8 +100,6 @@ void onEnterReturningNo2x4State() {
     returningNo2x4Step = 0;
     cylinderActionTime = 0;
     waitingForCylinder = false;
-    cutMotorIncrementalMoveTotalInches = 0.0;
-    feedMotorHomingSubStep = 0;
 }
 
 void onExitReturningNo2x4State() {
@@ -185,15 +172,7 @@ void handleReturningNo2x4Step(int step) {
         case STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION: // Move feed motor to final position
             configureFeedMotorForNormalOperation();
             moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-            returningNo2x4Step = STEP_CUT_MOTOR_HOMING; // Directly advance step
-            break;
-            
-        case STEP_CUT_MOTOR_HOMING: // Execute comprehensive cut motor homing with incremental moves
-            handleCutMotorHomingWithIncrementalMoves();
-            break;
-            
-        case STEP_FEED_MOTOR_HOMING: // Execute feed motor homing sequence
-            handleFeedMotorHomingSequenceNo2x4();
+            returningNo2x4Step = STEP_FINAL_COMPLETION; // Directly advance to final completion
             break;
             
         case STEP_FINAL_COMPLETION: // Final step: wait for both sensors to be not active, then finish sequence
@@ -256,118 +235,11 @@ bool checkBothSensorsNotActive() {
     return (firstCutSensorNotActive && woodPresentSensorNotActive);
 }
 
-//* ************************************************************************
-//* ****************** CUT MOTOR HOMING WITH INCREMENTAL MOVES ************
-//* ************************************************************************
-// Handles comprehensive cut motor homing with incremental move recovery
-
-void handleCutMotorHomingWithIncrementalMoves() {
-    FastAccelStepper* cutMotor = getCutMotor();
-    extern const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
-    extern const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
-    extern const float CUT_MOTOR_STEPS_PER_INCH;
-    
-    bool sensorDetectedHome = false;
-    for (int i = 0; i < 3; i++) {
-        delay(30);  
-        getCutHomingSwitch()->update();
-        bool sensorReading = getCutHomingSwitch()->read();
-        
-        if (sensorReading == HIGH) {
-            sensorDetectedHome = true;
-            if (cutMotor) cutMotor->setCurrentPosition(0); 
-            cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
-            returningNo2x4Step = STEP_FEED_MOTOR_HOMING; // Move to feed motor homing
-            break;  
-        }
-    }
-    
-    if (!sensorDetectedHome) {
-        if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
-            Serial.print("Attempting incremental move. Total moved: ");
-            Serial.print(cutMotorIncrementalMoveTotalInches);
-            Serial.println(" inches.");
-            if (cutMotor) {
-                cutMotor->move(-CUT_MOTOR_INCREMENTAL_MOVE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
-                cutMotorIncrementalMoveTotalInches += CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
-            }
-            // Stay in same step to re-check sensor after move
-        } else {
-            // Max incremental moves exceeded - transition to error
-            handleCutMotorHomingError();
-        }
-    }
-}
-
-//* ************************************************************************
-//* ****************** FEED MOTOR HOMING SEQUENCE **************************
-//* ************************************************************************
-// Handles the comprehensive feed motor homing sequence
-
-void handleFeedMotorHomingSequenceNo2x4() {
-    FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_MOTOR_HOMING_SPEED;
-    extern const float FEED_TRAVEL_DISTANCE;
-    extern const float FEED_MOTOR_STEPS_PER_INCH;
-    
-    // Non-blocking feed motor homing sequence
-    switch (feedMotorHomingSubStep) {
-        case 0: // Start homing - move toward home sensor
-            if (feedMotor) {
-                feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-                feedMotor->moveTo(10000 * FEED_MOTOR_STEPS_PER_INCH); // Large positive move toward sensor
-            }
-            feedMotorHomingSubStep = 1;
-            break;
-            
-        case 1: // Wait for home sensor to trigger
-            getFeedHomingSwitch()->update();
-            if (getFeedHomingSwitch()->read() == LOW) {
-                if (feedMotor) {
-                    feedMotor->stopMove();
-                    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-                }
-                feedMotorHomingSubStep = 2;
-            }
-            break;
-            
-        case 2: // Wait for motor to stop, then move to -0.1 inch from sensor
-            if (feedMotor && !feedMotor->isRunning()) {
-                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.1 * FEED_MOTOR_STEPS_PER_INCH);
-                feedMotorHomingSubStep = 3;
-            }
-            break;
-            
-        case 3: // Wait for positioning move to complete, then set new zero
-            if (feedMotor && !feedMotor->isRunning()) {
-                feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
-                configureFeedMotorForNormalOperation();
-                feedMotorHomingSubStep = 4;
-            }
-            break;
-            
-        case 4: // Homing complete - transition to final step
-            returningNo2x4Step = STEP_FINAL_COMPLETION; // Move to final completion step
-            break;
-    }
-}
 
 //* ************************************************************************
 //* ****************** HELPER FUNCTIONS FOR STEP HANDLING ******************
 //* ************************************************************************
 
-// Error handling function for cut motor homing failures
-void handleCutMotorHomingError() {
-    FastAccelStepper* cutMotor = getCutMotor();
-    Serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
-    if (cutMotor) cutMotor->forceStop();
-    extend2x4SecureClamp();
-    turnRedLedOn();
-    turnYellowLedOff();
-    changeState(ERROR);
-    setErrorStartTime(millis());
-    resetReturningNo2x4Steps();
-}
 
 // Generic function to wait for a motor to stop and then perform a cylinder action
 void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendClamp) {
@@ -435,6 +307,4 @@ void resetReturningNo2x4Steps() {
     returningNo2x4Step = 0;
     cylinderActionTime = 0;
     waitingForCylinder = false;
-    cutMotorIncrementalMoveTotalInches = 0.0;
-    feedMotorHomingSubStep = 0;
 } 

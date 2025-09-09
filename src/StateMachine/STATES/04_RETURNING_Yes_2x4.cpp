@@ -12,7 +12,7 @@
 //* ************************************************************************
 // Handles the simultaneous return sequence when wood sensor detects lumber.
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
-// Includes final feed motor homing sequence before transitioning to next cycle or IDLE.
+// Includes final feed wood movement to 3.4 inches before transitioning to next cycle or IDLE.
 // 
 // Feed clamp extension occurs immediately after feed motor completion.
 
@@ -25,7 +25,7 @@ static unsigned long cutMotorHomingAttemptStartTime = 0;
 static bool cutMotorHomingAttemptInProgress = false;
 static float cutMotorIncrementalMoveTotalInches = 0.0;
 
-// Feed motor homing sequence tracking
+// Feed wood movement sequence tracking
 static int feedMotorHomingSubStep = 0;
 
 // Feed clamp extension variables (no delay needed)
@@ -111,9 +111,9 @@ void handleReturningYes2x4Sequence() {
                 }
                 
                 if (sensorDetectedHome) {
-                    //! ************************************************************************
-                    //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED WITH FEED MOTOR
-                    //! ************************************************************************
+                //! ************************************************************************
+                //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED WITH FEED WOOD MOVEMENT
+                //! ************************************************************************
                     if (cutMotor) cutMotor->setCurrentPosition(0);
                     cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
                     
@@ -153,8 +153,8 @@ void handleReturningYes2x4Sequence() {
             }
             break;
             
-        case 3: // Execute feed motor homing sequence
-            handleFeedMotorHomingSequence();
+        case 3: // Execute feed wood movement to 3.4 inches
+            handleFeedWoodMovement();
             break;
             
         case 4: // Complete sequence - check for continuous operation or return to IDLE
@@ -232,53 +232,33 @@ void handleFeedMotorReturnSequence() {
 }
 
 //* ************************************************************************
-//* ****************** FEED MOTOR HOMING SEQUENCE **************************
+//* ****************** FEED WOOD MOVEMENT SEQUENCE *************************
 //* ************************************************************************
-// Handles the comprehensive feed motor homing sequence
+// Handles the feed wood movement to 3.4 inches with feed clamp extended
 
-void handleFeedMotorHomingSequence() {
+void handleFeedWoodMovement() {
     FastAccelStepper* feedMotor = getFeedMotor();
     extern const float FEED_MOTOR_HOMING_SPEED;
     extern const float FEED_TRAVEL_DISTANCE;
     extern const float FEED_MOTOR_STEPS_PER_INCH;
     
-    // Non-blocking feed motor homing sequence
+    // Non-blocking feed wood movement to 3.4 inches
     switch (feedMotorHomingSubStep) {
-        case 0: // Start homing - move toward home sensor
+        case 0: // Start feed wood movement to 3.4 inches
             if (feedMotor) {
-                feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-                feedMotor->moveTo(10000 * FEED_MOTOR_STEPS_PER_INCH); // Large positive move toward sensor
+                configureFeedMotorForNormalOperation();
+                feedMotor->moveTo(3.4 * FEED_MOTOR_STEPS_PER_INCH);
             }
             feedMotorHomingSubStep = 1;
             break;
             
-        case 1: // Wait for home sensor to trigger
-            getFeedHomingSwitch()->update();
-            if (getFeedHomingSwitch()->read() == LOW) {
-                if (feedMotor) {
-                    feedMotor->stopMove();
-                    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-                }
+        case 1: // Wait for movement to complete
+            if (feedMotor && !feedMotor->isRunning()) {
                 feedMotorHomingSubStep = 2;
             }
             break;
             
-        case 2: // Wait for motor to stop, then move to -0.1 inch from sensor
-            if (feedMotor && !feedMotor->isRunning()) {
-                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - 0.1 * FEED_MOTOR_STEPS_PER_INCH);
-                feedMotorHomingSubStep = 3;
-            }
-            break;
-            
-        case 3: // Wait for positioning move to complete, then set new zero
-            if (feedMotor && !feedMotor->isRunning()) {
-                feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH); // Set this position as the new zero
-                configureFeedMotorForNormalOperation();
-                feedMotorHomingSubStep = 4;
-            }
-            break;
-            
-        case 4: // Homing complete - transition to final step
+        case 2: // Movement complete - transition to final step
             extend2x4SecureClamp();
             returningYes2x4SubStep = 4; // Move to final completion step
             break;

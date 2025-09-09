@@ -19,5 +19,6 @@ void handleCuttingStep1();
 void handleCuttingStep2();
 void handleHomePositionError();
 void resetCuttingSteps();
+void checkWoodPresentSensor();
 
 #endif // CUTTING_STATE_H 

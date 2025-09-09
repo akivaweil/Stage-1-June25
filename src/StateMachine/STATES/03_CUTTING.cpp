@@ -21,6 +21,7 @@ static bool homePositionErrorDetected = false;
 static bool rotationClampActivatedThisCycle = false;
 static bool rotationServoActivatedThisCycle = false;
 static bool transferArmSignalSentThisCycle = false;
+static unsigned long lastWoodSensorCheckTime = 0;
 
 void onEnterCuttingState() {
     resetCuttingSteps();
@@ -78,6 +79,11 @@ void handleCuttingStep1() {
         stepStartTime = millis();
     }
 
+    //! ************************************************************************
+    //! WOOD SENSOR CHECKING: Monitor wood present sensor every 100ms
+    //! ************************************************************************
+    checkWoodPresentSensor();
+
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && cutMotor->getCurrentPosition() >= SUCTION_SENSOR_CHECK_DISTANCE_STEPS) {
         Bounce* suctionSensor = getSuctionSensorBounce();
@@ -109,6 +115,11 @@ void handleCuttingStep1() {
 void handleCuttingStep2() {
     FastAccelStepper* cutMotor = getCutMotor();
     extern const int _2x4_PRESENT_SENSOR;
+    
+    //! ************************************************************************
+    //! WOOD SENSOR CHECKING: Monitor wood present sensor every 100ms
+    //! ************************************************************************
+    checkWoodPresentSensor();
     
     static unsigned long lastDebugTime = 0;
     if (millis() - lastDebugTime >= 1000) {
@@ -202,4 +213,29 @@ void resetCuttingSteps() {
     rotationClampActivatedThisCycle = false;
     rotationServoActivatedThisCycle = false;
     transferArmSignalSentThisCycle = false;
+    lastWoodSensorCheckTime = 0;
+}
+
+//* ************************************************************************
+//* *********************** WOOD SENSOR CHECKING ***************************
+//* ************************************************************************
+// Checks wood present sensor every 100ms during cutting and updates LED accordingly
+// Blue LED = wood present (sensor LOW), Yellow LED = no wood (sensor HIGH)
+
+void checkWoodPresentSensor() {
+    extern const int _2x4_PRESENT_SENSOR;
+    
+    // Check every 100ms
+    if (millis() - lastWoodSensorCheckTime >= 100) {
+        int sensorValue = digitalRead(_2x4_PRESENT_SENSOR);
+        bool woodPresent = (sensorValue == LOW); // Active LOW sensor
+        
+        if (woodPresent) {
+            turnBlueLedOn(); // Wood present - blue LED
+        } else {
+            turnYellowLedOn(); // No wood - yellow LED
+        }
+        
+        lastWoodSensorCheckTime = millis();
+    }
 } 

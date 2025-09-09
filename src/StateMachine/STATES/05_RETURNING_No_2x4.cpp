@@ -16,15 +16,14 @@ const float FEED_MOTOR_FINAL_POSITION = -1.0; // Final position (0 again)
 enum ReturningNo2x4Step {
     STEP_INITIALIZE = 0,
     STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP = 1,
-    STEP_WAIT_FEED_MOTOR_RETRACT_FEED_CLAMP = 2,
-    STEP_MOVE_FEED_MOTOR_TO_2_INCHES = 3,
-    STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP = 4,
-    STEP_ATTENTION_SEQUENCE = 5,
-    STEP_MOVE_FEED_MOTOR_TO_HOME = 6,
-    STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP = 7,
-    STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION = 8,
-    STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP = 9,
-    STEP_FINAL_COMPLETION = 10
+    STEP_MOVE_FEED_MOTOR_TO_2_INCHES = 2,
+    STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP = 3,
+    STEP_ATTENTION_SEQUENCE = 4,
+    STEP_MOVE_FEED_MOTOR_TO_HOME = 5,
+    STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP = 6,
+    STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION = 7,
+    STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP = 8,
+    STEP_FINAL_COMPLETION = 9
 };
 
 //* ************************************************************************
@@ -49,35 +48,31 @@ enum ReturningNo2x4Step {
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 3: WAIT FOR FEED MOTOR HOME AND RETRACT FEED CLAMP
+//! STEP 3: MOVE FEED MOTOR TO -1 (NEGATIVE DIRECTION - EXTEND CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 4: MOVE FEED MOTOR TO 0 (NEGATIVE DIRECTION - EXTEND CLAMP)
+//! STEP 4: WAIT FOR FEED MOTOR AT -1 AND EXTEND FEED CLAMP
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: WAIT FOR FEED MOTOR AT 0 AND EXTEND FEED CLAMP
+//! STEP 5: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION (9 MOVEMENTS)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 6: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION (9 MOVEMENTS)
+//! STEP 6: MOVE FEED MOTOR TO 3.4 (POSITIVE DIRECTION - RETRACT CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 7: MOVE FEED MOTOR TO 3.4 (POSITIVE DIRECTION - RETRACT CLAMP)
+//! STEP 7: WAIT FOR FEED MOTOR AT 3.4 AND RETRACT FEED CLAMP
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: WAIT FOR FEED MOTOR AT 3.4 AND RETRACT FEED CLAMP
+//! STEP 8: MOVE FEED MOTOR TO -1 AGAIN (NEGATIVE DIRECTION - EXTEND CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 9: MOVE FEED MOTOR TO 0 AGAIN (NEGATIVE DIRECTION - EXTEND CLAMP)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 10: WAIT FOR FEED MOTOR AT 0 AND EXTEND FEED CLAMP
+//! STEP 9: WAIT FOR FEED MOTOR AT -1 AND EXTEND FEED CLAMP
 //! ************************************************************************
 
 // Static variables for returning no 2x4 state tracking
@@ -123,11 +118,6 @@ void handleReturningNo2x4Sequence() {
     
     if (returningNo2x4Step == STEP_INITIALIZE) { // First time entering this specific RETURNING_NO_2x4 logic path
         retract2x4SecureClamp();
-        if (feedMotor) {
-            if (feedMotor->getCurrentPosition() != FEED_MOTOR_HOME_POSITION || feedMotor->isRunning()) {
-                feedMotor->moveTo(FEED_MOTOR_HOME_POSITION);
-            }
-        }
         returningNo2x4Step = STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP;
     }
 
@@ -151,11 +141,7 @@ void handleReturningNo2x4Step(int step) {
             handleWaitForMotorAndCylinderAction(cutMotor, true); // true = extend
             break;
             
-        case STEP_WAIT_FEED_MOTOR_RETRACT_FEED_CLAMP: // Wait for feed motor, then retract feed clamp
-            handleWaitForMotorAndCylinderAction(feedMotor, false); // false = retract
-            break;
-            
-        case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to 0 (negative direction - extend clamp)
+        case STEP_MOVE_FEED_MOTOR_TO_2_INCHES: // Move feed motor to -1 (negative direction - extend clamp)
             configureFeedMotorForNormalOperation(); // Ensure correct config
             extendFeedClamp(); // Extend clamp for negative direction movement
             delay(50); // 50ms delay between cylinder extension and feed motor movement
@@ -163,7 +149,7 @@ void handleReturningNo2x4Step(int step) {
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP; // Directly advance step here as it's a command
             break;
             
-        case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at 0, ensure clamp extended
+        case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at -1, ensure clamp extended
             handleWaitForFeedMotorAndExtendClamp();
             break;
             
@@ -191,7 +177,7 @@ void handleReturningNo2x4Step(int step) {
             returningNo2x4Step = STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP; // Directly advance to wait step
             break;
             
-        case STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP: // Wait for feed motor at 0, ensure clamp extended
+        case STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP: // Wait for feed motor at -1, ensure clamp extended
             handleWaitForMotorAndCylinderAction(feedMotor, true); // true = extend
             break;
             
@@ -274,12 +260,12 @@ void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendCla
     }
 }
 
-// Specific function for waiting for feed motor and extending clamp at 0
+// Specific function for waiting for feed motor and extending clamp at -1
 void handleWaitForFeedMotorAndExtendClamp() {
     FastAccelStepper* feedMotor = getFeedMotor();
     if (feedMotor && !feedMotor->isRunning()) {
         extendFeedClamp();
-        //serial.println("ReturningNo2x4: Feed clamp extended at 0");
+        //serial.println("ReturningNo2x4: Feed clamp extended at -1");
         returningNo2x4Step = STEP_ATTENTION_SEQUENCE; // Move to attention sequence
     }
 }

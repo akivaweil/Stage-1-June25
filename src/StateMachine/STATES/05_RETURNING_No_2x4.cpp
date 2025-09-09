@@ -8,9 +8,9 @@ const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clam
 const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
 
 // Feed motor position constants
-const float FEED_MOTOR_2ND_POSITION = -1.0; // Position for 2nd position movement (0)
+const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
 const float FEED_MOTOR_HOME_POSITION = 3.4; // Home position (3.4)
-const float FEED_MOTOR_FINAL_POSITION = -1.0; // Final position (0 again)
+const float FEED_MOTOR_FINAL_POSITION = -1.2; // Final position
 
 // Step enumeration for better readability
 enum ReturningNo2x4Step {

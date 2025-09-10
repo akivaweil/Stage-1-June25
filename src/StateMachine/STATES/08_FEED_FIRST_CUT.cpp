@@ -5,9 +5,11 @@
 //* ************************************************************************
 //* ************************ RELEVANT CONSTANTS **************************
 //* ************************************************************************
-// Feed motor movement constants for this state (specific to this state)
-const float FEED_MOTOR_NEGATIVE_POSITION = -1.2; // inches - position for retracting feed motor (lower means less wood is fed)
-const float FEED_MOTOR_SECOND_RUN_OFFSET = 1.4; // inches - offset for second run final position
+// Feed motor absolute position constants for this state (specific to this state)
+const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
+const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end (FEED_TRAVEL_DISTANCE)
+const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = 2.6; // inches - absolute position for second run end (3.4 - 1.4)
 
 // Timing constants for this state
 const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed clamp and retracting secure clamp
@@ -26,7 +28,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 2: MOVE TO NEGATIVE ONE INCH
+//! STEP 2: MOVE TO FIRST RUN START POSITION (-1.2 INCHES)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -38,7 +40,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: MOVE TO TRAVEL DISTANCE
+//! STEP 5: MOVE TO FIRST RUN END POSITION (3.4 INCHES)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -50,7 +52,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: MOVE TO NEGATIVE 1.35 INCHES (SECOND RUN)
+//! STEP 8: MOVE TO SECOND RUN START POSITION (-1.2 INCHES)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -62,7 +64,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 11: MOVE TO TRAVEL DISTANCE MINUS 1.4 INCHES
+//! STEP 11: MOVE TO SECOND RUN END POSITION (2.0 INCHES)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -72,16 +74,16 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 // Static variables for feed first cut state tracking
 enum FeedFirstCutStep {
     RETRACT_FEED_CLAMP,
-    MOVE_TO_NEGATIVE_ONE,
+    MOVE_TO_FIRST_RUN_START_POSITION,
     EXTEND_FEED_CLAMP_RETRACT_SECURE,
     WAIT_200MS,
-    MOVE_TO_TRAVEL_DISTANCE,
+    MOVE_TO_FIRST_RUN_END_POSITION,
     FIRST_RUN_COMPLETE,
     RETRACT_FEED_CLAMP_SECOND,
-    MOVE_TO_NEGATIVE_TWO,
+    MOVE_TO_SECOND_RUN_START_POSITION,
     EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND,
     WAIT_200MS_SECOND,
-    MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75,
+    MOVE_TO_SECOND_RUN_END_POSITION,
     CHECK_START_CYCLE_SWITCH
 };
 
@@ -115,10 +117,10 @@ void executeFeedFirstCutStep() {
             advanceToNextFeedFirstCutStep();
             break;
 
-        case MOVE_TO_NEGATIVE_ONE:
+        case MOVE_TO_FIRST_RUN_START_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_MOTOR_NEGATIVE_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to -1 inch");
+                moveFeedMotorToPosition(FEED_MOTOR_FIRST_RUN_START_POSITION);
+                //serial.println("FeedFirstCut: Moving feed motor to first run start position (-1.2 inches)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -140,10 +142,10 @@ void executeFeedFirstCutStep() {
             }
             break;
 
-        case MOVE_TO_TRAVEL_DISTANCE:
+        case MOVE_TO_FIRST_RUN_END_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                //serial.println("FeedFirstCut: Moving feed motor to travel distance");
+                moveFeedMotorToPosition(FEED_MOTOR_FIRST_RUN_END_POSITION);
+                //serial.println("FeedFirstCut: Moving feed motor to first run end position (3.4 inches)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -161,10 +163,10 @@ void executeFeedFirstCutStep() {
             advanceToNextFeedFirstCutStep();
             break;
 
-        case MOVE_TO_NEGATIVE_TWO:
+        case MOVE_TO_SECOND_RUN_START_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_MOTOR_NEGATIVE_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to -2.25 inch (second run)");
+                moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_START_POSITION);
+                //serial.println("FeedFirstCut: Moving feed motor to second run start position (-1.2 inches)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -186,10 +188,10 @@ void executeFeedFirstCutStep() {
             }
             break;
 
-        case MOVE_TO_TRAVEL_DISTANCE_MINUS_2_75:
+        case MOVE_TO_SECOND_RUN_END_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE - FEED_MOTOR_SECOND_RUN_OFFSET);
-                //serial.println("FeedFirstCut: Moving feed motor to travel distance minus 2.75 inches");
+                moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_END_POSITION);
+                //serial.println("FeedFirstCut: Moving feed motor to second run end position (2.0 inches)");
                 advanceToNextFeedFirstCutStep();
             }
             break;

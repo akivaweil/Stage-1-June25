@@ -10,7 +10,7 @@
 //* ************************ SERVO CONFIGURATION **************************
 //* ************************************************************************
 // Rotation servo position settings
-const int ROTATION_SERVO_HOME_POSITION = 23;     // Home position (degrees)
+const int ROTATION_SERVO_HOME_POSITION = 23.5;     // Home position (degrees)
 const int ROTATION_SERVO_ACTIVE_POSITION = 90;   // Position when activated (degrees)
 
 //* ************************************************************************
@@ -45,11 +45,11 @@ const float CUT_MOTOR_HOMING_SPEED = 1500;      // Speed for homing the cut moto
 //* ************************ FEED MOTOR SPEED SETTINGS *******************
 //* ************************************************************************
 // Normal Feed Operation (Feed State / Parts of Cutting State)
-const float FEED_MOTOR_NORMAL_SPEED = 25000;    // Speed for normal feed moves (steps/sec)
-const float FEED_MOTOR_NORMAL_ACCELERATION = 25000; // Acceleration for normal feed (steps/sec^2)
+const float FEED_MOTOR_NORMAL_SPEED = 22000;    // Speed for normal feed moves (steps/sec)
+const float FEED_MOTOR_NORMAL_ACCELERATION = 22000; // Acceleration for normal feed (steps/sec^2)
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
-const float FEED_MOTOR_RETURN_SPEED = 25000;    // Speed for returning to home or start position (steps/sec)
+const float FEED_MOTOR_RETURN_SPEED = 22000;    // Speed for returning to home or start position (steps/sec)
 const float FEED_MOTOR_RETURN_ACCELERATION =
  30000; // Acceleration for return moves (steps/sec^2)
 
@@ -63,7 +63,7 @@ const float FEED_MOTOR_HOMING_SPEED = 2000;     // Speed for homing the feed mot
 const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
 
 // Rotation clamp timing
-const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2100; // (was 1500)2.4 seconds (2 seconds for 3 inch squares and 2.4 seconds for 2.65 inch squares)
+const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2250; //
 
 // Cut motor homing timeout
 const unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds timeout
@@ -78,7 +78,7 @@ const unsigned long TA_SIGNAL_DURATION = 500; // Duration for Transfer Arm signa
 const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
 
 // Rotation servo early activation offset
-const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.15;
+const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
 
 // Transfer Arm signal early activation offset
 const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;

@@ -22,6 +22,7 @@ extern bool startSwitchSafe;
 extern bool continuousModeActive;
 extern bool cuttingCycleInProgress;
 extern bool woodSuctionError;
+extern bool comingFromNoWoodWithSensorsClear;
 
 // System state enum
 enum SystemState {
@@ -122,6 +123,7 @@ void configureCutMotorForCutting();
 void configureCutMotorForReturn();
 void configureFeedMotorForNormalOperation();
 void configureFeedMotorForReturn();
+void configureFeedMotorForSlowOperation(float speedMultiplier);
 void moveCutMotorToCut();
 void moveCutMotorToHome();
 void moveFeedMotorToTravel();
@@ -155,5 +157,11 @@ void handleRotationServoReturn();
 void handleTASignalTiming();
 void handleRotationClampRetract();
 void moveFeedMotorToPostCutHome();
+
+//* ************************************************************************
+//* ************************* FLAG MANAGEMENT FUNCTIONS ********************
+//* ************************************************************************
+bool getComingFromNoWoodWithSensorsClear();
+void setComingFromNoWoodWithSensorsClear(bool value);
 
 #endif // GENERAL_FUNCTIONS_H 

@@ -226,6 +226,14 @@ void configureFeedMotorForReturn() {
     }
 }
 
+void configureFeedMotorForSlowOperation(float speedMultiplier) {
+    if (feedMotor) {
+        // Apply speed multiplier to normal speed and acceleration
+        feedMotor->setSpeedInHz((uint32_t)(FEED_MOTOR_NORMAL_SPEED * speedMultiplier));
+        feedMotor->setAcceleration((uint32_t)(FEED_MOTOR_NORMAL_ACCELERATION * speedMultiplier));
+    }
+}
+
 void moveCutMotorToCut() {
     if (cutMotor) {
         cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
@@ -583,4 +591,16 @@ void moveFeedMotorToPostCutHome() {
         feedMotor->moveTo(0);
         //serial.println("Feed motor moving to post-cut home position (0 inches)");
     }
+}
+
+//* ************************************************************************
+//* ************************* FLAG MANAGEMENT FUNCTIONS ********************
+//* ************************************************************************
+
+bool getComingFromNoWoodWithSensorsClear() {
+    return comingFromNoWoodWithSensorsClear;
+}
+
+void setComingFromNoWoodWithSensorsClear(bool value) {
+    comingFromNoWoodWithSensorsClear = value;
 } 

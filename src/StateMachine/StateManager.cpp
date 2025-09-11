@@ -240,13 +240,6 @@ void setStartSwitchSafe(bool value) {
     startSwitchSafe = value;
 }
 
-bool getComingFromNoWoodWithSensorsClear() {
-    return comingFromNoWoodWithSensorsClear;
-}
-
-void setComingFromNoWoodWithSensorsClear(bool value) {
-    comingFromNoWoodWithSensorsClear = value;
-}
 
 unsigned long getLastBlinkTime() {
     return lastBlinkTime;

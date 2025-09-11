@@ -128,7 +128,10 @@ void executeFeedFirstCutStep() {
         case EXTEND_FEED_CLAMP_RETRACT_SECURE:
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
-                retract2x4SecureClamp();
+                // Only retract secure clamp if not coming from no-wood situation
+                if (!getComingFromNoWoodWithSensorsClear()) {
+                    retract2x4SecureClamp();
+                }
                 //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
@@ -202,6 +205,9 @@ void executeFeedFirstCutStep() {
                 
                 // Set start switch safety flag as if user flipped the switch
                 setStartSwitchSafe(true);
+                
+                // Reset the no-wood flag when completing feed first cut
+                setComingFromNoWoodWithSensorsClear(false);
                 
                 // Check the start cycle switch state
                 if (getStartCycleSwitch()->read() == HIGH) {

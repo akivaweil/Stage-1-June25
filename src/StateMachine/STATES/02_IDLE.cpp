@@ -6,7 +6,8 @@
 //* ************************** IDLE STATE **********************************
 //* ************************************************************************
 // Handles the idle state, awaiting user input or automatic cycle start.
-// Maintains secure wood clamp extended and feed clamp retracted.
+// CRITICAL: Maintains secure wood clamp extended in normal idle - ONLY retracts in reload mode.
+// Maintains feed clamp retracted.
 // Checks for pushwood forward switch press to transition to FeedFirstCut state.
 
 //! ************************************************************************
@@ -56,18 +57,25 @@ void executeIdleState() {
 }
 
 void onEnterIdleState() {
+    // CRITICAL: Secure 2x4 clamp MUST remain extended in normal idle state
+    // Only retracts when entering reload mode (handled in handleReloadModeLogic)
     // Check if coming from no2x4 with no wood detected - if so, keep secure clamp extended
-    if (!getComingFromNoWoodWithSensorsClear()) {
-        // Only retract secure clamp if not coming from no2x4 with no wood
-        retract2x4SecureClamp();
+    bool comingFromNoWood = getComingFromNoWoodWithSensorsClear();
+    
+    if (comingFromNoWood) {
+        // Coming from no2x4 with no wood - keep secure clamp extended
+        // Don't retract the secure clamp, it should stay extended
+    } else {
+        // Normal case - keep secure clamp extended (only retracts in reload mode)
+        // retract2x4SecureClamp(); // REMOVED - secure clamp stays extended in normal idle
     }
     
-    // Always retract other clamps
+    // Always retract other clamps (but NOT the secure 2x4 clamp in normal idle)
     retractFeedClamp();
     retractRotationClamp();
     
     // Reset the no-wood flag if it was set
-    if (getComingFromNoWoodWithSensorsClear()) {
+    if (comingFromNoWood) {
         setComingFromNoWoodWithSensorsClear(false);
     }
     
@@ -87,12 +95,15 @@ void handleReloadModeLogic() {
         // Enter reload mode
         setIsReloadMode(true);
         retractFeedClamp(); // Retract feed clamp
-        retract2x4SecureClamp(); // Retract 2x4 secure clamp
+        retract2x4SecureClamp(); // Retract 2x4 secure clamp in reload mode only
         turnBlueLedOn();     // Turn on blue LED for reload mode
     } else if (!reloadSwitchOn && isReloadMode) {
         // Exit reload mode
         setIsReloadMode(false);
-        extend2x4SecureClamp(); // Re-extend 2x4 secure clamp
+        // Only extend 2x4 secure clamp if not coming from no-wood situation
+        if (!getComingFromNoWoodWithSensorsClear()) {
+            extend2x4SecureClamp(); // Re-extend 2x4 secure clamp
+        }
         retractFeedClamp();   // Keep feed clamp retracted (idle state default)
         turnBlueLedOff();       // Turn off blue LED
     }
@@ -108,10 +119,14 @@ void checkFirstCutConditions() {
     
     if (pushwoodPressed && firstCutSensorHigh) {
         //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor HIGH - transitioning to FEED_FIRST_CUT");
+        // Reset the no-wood flag when feed button is pressed
+        setComingFromNoWoodWithSensorsClear(false);
         changeState(FEED_FIRST_CUT);
     }
     else if (pushwoodPressed && firstCutSensorLow) {
         //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor LOW - transitioning to FEED_WOOD_FWD_ONE");
+        // Reset the no-wood flag when feed button is pressed
+        setComingFromNoWoodWithSensorsClear(false);
         changeState(FEED_WOOD_FWD_ONE);
     }
 }
@@ -128,9 +143,18 @@ void checkStartConditions() {
     
     if (((startCycleRose || (continuousModeActive && !cuttingCycleInProgress)) 
         && !woodSuctionError) && startSwitchSafe) {
+        
+        // Don't start new cycle if coming from no-wood situation - require manual reset
+        if (getComingFromNoWoodWithSensorsClear()) {
+            return; // Exit without starting cycle
+        }
+        
         turnGreenLedOff();
         turnYellowLedOn();
         turnBlueLedOff();
+        
+        // Reset the no-wood flag when starting a new cutting cycle
+        setComingFromNoWoodWithSensorsClear(false);
         
         setCuttingCycleInProgress(true);
         changeState(CUTTING);

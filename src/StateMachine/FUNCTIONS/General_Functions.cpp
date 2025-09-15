@@ -35,6 +35,8 @@ void sendSignalToTA() {
     
     rotationServoActiveStartTime = millis();
     rotationServoIsActiveAndTiming = true;
+    // Reset the return completed flag for new activation cycle
+    rotationServoReturnCompleted = false;
     //Serial.print("Rotation servo moved to ");
     //Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
     //Serial.println(" degrees with TA signal.");
@@ -549,6 +551,8 @@ void activateRotationServo() {
         rotationServoIsActiveAndTiming = true;
         // Reset safety delay flag for new activation cycle
         setRotationServoSafetyDelayActive(false);
+        // Reset the return completed flag for new activation cycle
+        rotationServoReturnCompleted = false;
         //Serial.print("Rotation servo activated to ");
         //Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
         //Serial.println(" degrees.");

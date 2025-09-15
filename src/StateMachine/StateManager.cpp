@@ -444,13 +444,16 @@ void handleCommonOperations() {
                         rotationServoReturnDelayActive = true;
                         rotationServoReturnDelayStartTime = millis();
                         //serial.println("Safety delay complete. Starting 150ms return delay before returning servo to home.");
-                    } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS) {
+                    } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS && !rotationServoReturnCompleted) {
                         // Return delay complete - now return servo to home
                         handleRotationServoReturn();
                         //serial.println("Return delay complete. Returning rotation servo to home position.");
                         rotationServoIsActiveAndTiming = false;
                         rotationServoSafetyDelayActive = false; // Reset safety delay flag
                         rotationServoReturnDelayActive = false; // Reset return delay flag
+                        rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+                        // Reset the return delay start time to prevent repeated calls
+                        rotationServoReturnDelayStartTime = 0;
                     }
                 } else {
                     // Still in safety delay period
@@ -472,12 +475,15 @@ void handleCommonOperations() {
                     rotationServoReturnDelayActive = true;
                     rotationServoReturnDelayStartTime = millis();
                     //serial.println("Starting 150ms return delay before returning servo to home.");
-                } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS) {
+                } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS && !rotationServoReturnCompleted) {
                     // Return delay complete - now return servo to home
                     handleRotationServoReturn();
                     //serial.println("Return delay complete. Returning rotation servo to home position.");
                     rotationServoIsActiveAndTiming = false;
                     rotationServoReturnDelayActive = false; // Reset return delay flag
+                    rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+                    // Reset the return delay start time to prevent repeated calls
+                    rotationServoReturnDelayStartTime = 0;
                 }
             }
         } else {

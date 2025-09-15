@@ -29,6 +29,7 @@ unsigned long rotationServoSafetyDelayStartTime = 0;
 // Rotation servo return delay variables
 bool rotationServoReturnDelayActive = false;
 unsigned long rotationServoReturnDelayStartTime = 0;
+bool rotationServoReturnCompleted = false; // Flag to prevent multiple calls to handleRotationServoReturn()
 
 unsigned long rotationClampExtendTime = 0;
 bool rotationClampIsExtended = false;

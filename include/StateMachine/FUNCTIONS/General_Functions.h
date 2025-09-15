@@ -14,6 +14,7 @@ extern bool signalTAActive;
 extern unsigned long signalTAStartTime;
 extern bool rotationServoIsActiveAndTiming;
 extern unsigned long rotationServoActiveStartTime;
+extern bool rotationServoReturnCompleted; // Flag to prevent multiple calls to handleRotationServoReturn()
 extern bool rotationClampIsExtended;
 extern unsigned long rotationClampExtendTime;
 extern bool isReloadMode;

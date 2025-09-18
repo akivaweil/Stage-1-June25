@@ -1,4 +1,5 @@
 #include "WebSocketDashboard/websocket_dashboard.h"
+#include <ArduinoJson.h>
 
 //* ************************************************************************
 //* ********************** WEBSOCKET DASHBOARD ****************************
@@ -178,6 +179,16 @@ const char* dashboardHTML = R"rawliteral(
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+        
+        .status:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .status.disconnected:hover {
+            background: rgba(239, 68, 68, 0.3);
         }
         
         .status.connected {
@@ -340,36 +351,123 @@ const char* dashboardHTML = R"rawliteral(
 
     <script>
         let ws;
-        let reconnectInterval;
+        let reconnectTimeout;
+        let heartbeatInterval;
         let isConnected = false;
         let reconnectAttempts = 0;
-        const maxReconnectAttempts = 10;
+        let lastHeartbeat = Date.now();
+        const maxReconnectAttempts = 20;
+        const heartbeatIntervalMs = 5000; // Send heartbeat every 5 seconds
+        const heartbeatTimeoutMs = 10000; // Consider connection dead after 10 seconds
         
-        function updateStatus(message, isConnected) {
+        function updateStatus(message, isConnected, showRetry = false) {
             const statusEl = document.getElementById('status');
-            statusEl.innerHTML = `<div class="status-dot"></div><span>${message}</span>`;
+            let statusText = message;
+            
+            if (showRetry && reconnectAttempts > 0) {
+                statusText += ` (${reconnectAttempts}/${maxReconnectAttempts})`;
+            }
+            
+            statusEl.innerHTML = `<div class="status-dot"></div><span>${statusText}</span>`;
             statusEl.className = `status ${isConnected ? 'connected' : 'disconnected'}`;
         }
         
+        function startHeartbeat() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+            }
+            
+            heartbeatInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({type: 'ping'}));
+                    lastHeartbeat = Date.now();
+                }
+            }, heartbeatIntervalMs);
+        }
+        
+        function stopHeartbeat() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+        }
+        
+        function checkHeartbeat() {
+            if (isConnected && Date.now() - lastHeartbeat > heartbeatTimeoutMs) {
+                console.log('Heartbeat timeout - connection lost');
+                handleConnectionLoss();
+            }
+        }
+        
+        function handleConnectionLoss() {
+            isConnected = false;
+            stopHeartbeat();
+            if (ws) {
+                ws.close();
+            }
+            updateStatus('Connection Lost', false, true);
+            attemptReconnect();
+        }
+        
+        function attemptReconnect() {
+            if (reconnectAttempts >= maxReconnectAttempts) {
+                updateStatus('Connection Failed - Click to Retry', false, true);
+                return;
+            }
+            
+            reconnectAttempts++;
+            const delay = Math.min(500 + (reconnectAttempts * 200), 3000); // Faster initial reconnects
+            
+            updateStatus(`Reconnecting in ${Math.ceil(delay/1000)}s...`, false, true);
+            
+            reconnectTimeout = setTimeout(() => {
+                if (!isConnected) {
+                    connect();
+                }
+            }, delay);
+        }
+        
         function connect() {
+            // Clear any existing reconnection timeout
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+                reconnectTimeout = null;
+            }
+            
             // Show connecting status immediately
-            updateStatus('Connecting...', false);
+            updateStatus('Connecting...', false, true);
             
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}/ws`;
             
             ws = new WebSocket(wsUrl);
             
+            // Set a connection timeout
+            const connectionTimeout = setTimeout(() => {
+                if (ws.readyState === WebSocket.CONNECTING) {
+                    ws.close();
+                    handleConnectionLoss();
+                }
+            }, 5000);
+            
             ws.onopen = function() {
+                clearTimeout(connectionTimeout);
                 isConnected = true;
                 reconnectAttempts = 0;
+                lastHeartbeat = Date.now();
                 updateStatus('Connected', true);
-                clearInterval(reconnectInterval);
-                reconnectInterval = null;
+                startHeartbeat();
             };
             
             ws.onmessage = function(event) {
                 const data = JSON.parse(event.data);
+                
+                if (data.type === 'pong') {
+                    // Heartbeat response received
+                    lastHeartbeat = Date.now();
+                    return;
+                }
+                
                 if (data.type === 'counter') {
                     const counterEl = document.getElementById('counter');
                     const lastUpdateEl = document.getElementById('lastUpdate');
@@ -385,37 +483,44 @@ const char* dashboardHTML = R"rawliteral(
                 }
             };
             
-            ws.onclose = function() {
+            ws.onclose = function(event) {
+                clearTimeout(connectionTimeout);
                 isConnected = false;
-                updateStatus('Disconnected', false);
+                stopHeartbeat();
                 
-                // Exponential backoff for reconnection
-                if (reconnectAttempts < maxReconnectAttempts) {
-                    reconnectAttempts++;
-                    const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 5000);
-                    
-                    setTimeout(() => {
-                        if (!isConnected) {
-                            connect();
-                        }
-                    }, delay);
+                if (event.code !== 1000) { // Not a normal closure
+                    handleConnectionLoss();
                 } else {
-                    updateStatus('Connection Failed', false);
+                    updateStatus('Disconnected', false);
                 }
             };
             
-            ws.onerror = function() {
+            ws.onerror = function(error) {
+                clearTimeout(connectionTimeout);
                 isConnected = false;
-                updateStatus('Connection Error', false);
+                stopHeartbeat();
+                console.error('WebSocket error:', error);
+                updateStatus('Connection Error', false, true);
             };
+        }
+        
+        function manualReconnect() {
+            if (reconnectAttempts >= maxReconnectAttempts) {
+                reconnectAttempts = 0; // Reset attempts for manual reconnect
+            }
+            connect();
         }
         
         // Connect on page load
         connect();
         
+        // Check heartbeat every 2 seconds
+        setInterval(checkHeartbeat, 2000);
+        
         // Add some interactive effects
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.querySelector('.container');
+            const statusEl = document.getElementById('status');
             
             // Add subtle hover effects
             container.addEventListener('mouseenter', function() {
@@ -424,6 +529,13 @@ const char* dashboardHTML = R"rawliteral(
             
             container.addEventListener('mouseleave', function() {
                 this.style.transform = 'translateY(0)';
+            });
+            
+            // Add click handler for manual reconnection
+            statusEl.addEventListener('click', function() {
+                if (!isConnected) {
+                    manualReconnect();
+                }
             });
         });
     </script>
@@ -471,9 +583,28 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
             Serial.printf("Client %u disconnected\n", client->id());
             break;
             
-        case WS_EVT_DATA:
-            // Handle any incoming data if needed
+        case WS_EVT_DATA: {
+            // Handle incoming data
+            AwsFrameInfo *info = (AwsFrameInfo*)arg;
+            if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+                data[len] = 0;
+                String message = (char*)data;
+                
+                // Parse JSON message
+                DynamicJsonDocument doc(1024);
+                DeserializationError error = deserializeJson(doc, message);
+                
+                if (!error) {
+                    String type = doc["type"];
+                    if (type == "ping") {
+                        // Respond with pong
+                        String pongMessage = "{\"type\":\"pong\"}";
+                        client->text(pongMessage);
+                    }
+                }
+            }
             break;
+        }
             
         case WS_EVT_PONG:
         case WS_EVT_ERROR:

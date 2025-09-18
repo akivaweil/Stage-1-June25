@@ -350,12 +350,16 @@ const char* dashboardHTML = R"rawliteral(
         let ws;
         let reconnectTimeout;
         let heartbeatInterval;
+        let connectionCheckInterval;
         let isConnected = false;
         let reconnectAttempts = 0;
         let lastHeartbeat = Date.now();
+        let lastSuccessfulPing = Date.now();
+        let connectionStartTime = Date.now();
         const maxReconnectAttempts = 20;
-        const heartbeatIntervalMs = 1000; // Send heartbeat every 1 second
-        const heartbeatTimeoutMs = 3000; // Consider connection dead after 3 seconds
+        const heartbeatIntervalMs = 500; // Send heartbeat every 500ms
+        const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds
+        const connectionCheckMs = 200; // Check connection every 200ms
         
         function updateStatus(message, isConnected, showRetry = false) {
             const statusEl = document.getElementById('status');
@@ -381,13 +385,56 @@ const char* dashboardHTML = R"rawliteral(
                         lastHeartbeat = Date.now();
                     } catch (error) {
                         console.log('Error sending ping:', error);
-                        handleConnectionLoss();
+                        forceDisconnect();
                     }
                 } else {
                     console.log('WebSocket not open during heartbeat, state:', ws ? ws.readyState : 'null');
-                    handleConnectionLoss();
+                    forceDisconnect();
                 }
             }, heartbeatIntervalMs);
+        }
+        
+        function startConnectionCheck() {
+            if (connectionCheckInterval) {
+                clearInterval(connectionCheckInterval);
+            }
+            
+            connectionCheckInterval = setInterval(() => {
+                // Multiple ways to detect connection loss
+                const now = Date.now();
+                
+                // Method 1: Check if we haven't received a pong in too long
+                if (isConnected && (now - lastSuccessfulPing) > heartbeatTimeoutMs) {
+                    console.log('Connection lost - no pong received in time');
+                    forceDisconnect();
+                    return;
+                }
+                
+                // Method 2: Check WebSocket readyState
+                if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
+                    console.log('Connection lost - WebSocket state changed to:', ws.readyState);
+                    forceDisconnect();
+                    return;
+                }
+                
+                // Method 3: Try to send a test message and catch errors
+                if (isConnected && ws && ws.readyState === WebSocket.OPEN) {
+                    try {
+                        ws.send('{"type":"connection_test"}');
+                    } catch (error) {
+                        console.log('Connection lost - test message failed:', error);
+                        forceDisconnect();
+                        return;
+                    }
+                }
+                
+                // Method 4: Check if connection has been open too long without activity
+                if (isConnected && (now - connectionStartTime) > 30000 && (now - lastSuccessfulPing) > 5000) {
+                    console.log('Connection lost - stale connection detected');
+                    forceDisconnect();
+                    return;
+                }
+            }, connectionCheckMs);
         }
         
         function stopHeartbeat() {
@@ -397,32 +444,26 @@ const char* dashboardHTML = R"rawliteral(
             }
         }
         
-        function checkHeartbeat() {
-            if (isConnected && Date.now() - lastHeartbeat > heartbeatTimeoutMs) {
-                console.log('Heartbeat timeout - connection lost');
-                handleConnectionLoss();
-            }
-            
-            // Also check WebSocket readyState for immediate detection
-            if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
-                console.log('WebSocket state changed to:', ws.readyState);
-                handleConnectionLoss();
+        function stopConnectionCheck() {
+            if (connectionCheckInterval) {
+                clearInterval(connectionCheckInterval);
+                connectionCheckInterval = null;
             }
         }
         
-        function handleConnectionLoss() {
-            if (!isConnected) {
-                return; // Already disconnected
-            }
-            
+        function forceDisconnect() {
+            console.log('Force disconnecting...');
             isConnected = false;
             stopHeartbeat();
+            stopConnectionCheck();
             if (ws) {
                 ws.close();
+                ws = null;
             }
             updateStatus('Disconnected', false, true);
             attemptReconnect();
         }
+        
         
         function attemptReconnect() {
             if (reconnectAttempts >= maxReconnectAttempts) {
@@ -461,17 +502,20 @@ const char* dashboardHTML = R"rawliteral(
             const connectionTimeout = setTimeout(() => {
                 if (ws.readyState === WebSocket.CONNECTING) {
                     ws.close();
-                    handleConnectionLoss();
+                    forceDisconnect();
                 }
-            }, 3000);
+            }, 2000);
             
             ws.onopen = function() {
                 clearTimeout(connectionTimeout);
                 isConnected = true;
                 reconnectAttempts = 0;
                 lastHeartbeat = Date.now();
+                lastSuccessfulPing = Date.now();
+                connectionStartTime = Date.now();
                 updateStatus('Connected', true);
                 startHeartbeat();
+                startConnectionCheck();
             };
             
             ws.onmessage = function(event) {
@@ -480,12 +524,20 @@ const char* dashboardHTML = R"rawliteral(
                 if (data.type === 'pong') {
                     // Heartbeat response received
                     lastHeartbeat = Date.now();
+                    lastSuccessfulPing = Date.now();
                     return;
                 }
                 
                 if (data.type === 'test_ok') {
                     // Test message response received - connection is alive
                     lastHeartbeat = Date.now();
+                    lastSuccessfulPing = Date.now();
+                    return;
+                }
+                
+                if (data.type === 'connection_test_ok') {
+                    // Connection test response received
+                    lastSuccessfulPing = Date.now();
                     return;
                 }
                 
@@ -510,19 +562,14 @@ const char* dashboardHTML = R"rawliteral(
                 
                 // Immediately update status and handle disconnection
                 if (isConnected) {
-                    isConnected = false;
-                    stopHeartbeat();
-                    updateStatus('Disconnected', false, true);
-                    attemptReconnect();
+                    forceDisconnect();
                 }
             };
             
             ws.onerror = function(error) {
                 clearTimeout(connectionTimeout);
-                isConnected = false;
-                stopHeartbeat();
                 console.error('WebSocket error:', error);
-                updateStatus('Connection Error', false, true);
+                forceDisconnect();
             };
         }
         
@@ -536,30 +583,6 @@ const char* dashboardHTML = R"rawliteral(
         // Connect on page load
         connect();
         
-        // Check heartbeat every 1 second for faster detection
-        setInterval(checkHeartbeat, 1000);
-        
-        // Also check WebSocket state every 200ms for immediate detection
-        setInterval(() => {
-            if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
-                console.log('Immediate WebSocket state check - connection lost, state:', ws.readyState);
-                handleConnectionLoss();
-            }
-        }, 200);
-        
-        // Additional aggressive monitoring - try to send a test message every 500ms
-        setInterval(() => {
-            if (isConnected && ws && ws.readyState === WebSocket.OPEN) {
-                try {
-                    // Send a small test message to detect connection issues
-                    ws.send('{"type":"test"}');
-                } catch (error) {
-                    console.log('Test message failed - connection lost:', error);
-                    handleConnectionLoss();
-                }
-            }
-        }, 500);
-        
         // Monitor network connectivity
         window.addEventListener('online', () => {
             console.log('Network came online');
@@ -571,7 +594,7 @@ const char* dashboardHTML = R"rawliteral(
         window.addEventListener('offline', () => {
             console.log('Network went offline');
             if (isConnected) {
-                handleConnectionLoss();
+                forceDisconnect();
             }
         });
         
@@ -579,7 +602,7 @@ const char* dashboardHTML = R"rawliteral(
         setInterval(() => {
             if (!navigator.onLine && isConnected) {
                 console.log('Network offline detected');
-                handleConnectionLoss();
+                forceDisconnect();
             }
         }, 1000);
         
@@ -592,7 +615,7 @@ const char* dashboardHTML = R"rawliteral(
                 // When page becomes visible, verify connection is still alive
                 if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
                     console.log('Connection lost when page became visible');
-                    handleConnectionLoss();
+                    forceDisconnect();
                 }
             }
         });
@@ -683,6 +706,10 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                     } else if (type == "test") {
                         // Respond to test message to confirm connection is alive
                         String testResponse = "{\"type\":\"test_ok\"}";
+                        client->text(testResponse);
+                    } else if (type == "connection_test") {
+                        // Respond to connection test message
+                        String testResponse = "{\"type\":\"connection_test_ok\"}";
                         client->text(testResponse);
                     }
                 }

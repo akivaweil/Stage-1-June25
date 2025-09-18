@@ -111,20 +111,17 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .saw-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
-            border-radius: 50%;
+            width: 60px;
+            height: 60px;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
         }
         
         .saw-icon svg {
-            width: 24px;
-            height: 24px;
+            width: 36px;
+            height: 36px;
             fill: #667eea;
         }
         

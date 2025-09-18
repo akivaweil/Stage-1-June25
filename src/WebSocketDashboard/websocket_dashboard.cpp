@@ -108,11 +108,24 @@ const char* dashboardHTML = R"rawliteral(
             align-items: center;
             justify-content: center;
             gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .title:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
         
         .saw-icon {
-            width: 90px;
-            height: 90px;
+            width: 60px;
+            height: 60px;
             position: relative;
             display: flex;
             align-items: center;
@@ -121,25 +134,25 @@ const char* dashboardHTML = R"rawliteral(
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .saw-icon:hover {
             background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: rotate(15deg);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
         
         .saw-icon svg {
-            width: 54px;
-            height: 54px;
+            width: 36px;
+            height: 36px;
             fill: #1e3a8a;
             filter: drop-shadow(0 2px 8px rgba(30, 58, 138, 0.3));
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .saw-icon:hover svg {
+        .title:hover .saw-icon svg {
             transform: rotate(15deg);
             filter: drop-shadow(0 4px 12px rgba(30, 58, 138, 0.4));
         }

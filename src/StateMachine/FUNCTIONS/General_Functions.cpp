@@ -288,31 +288,21 @@ void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {
     }
     
     //serial.println("Starting cut motor homing sequence...");
-    Serial.print("Initial switch state: ");
+    //serial.print("Initial switch state: ");
     //serial.println(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
     
     unsigned long startTime = millis();
     cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_HOMING_SPEED);
     cutMotor->moveTo(-40000);
     
-    Serial.print("Cut motor homing speed set to: ");
+    //serial.print("Cut motor homing speed set to: ");
     //serial.println(CUT_MOTOR_HOMING_SPEED);
     //serial.println("Cut motor moving to -40000 steps...");
 
     while (homingSwitch.read() != HIGH) {
         homingSwitch.update();
         
-        // Add periodic status updates
-        static unsigned long lastStatusTime = 0;
-        if (millis() - lastStatusTime >= 500) {
-            Serial.print("Homing in progress... Switch: ");
-            Serial.print(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
-            Serial.print(", Position: ");
-            Serial.print(cutMotor->getCurrentPosition());
-            Serial.print(", Running: ");
-            //serial.println(cutMotor->isRunning() ? "YES" : "NO");
-            lastStatusTime = millis();
-        }
+        // Periodic status updates removed to reduce serial output
         
         if (millis() - startTime > timeout) {
             //serial.println("Cut motor homing timeout!");
@@ -345,13 +335,13 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     }
     
     //serial.println("Starting feed motor homing sequence...");
-    Serial.print("Initial feed sensor state: ");
+    //serial.print("Initial feed sensor state: ");
     //serial.println(homingSwitch.read() == LOW ? "ACTIVE" : "INACTIVE");
     
     // Debug motor setup
-    Serial.print("FEED_MOTOR_STEPS_PER_INCH value: ");
+    //serial.print("FEED_MOTOR_STEPS_PER_INCH value: ");
     //serial.println(FEED_MOTOR_STEPS_PER_INCH);
-    Serial.print("FEED_MOTOR_HOMING_SPEED value: ");
+    //serial.print("FEED_MOTOR_HOMING_SPEED value: ");
     //serial.println(FEED_MOTOR_HOMING_SPEED);
     
     // Step 1: Move toward home sensor until it triggers
@@ -363,9 +353,9 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     
     // Verify motor started
     delay(100); // Small delay to let motor start
-    Serial.print("Motor started - Running: ");
-    Serial.print(feedMotor->isRunning() ? "YES" : "NO");
-    Serial.print(", Position: ");
+    //serial.print("Motor started - Running: ");
+    //serial.print(feedMotor->isRunning() ? "YES" : "NO");
+    //serial.print(", Position: ");
     //serial.println(feedMotor->getCurrentPosition());
 
     // Add timeout for feed motor homing
@@ -375,22 +365,16 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     while (homingSwitch.read() != LOW) {
         homingSwitch.update();
         
-        // Add periodic status updates
-        static unsigned long lastStatusTime = 0;
-        if (millis() - lastStatusTime >= 1000) {
-            Serial.print("Feed homing in progress... Sensor: ");
-            Serial.print(homingSwitch.read() == LOW ? "ACTIVE" : "INACTIVE");
-            Serial.print(", Position: ");
-            Serial.print(feedMotor->getCurrentPosition());
-            Serial.print(", Running: ");
-            //serial.println(feedMotor->isRunning() ? "YES" : "NO");
-            lastStatusTime = millis();
-            
-            // If motor stopped running unexpectedly, restart it
+        // Periodic status updates removed to reduce serial output
+        
+        // If motor stopped running unexpectedly, restart it
+        static unsigned long lastRestartCheck = 0;
+        if (millis() - lastRestartCheck >= 1000) {
             if (!feedMotor->isRunning()) {
                 //serial.println("Motor stopped unexpectedly! Restarting...");
                 feedMotor->runForward();
             }
+            lastRestartCheck = millis();
         }
         
         // Check for timeout

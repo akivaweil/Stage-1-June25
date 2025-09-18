@@ -99,10 +99,7 @@ const char* dashboardHTML = R"rawliteral(
         .title {
             font-size: 2.5rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #ffffff;
             margin-bottom: 8px;
             letter-spacing: -0.02em;
             display: flex;

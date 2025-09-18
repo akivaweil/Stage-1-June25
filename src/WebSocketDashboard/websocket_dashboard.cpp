@@ -119,45 +119,15 @@ const char* dashboardHTML = R"rawliteral(
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            font-size: 24px;
+            color: #667eea;
         }
         
         .saw-icon::before {
-            content: '';
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .saw-icon::after {
-            content: '';
-            position: absolute;
-            width: 34px;
-            height: 34px;
-            background: 
-                radial-gradient(circle at 50% 50%, transparent 10px, #667eea 10px, #667eea 12px, transparent 12px),
-                conic-gradient(from 0deg, 
-                    transparent 0deg, #667eea 20deg, transparent 20deg,
-                    transparent 40deg, #667eea 40deg, transparent 40deg,
-                    transparent 60deg, #667eea 60deg, transparent 60deg,
-                    transparent 80deg, #667eea 80deg, transparent 80deg,
-                    transparent 100deg, #667eea 100deg, transparent 100deg,
-                    transparent 120deg, #667eea 120deg, transparent 120deg,
-                    transparent 140deg, #667eea 140deg, transparent 140deg,
-                    transparent 160deg, #667eea 160deg, transparent 160deg,
-                    transparent 180deg, #667eea 180deg, transparent 180deg,
-                    transparent 200deg, #667eea 200deg, transparent 200deg,
-                    transparent 220deg, #667eea 220deg, transparent 220deg,
-                    transparent 240deg, #667eea 240deg, transparent 240deg,
-                    transparent 260deg, #667eea 260deg, transparent 260deg,
-                    transparent 280deg, #667eea 280deg, transparent 280deg,
-                    transparent 300deg, #667eea 300deg, transparent 300deg,
-                    transparent 320deg, #667eea 320deg, transparent 320deg,
-                    transparent 340deg, #667eea 340deg, transparent 340deg);
-            border-radius: 50%;
-            z-index: 2;
+            content: '⚙';
+            font-size: 24px;
+            color: #667eea;
+            text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
         }
         
         .subtitle {

@@ -19,7 +19,7 @@ const char* dashboardHTML = R"rawliteral(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table Saw Dashboard</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='180'>⚙</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='120'>⚙</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -122,28 +122,10 @@ const char* dashboardHTML = R"rawliteral(
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
         }
         
-        .saw-icon::before {
-            content: '';
+        .saw-icon svg {
             width: 24px;
             height: 24px;
-            background: #667eea;
-            border-radius: 50%;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .saw-icon::after {
-            content: '';
-            position: absolute;
-            width: 26px;
-            height: 26px;
-            background: 
-                radial-gradient(circle at 50% 50%, transparent 6px, #667eea 6px, #667eea 8px, transparent 8px),
-                repeating-conic-gradient(from 0deg, 
-                    #667eea 0deg 12deg, 
-                    transparent 12deg 24deg);
-            border-radius: 50%;
-            z-index: 2;
+            fill: #667eea;
         }
         
         .subtitle {
@@ -297,7 +279,11 @@ const char* dashboardHTML = R"rawliteral(
     <div class="container">
         <div class="header">
             <h1 class="title">
-                <div class="saw-icon"></div>
+                <div class="saw-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1c0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
+                    </svg>
+                </div>
                 Table Saw
             </h1>
             <p class="subtitle">Real-time Monitoring Dashboard</p>

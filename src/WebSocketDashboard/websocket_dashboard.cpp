@@ -111,8 +111,8 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .saw-icon {
-            width: 60px;
-            height: 60px;
+            width: 90px;
+            height: 90px;
             position: relative;
             display: flex;
             align-items: center;
@@ -120,9 +120,9 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .saw-icon svg {
-            width: 36px;
-            height: 36px;
-            fill: #667eea;
+            width: 54px;
+            height: 54px;
+            fill: #1e3a8a;
         }
         
         .subtitle {

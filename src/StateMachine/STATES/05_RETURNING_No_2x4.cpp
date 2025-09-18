@@ -9,7 +9,7 @@ const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in atte
 const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100; // Delay between clamp extending/retracting and feed motor movement
 
 // Feed motor speed configuration for this state
-const float FEED_MOTOR_SPEED_MULTIPLIER = 0.8; // 20% reduction for large position changes
+const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 returning sequence
 
 // Feed motor position constants
 const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement

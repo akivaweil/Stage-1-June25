@@ -365,10 +365,7 @@ const char* dashboardHTML = R"rawliteral(
             const statusEl = document.getElementById('status');
             let statusText = message;
             
-            if (showRetry && reconnectAttempts > 0) {
-                statusText += ` (${reconnectAttempts}/${maxReconnectAttempts})`;
-            }
-            
+            // Simplified - no attempt numbers or countdown
             statusEl.innerHTML = `<div class="status-dot"></div><span>${statusText}</span>`;
             statusEl.className = `status ${isConnected ? 'connected' : 'disconnected'}`;
         }
@@ -474,7 +471,8 @@ const char* dashboardHTML = R"rawliteral(
             reconnectAttempts++;
             const delay = Math.min(500 + (reconnectAttempts * 200), 3000); // Faster initial reconnects
             
-            updateStatus(`Reconnecting in ${Math.ceil(delay/1000)}s...`, false, true);
+            // Simplified message - just show "Reconnecting"
+            updateStatus('Reconnecting', false, true);
             
             reconnectTimeout = setTimeout(() => {
                 if (!isConnected) {
@@ -491,7 +489,7 @@ const char* dashboardHTML = R"rawliteral(
             }
             
             // Show connecting status immediately
-            updateStatus('Connecting...', false, true);
+            updateStatus('Reconnecting', false, true);
             
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}/ws`;

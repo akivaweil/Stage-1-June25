@@ -9,6 +9,7 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "ErrorStates/Errors_Functions.h"
 #include "StateMachine/StateManager.h"
+#include "WebSocketDashboard/websocket_dashboard.h"
 
 //* ************************************************************************
 //* ************************ AUTOMATED TABLE SAW **************************
@@ -97,6 +98,9 @@ void setup() {
   Serial.println("Automated Table Saw Control System - Stage 1");
   
   setupOTA();
+  
+  //! Setup websocket dashboard
+  setupWebSocketDashboard();
 
   //! Configure pin modes
   pinMode(CUT_MOTOR_STEP_PIN, OUTPUT);

@@ -353,6 +353,7 @@ const char* dashboardHTML = R"rawliteral(
         let isConnected = false;
         let reconnectAttempts = 0;
         let lastHeartbeat = Date.now();
+        let isHandlingConnectionLoss = false;
         const maxReconnectAttempts = 20;
         const heartbeatIntervalMs = 1000; // Send heartbeat every 1 second
         const heartbeatTimeoutMs = 3000; // Consider connection dead after 3 seconds
@@ -411,6 +412,11 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         function handleConnectionLoss() {
+            if (!isConnected || isHandlingConnectionLoss) {
+                return; // Already handling connection loss
+            }
+            
+            isHandlingConnectionLoss = true;
             isConnected = false;
             stopHeartbeat();
             if (ws) {
@@ -418,6 +424,11 @@ const char* dashboardHTML = R"rawliteral(
             }
             updateStatus('Connection Lost', false, true);
             attemptReconnect();
+            
+            // Reset flag after a short delay
+            setTimeout(() => {
+                isHandlingConnectionLoss = false;
+            }, 1000);
         }
         
         function attemptReconnect() {
@@ -464,6 +475,7 @@ const char* dashboardHTML = R"rawliteral(
             ws.onopen = function() {
                 clearTimeout(connectionTimeout);
                 isConnected = true;
+                isHandlingConnectionLoss = false;
                 reconnectAttempts = 0;
                 lastHeartbeat = Date.now();
                 updateStatus('Connected', true);
@@ -506,11 +518,8 @@ const char* dashboardHTML = R"rawliteral(
                 stopHeartbeat();
                 
                 console.log('WebSocket closed with code:', event.code);
-                if (event.code !== 1000) { // Not a normal closure
-                    handleConnectionLoss();
-                } else {
-                    updateStatus('Disconnected', false);
-                }
+                // Always treat close as connection loss for reconnection
+                handleConnectionLoss();
             };
             
             ws.onerror = function(error) {
@@ -582,15 +591,12 @@ const char* dashboardHTML = R"rawliteral(
         // Handle page visibility changes
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                console.log('Page hidden - checking connection');
-                // When page becomes hidden, check if connection is still alive
-                if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
-                    handleConnectionLoss();
-                }
+                console.log('Page hidden');
             } else {
                 console.log('Page visible - checking connection');
                 // When page becomes visible, verify connection is still alive
                 if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
+                    console.log('Connection lost when page became visible');
                     handleConnectionLoss();
                 }
             }

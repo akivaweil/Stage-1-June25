@@ -332,7 +332,7 @@ const char* dashboardHTML = R"rawliteral(
         <div class="info-card">
             <div class="info-title">System Status</div>
             <div class="info-subtitle">
-                Last updated: <span class="last-update" id="lastUpdate">Never</span>
+                Last cut: <span class="last-update" id="lastUpdate">Never</span>
             </div>
         </div>
     </div>

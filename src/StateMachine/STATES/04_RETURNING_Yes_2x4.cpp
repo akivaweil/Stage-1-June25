@@ -6,6 +6,7 @@
 #include "../../../include/StateMachine/FUNCTIONS/General_Functions.h"
 #include "../../../include/Config/Pins_Definitions.h"
 #include "../../../include/StateMachine/STATES/States_Config.h"
+#include "../../../include/WebSocketDashboard/websocket_dashboard.h"
 
 //* ************************************************************************
 //* ******************** RETURNING YES 2X4 STATE **************************
@@ -139,6 +140,7 @@ void handleReturningYes2x4Sequence() {
                     } else {
                         // Max incremental moves exceeded - transition to error
                         Serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
+                        onErrorOccurred("Cut motor home switch not detected after max moves");
                         if (cutMotor) cutMotor->forceStop();
                         if (feedMotor) feedMotor->forceStop();
                         extend2x4SecureClamp();

@@ -213,4 +213,11 @@ void loop() {
 
   // Execute the state machine - all the logic below has been moved to function-based state management
   executeStateMachine();
+  
+  // Update dashboard status periodically (only when not cutting to avoid timing interference)
+  static unsigned long lastDashboardUpdate = 0;
+  if (millis() - lastDashboardUpdate > 1000) { // Update every second
+    updateDashboardStatus();
+    lastDashboardUpdate = millis();
+  }
 }

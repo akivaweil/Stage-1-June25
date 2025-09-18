@@ -102,6 +102,7 @@ void handleCuttingStep1() {
             }
             
             setCuttingCycleInProgress(false);
+            onErrorOccurred("Wood suction not confirmed");
             changeState(SUCTION_ERROR);
             stepStartTime = 0;
             return;
@@ -208,6 +209,7 @@ void handleHomePositionError() {
     
     if (getReloadSwitch()->rose()) {
         homePositionErrorDetected = false;
+        onErrorOccurred("Home position error - acknowledged");
         changeState(ERROR_RESET);
         setErrorAcknowledged(true);
     }

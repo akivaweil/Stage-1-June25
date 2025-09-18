@@ -6,6 +6,7 @@
 #include "ErrorStates/Error_Reset.h"
 #include "ErrorStates/Suction_Error.h"
 #include "ErrorStates/Cut_Motor_Error.h"
+#include "WebSocketDashboard/websocket_dashboard.h"
 
 // External references to Bounce objects from main.cpp
 extern Bounce cutHomingSwitch;
@@ -122,6 +123,9 @@ void changeState(SystemState newState) {
         
         previousState = currentState;
         currentState = newState;
+        
+        // Notify dashboard of state change
+        onStateChange(newState);
         
         // Call onEnter for the new state after changing
         switch (newState) {

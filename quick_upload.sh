@@ -6,7 +6,7 @@
 case "$1" in
     "ota")
         echo "🚀 Uploading via OTA (WiFi)..."
-        echo "📡 Target: 192.168.1.249"
+        echo "📡 Target: 192.168.1.227"
         time pio run -e esp32s3 -t upload
         ;;
     "usb")
@@ -16,7 +16,7 @@ case "$1" in
         ;;
     "test")
         echo "🏓 Testing network connectivity..."
-        ping -c 3 192.168.1.249
+        ping -c 3 192.168.1.227
         echo ""
         echo "📊 Network analysis:"
         echo "- Good: <50ms latency, 0% packet loss"

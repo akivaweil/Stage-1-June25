@@ -2,6 +2,7 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
+#include "WebSocketDashboard/websocket_dashboard.h"
 
 //* ************************************************************************
 //* ************************** CUTTING STATE *******************************
@@ -165,6 +166,12 @@ void handleCuttingStep2() {
     
     if (cutMotor && !cutMotor->isRunning()) {
         Serial.println("Cut cycle complete - transitioning to return sequence");
+        
+        //! ************************************************************************
+        //! INCREMENT CUTTING CYCLE COUNTER - Safe to do when motors are not running
+        //! ************************************************************************
+        incrementCuttingCycleCounter();
+        
         configureCutMotorForReturn();
         transferArmSignalSentThisCycle = false;
 

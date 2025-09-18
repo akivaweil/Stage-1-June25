@@ -354,8 +354,8 @@ const char* dashboardHTML = R"rawliteral(
         let reconnectAttempts = 0;
         let lastHeartbeat = Date.now();
         const maxReconnectAttempts = 20;
-        const heartbeatIntervalMs = 5000; // Send heartbeat every 5 seconds
-        const heartbeatTimeoutMs = 10000; // Consider connection dead after 10 seconds
+        const heartbeatIntervalMs = 3000; // Send heartbeat every 3 seconds
+        const heartbeatTimeoutMs = 6000; // Consider connection dead after 6 seconds
         
         function updateStatus(message, isConnected, showRetry = false) {
             const statusEl = document.getElementById('status');
@@ -376,8 +376,16 @@ const char* dashboardHTML = R"rawliteral(
             
             heartbeatInterval = setInterval(() => {
                 if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({type: 'ping'}));
-                    lastHeartbeat = Date.now();
+                    try {
+                        ws.send(JSON.stringify({type: 'ping'}));
+                        lastHeartbeat = Date.now();
+                    } catch (error) {
+                        console.log('Error sending ping:', error);
+                        handleConnectionLoss();
+                    }
+                } else {
+                    console.log('WebSocket not open during heartbeat, state:', ws ? ws.readyState : 'null');
+                    handleConnectionLoss();
                 }
             }, heartbeatIntervalMs);
         }
@@ -392,6 +400,12 @@ const char* dashboardHTML = R"rawliteral(
         function checkHeartbeat() {
             if (isConnected && Date.now() - lastHeartbeat > heartbeatTimeoutMs) {
                 console.log('Heartbeat timeout - connection lost');
+                handleConnectionLoss();
+            }
+            
+            // Also check WebSocket readyState for immediate detection
+            if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
+                console.log('WebSocket state changed to:', ws.readyState);
                 handleConnectionLoss();
             }
         }
@@ -485,6 +499,7 @@ const char* dashboardHTML = R"rawliteral(
                 isConnected = false;
                 stopHeartbeat();
                 
+                console.log('WebSocket closed with code:', event.code);
                 if (event.code !== 1000) { // Not a normal closure
                     handleConnectionLoss();
                 } else {
@@ -511,8 +526,16 @@ const char* dashboardHTML = R"rawliteral(
         // Connect on page load
         connect();
         
-        // Check heartbeat every 2 seconds
-        setInterval(checkHeartbeat, 2000);
+        // Check heartbeat every 1 second for faster detection
+        setInterval(checkHeartbeat, 1000);
+        
+        // Also check WebSocket state every 500ms for immediate detection
+        setInterval(() => {
+            if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
+                console.log('Immediate WebSocket state check - connection lost, state:', ws.readyState);
+                handleConnectionLoss();
+            }
+        }, 500);
         
         // Add some interactive effects
         document.addEventListener('DOMContentLoaded', function() {

@@ -59,7 +59,7 @@ const char* dashboardHTML = R"rawliteral(
             background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
                         radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
                         radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
-            animation: float 20s ease-in-out infinite;
+            animation: float 40s ease-in-out infinite;
         }
         
         @keyframes float {

@@ -103,6 +103,61 @@ const char* dashboardHTML = R"rawliteral(
             background-clip: text;
             margin-bottom: 8px;
             letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .saw-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        .saw-icon::before {
+            content: '';
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .saw-icon::after {
+            content: '';
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            background: 
+                radial-gradient(circle at 50% 50%, transparent 10px, #667eea 10px, #667eea 12px, transparent 12px),
+                conic-gradient(from 0deg, 
+                    transparent 0deg, #667eea 20deg, transparent 20deg,
+                    transparent 40deg, #667eea 40deg, transparent 40deg,
+                    transparent 60deg, #667eea 60deg, transparent 60deg,
+                    transparent 80deg, #667eea 80deg, transparent 80deg,
+                    transparent 100deg, #667eea 100deg, transparent 100deg,
+                    transparent 120deg, #667eea 120deg, transparent 120deg,
+                    transparent 140deg, #667eea 140deg, transparent 140deg,
+                    transparent 160deg, #667eea 160deg, transparent 160deg,
+                    transparent 180deg, #667eea 180deg, transparent 180deg,
+                    transparent 200deg, #667eea 200deg, transparent 200deg,
+                    transparent 220deg, #667eea 220deg, transparent 220deg,
+                    transparent 240deg, #667eea 240deg, transparent 240deg,
+                    transparent 260deg, #667eea 260deg, transparent 260deg,
+                    transparent 280deg, #667eea 280deg, transparent 280deg,
+                    transparent 300deg, #667eea 300deg, transparent 300deg,
+                    transparent 320deg, #667eea 320deg, transparent 320deg,
+                    transparent 340deg, #667eea 340deg, transparent 340deg);
+            border-radius: 50%;
+            z-index: 2;
         }
         
         .subtitle {
@@ -255,7 +310,10 @@ const char* dashboardHTML = R"rawliteral(
     
     <div class="container">
         <div class="header">
-            <h1 class="title">🔧 Table Saw</h1>
+            <h1 class="title">
+                <div class="saw-icon"></div>
+                Table Saw
+            </h1>
             <p class="subtitle">Real-time Monitoring Dashboard</p>
         </div>
         
@@ -283,8 +341,19 @@ const char* dashboardHTML = R"rawliteral(
         let ws;
         let reconnectInterval;
         let isConnected = false;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 10;
+        
+        function updateStatus(message, isConnected) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = `<div class="status-dot"></div><span>${message}</span>`;
+            statusEl.className = `status ${isConnected ? 'connected' : 'disconnected'}`;
+        }
         
         function connect() {
+            // Show connecting status immediately
+            updateStatus('Connecting...', false);
+            
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}/ws`;
             
@@ -292,10 +361,10 @@ const char* dashboardHTML = R"rawliteral(
             
             ws.onopen = function() {
                 isConnected = true;
-                const statusEl = document.getElementById('status');
-                statusEl.innerHTML = '<div class="status-dot"></div><span>Connected</span>';
-                statusEl.className = 'status connected';
+                reconnectAttempts = 0;
+                updateStatus('Connected', true);
                 clearInterval(reconnectInterval);
+                reconnectInterval = null;
             };
             
             ws.onmessage = function(event) {
@@ -317,20 +386,26 @@ const char* dashboardHTML = R"rawliteral(
             
             ws.onclose = function() {
                 isConnected = false;
-                const statusEl = document.getElementById('status');
-                statusEl.innerHTML = '<div class="status-dot"></div><span>Disconnected</span>';
-                statusEl.className = 'status disconnected';
+                updateStatus('Disconnected', false);
                 
-                if (!reconnectInterval) {
-                    reconnectInterval = setInterval(connect, 3000);
+                // Exponential backoff for reconnection
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 5000);
+                    
+                    setTimeout(() => {
+                        if (!isConnected) {
+                            connect();
+                        }
+                    }, delay);
+                } else {
+                    updateStatus('Connection Failed', false);
                 }
             };
             
             ws.onerror = function() {
                 isConnected = false;
-                const statusEl = document.getElementById('status');
-                statusEl.innerHTML = '<div class="status-dot"></div><span>Connection Error</span>';
-                statusEl.className = 'status disconnected';
+                updateStatus('Connection Error', false);
             };
         }
         

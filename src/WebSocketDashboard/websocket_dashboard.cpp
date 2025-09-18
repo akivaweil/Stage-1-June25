@@ -120,15 +120,30 @@ const char* dashboardHTML = R"rawliteral(
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-            font-size: 24px;
-            color: #667eea;
         }
         
         .saw-icon::before {
-            content: '⚙';
-            font-size: 24px;
-            color: #667eea;
-            text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+            content: '';
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 50%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .saw-icon::after {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: 
+                radial-gradient(circle at 50% 50%, transparent 6px, #667eea 6px, #667eea 8px, transparent 8px),
+                repeating-conic-gradient(from 0deg, 
+                    #667eea 0deg 12deg, 
+                    transparent 12deg 24deg);
+            border-radius: 50%;
+            z-index: 2;
         }
         
         .subtitle {

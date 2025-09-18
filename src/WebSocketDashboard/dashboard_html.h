@@ -128,27 +128,27 @@ const char* dashboardHTML = R"rawliteral(
         
         /* LED-specific colors */
         .status-item.led-red.active {
-            background: rgba(239, 68, 68, 0.3);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+            background: rgba(220, 38, 38, 0.6);
+            border: 2px solid rgba(220, 38, 38, 0.8);
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.5);
         }
         
         .status-item.led-yellow.active {
-            background: rgba(245, 158, 11, 0.3);
-            border: 1px solid rgba(245, 158, 11, 0.5);
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+            background: rgba(217, 119, 6, 0.6);
+            border: 2px solid rgba(217, 119, 6, 0.8);
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.5);
         }
         
         .status-item.led-green.active {
-            background: rgba(34, 197, 94, 0.3);
-            border: 1px solid rgba(34, 197, 94, 0.5);
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+            background: rgba(21, 128, 61, 0.6);
+            border: 2px solid rgba(21, 128, 61, 0.8);
+            box-shadow: 0 0 15px rgba(21, 128, 61, 0.5);
         }
         
         .status-item.led-blue.active {
-            background: rgba(59, 130, 246, 0.3);
-            border: 1px solid rgba(59, 130, 246, 0.5);
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            background: rgba(29, 78, 216, 0.6);
+            border: 2px solid rgba(29, 78, 216, 0.8);
+            box-shadow: 0 0 15px rgba(29, 78, 216, 0.5);
         }
         
         .status-label {

@@ -676,7 +676,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                 String message = (char*)data;
                 
                 // Parse JSON message
-                DynamicJsonDocument doc(1024);
+                JsonDocument doc;
                 DeserializationError error = deserializeJson(doc, message);
                 
                 if (!error) {

@@ -126,6 +126,31 @@ const char* dashboardHTML = R"rawliteral(
             border: 1px solid rgba(107, 114, 128, 0.3);
         }
         
+        /* LED-specific colors */
+        .status-item.led-red.active {
+            background: rgba(239, 68, 68, 0.3);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+        
+        .status-item.led-yellow.active {
+            background: rgba(245, 158, 11, 0.3);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+        
+        .status-item.led-green.active {
+            background: rgba(34, 197, 94, 0.3);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+        }
+        
+        .status-item.led-blue.active {
+            background: rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+        
         .status-label {
             color: rgba(255, 255, 255, 0.7);
             font-size: 0.8rem;
@@ -595,10 +620,10 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         function updateLEDStatus(data) {
-            updateStatusItem('led_red', data.red);
-            updateStatusItem('led_yellow', data.yellow);
-            updateStatusItem('led_green', data.green);
-            updateStatusItem('led_blue', data.blue);
+            updateLEDItem('led_red', data.red, 'led-red');
+            updateLEDItem('led_yellow', data.yellow, 'led-yellow');
+            updateLEDItem('led_green', data.green, 'led-green');
+            updateLEDItem('led_blue', data.blue, 'led-blue');
         }
         
         function updateStatusItem(elementId, isActive) {
@@ -606,6 +631,14 @@ const char* dashboardHTML = R"rawliteral(
             const valueElement = element.querySelector('.status-value');
             
             element.className = `status-item ${isActive ? 'active' : 'inactive'}`;
+            valueElement.textContent = isActive ? 'ON' : 'OFF';
+        }
+        
+        function updateLEDItem(elementId, isActive, ledClass) {
+            const element = document.getElementById(elementId);
+            const valueElement = element.querySelector('.status-value');
+            
+            element.className = `status-item ${ledClass} ${isActive ? 'active' : 'inactive'}`;
             valueElement.textContent = isActive ? 'ON' : 'OFF';
         }
         

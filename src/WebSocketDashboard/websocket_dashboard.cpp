@@ -353,7 +353,6 @@ const char* dashboardHTML = R"rawliteral(
         let isConnected = false;
         let reconnectAttempts = 0;
         let lastHeartbeat = Date.now();
-        let isHandlingConnectionLoss = false;
         const maxReconnectAttempts = 20;
         const heartbeatIntervalMs = 1000; // Send heartbeat every 1 second
         const heartbeatTimeoutMs = 3000; // Consider connection dead after 3 seconds
@@ -412,23 +411,17 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         function handleConnectionLoss() {
-            if (!isConnected || isHandlingConnectionLoss) {
-                return; // Already handling connection loss
+            if (!isConnected) {
+                return; // Already disconnected
             }
             
-            isHandlingConnectionLoss = true;
             isConnected = false;
             stopHeartbeat();
             if (ws) {
                 ws.close();
             }
-            updateStatus('Connection Lost', false, true);
+            updateStatus('Disconnected', false, true);
             attemptReconnect();
-            
-            // Reset flag after a short delay
-            setTimeout(() => {
-                isHandlingConnectionLoss = false;
-            }, 1000);
         }
         
         function attemptReconnect() {
@@ -475,7 +468,6 @@ const char* dashboardHTML = R"rawliteral(
             ws.onopen = function() {
                 clearTimeout(connectionTimeout);
                 isConnected = true;
-                isHandlingConnectionLoss = false;
                 reconnectAttempts = 0;
                 lastHeartbeat = Date.now();
                 updateStatus('Connected', true);
@@ -514,12 +506,15 @@ const char* dashboardHTML = R"rawliteral(
             
             ws.onclose = function(event) {
                 clearTimeout(connectionTimeout);
-                isConnected = false;
-                stopHeartbeat();
-                
                 console.log('WebSocket closed with code:', event.code);
-                // Always treat close as connection loss for reconnection
-                handleConnectionLoss();
+                
+                // Immediately update status and handle disconnection
+                if (isConnected) {
+                    isConnected = false;
+                    stopHeartbeat();
+                    updateStatus('Disconnected', false, true);
+                    attemptReconnect();
+                }
             };
             
             ws.onerror = function(error) {

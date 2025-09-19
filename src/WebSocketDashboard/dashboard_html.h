@@ -465,10 +465,13 @@ const char* dashboardHTML = R"rawliteral(
         let ws;
         let reconnectTimeout;
         let heartbeatInterval;
+        let heartbeatTimeout;
         let isConnected = false;
         let reconnectAttempts = 0;
+        let lastPongReceived = 0;
         const maxReconnectAttempts = 20;
         const heartbeatIntervalMs = 1000;
+        const heartbeatTimeoutMs = 3000; // Consider connection dead after 3 seconds without pong
         
         function updateConnectionStatus(connected, message) {
             const statusEl = document.getElementById('connectionStatus');
@@ -482,11 +485,25 @@ const char* dashboardHTML = R"rawliteral(
             if (heartbeatInterval) {
                 clearInterval(heartbeatInterval);
             }
+            if (heartbeatTimeout) {
+                clearTimeout(heartbeatTimeout);
+            }
+            
+            lastPongReceived = Date.now();
             
             heartbeatInterval = setInterval(() => {
                 if (ws && ws.readyState === WebSocket.OPEN) {
                     try {
                         ws.send(JSON.stringify({type: 'ping'}));
+                        
+                        // Set timeout to detect if pong is not received
+                        if (heartbeatTimeout) {
+                            clearTimeout(heartbeatTimeout);
+                        }
+                        heartbeatTimeout = setTimeout(() => {
+                            console.log('Heartbeat timeout - no pong received');
+                            forceDisconnect();
+                        }, heartbeatTimeoutMs);
                     } catch (error) {
                         console.log('Error sending ping:', error);
                         forceDisconnect();
@@ -502,6 +519,10 @@ const char* dashboardHTML = R"rawliteral(
             if (heartbeatInterval) {
                 clearInterval(heartbeatInterval);
                 heartbeatInterval = null;
+            }
+            if (heartbeatTimeout) {
+                clearTimeout(heartbeatTimeout);
+                heartbeatTimeout = null;
             }
             if (ws) {
                 ws.close();
@@ -561,6 +582,12 @@ const char* dashboardHTML = R"rawliteral(
                 const data = JSON.parse(event.data);
                 
                 if (data.type === 'pong') {
+                    // Clear heartbeat timeout since we received a pong
+                    if (heartbeatTimeout) {
+                        clearTimeout(heartbeatTimeout);
+                        heartbeatTimeout = null;
+                    }
+                    lastPongReceived = Date.now();
                     return;
                 }
                 
@@ -728,10 +755,17 @@ const char* dashboardHTML = R"rawliteral(
             }
         });
         
-        // Request initial data
+        // Request initial data and monitor connection health
         setInterval(() => {
             if (isConnected && ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({type: 'request_all_data'}));
+                
+                // Additional connection health check - if no pong received recently, force disconnect
+                const timeSinceLastPong = Date.now() - lastPongReceived;
+                if (timeSinceLastPong > heartbeatTimeoutMs) {
+                    console.log('Connection health check failed - no recent pong');
+                    forceDisconnect();
+                }
             }
         }, 5000);
     </script>

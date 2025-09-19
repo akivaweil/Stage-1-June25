@@ -252,11 +252,11 @@ void calculateTimeBasedMetrics() {
 // Update performance metrics
 void updatePerformanceMetrics(unsigned long cycleTime) {
     // Calculate time since last cycle completion (in seconds)
-    // Only show time since last cycle if we've completed at least one cycle
-    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 1) {
+    // Show time since last cycle if we've completed at least one cycle
+    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 0) {
         performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
     } else {
-        performanceMetrics.lastCycleTime = 0; // Show 0 for first cycle or no cycles completed
+        performanceMetrics.lastCycleTime = 0; // Show 0 for no cycles completed
     }
     performanceMetrics.totalCycles++;
     
@@ -570,11 +570,11 @@ void startCuttingCycleTimer() {
 
 void updateTimeSinceLastCycle() {
     // Update the time since last cycle completion
-    // Only show time since last cycle if we've completed at least one cycle
-    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 1) {
+    // Show time since last cycle if we've completed at least one cycle
+    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 0) {
         performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
     } else {
-        performanceMetrics.lastCycleTime = 0; // Show 0 for first cycle or no cycles completed
+        performanceMetrics.lastCycleTime = 0; // Show 0 for no cycles completed
     }
 }
 

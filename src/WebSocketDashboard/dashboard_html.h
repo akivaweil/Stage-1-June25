@@ -205,6 +205,16 @@ const char* dashboardHTML = R"rawliteral(
             background: rgba(239, 68, 68, 0.9);
         }
         
+        .connection-status.reconnecting {
+            background: rgba(245, 158, 11, 0.9);
+            animation: slowBlink 2s ease-in-out infinite;
+        }
+        
+        @keyframes slowBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
         .event-log {
             max-height: 300px;
             overflow-y: auto;
@@ -473,12 +483,20 @@ const char* dashboardHTML = R"rawliteral(
         const heartbeatIntervalMs = 500; // Send ping every 500ms for faster detection
         const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
         
-        function updateConnectionStatus(connected, message) {
+        function updateConnectionStatus(connected, message, isReconnecting = false) {
             const statusEl = document.getElementById('connectionStatus');
             const textEl = document.getElementById('connectionText');
             
-            statusEl.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
-            textEl.textContent = message;
+            if (connected) {
+                statusEl.className = 'connection-status connected';
+                textEl.textContent = 'Connected';
+            } else if (isReconnecting) {
+                statusEl.className = 'connection-status reconnecting';
+                textEl.textContent = 'Reconnecting';
+            } else {
+                statusEl.className = 'connection-status disconnected';
+                textEl.textContent = 'Disconnected';
+            }
         }
         
         function startHeartbeat() {
@@ -528,20 +546,21 @@ const char* dashboardHTML = R"rawliteral(
                 ws.close();
                 ws = null;
             }
-            updateConnectionStatus(false, 'Disconnected');
+            updateConnectionStatus(false, '', false);
             attemptReconnect();
         }
         
         function attemptReconnect() {
             if (reconnectAttempts >= maxReconnectAttempts) {
-                updateConnectionStatus(false, 'Connection Failed - Click to Retry');
+                updateConnectionStatus(false, '', false);
+                document.getElementById('connectionText').textContent = 'Connection Failed - Click to Retry';
                 return;
             }
             
             reconnectAttempts++;
             const delay = Math.min(250 + (reconnectAttempts * 100), 2000); // Faster reconnection attempts
             
-            updateConnectionStatus(false, 'Reconnecting...');
+            updateConnectionStatus(false, '', true); // Show blinking "Reconnecting"
             
             reconnectTimeout = setTimeout(() => {
                 if (!isConnected) {
@@ -556,7 +575,7 @@ const char* dashboardHTML = R"rawliteral(
                 reconnectTimeout = null;
             }
             
-            updateConnectionStatus(false, 'Connecting...');
+            updateConnectionStatus(false, '', true); // Show blinking "Reconnecting"
             
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}/ws`;
@@ -669,7 +688,7 @@ const char* dashboardHTML = R"rawliteral(
             const valueElement = element.querySelector('.status-value');
             
             element.className = `status-item ${ledClass} ${isActive ? 'active' : 'inactive'}`;
-            valueElement.textContent = isActive ? 'ON' : 'OFF';
+            valueElement.textContent = ''; // Remove ON/OFF text, just show color
         }
         
         function updateEventLog(events) {

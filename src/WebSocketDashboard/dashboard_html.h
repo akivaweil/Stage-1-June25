@@ -263,10 +263,6 @@ const char* dashboardHTML = R"rawliteral(
                     <div class="status-value" id="currentState">-</div>
                 </div>
                 <div class="status-item">
-                    <div class="status-label">System Health</div>
-                    <div class="status-value" id="systemHealth">-</div>
-                </div>
-                <div class="status-item">
                     <div class="status-label">Uptime</div>
                     <div class="status-value" id="uptime">-</div>
                 </div>
@@ -291,10 +287,6 @@ const char* dashboardHTML = R"rawliteral(
                 <div class="metric-item">
                     <div class="metric-value" id="averageCycleTime">-</div>
                     <div class="metric-label">Avg Cycle (ms)</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value" id="efficiency">-</div>
-                    <div class="metric-label">Efficiency %</div>
                 </div>
             </div>
         </div>
@@ -333,27 +325,6 @@ const char* dashboardHTML = R"rawliteral(
             </div>
         </div>
         
-        <!-- Clamp Status Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-icon">🔧</div>
-                <div class="card-title">Clamps</div>
-            </div>
-            <div class="status-grid">
-                <div class="status-item" id="clamp_feed">
-                    <div class="status-label">Feed Clamp</div>
-                    <div class="status-value">-</div>
-                </div>
-                <div class="status-item" id="clamp_2x4">
-                    <div class="status-label">2x4 Secure</div>
-                    <div class="status-value">-</div>
-                </div>
-                <div class="status-item" id="clamp_rotation">
-                    <div class="status-label">Rotation</div>
-                    <div class="status-value">-</div>
-                </div>
-            </div>
-        </div>
         
         <!-- LED Status Card -->
         <div class="card">
@@ -381,27 +352,6 @@ const char* dashboardHTML = R"rawliteral(
             </div>
         </div>
         
-        <!-- Network Info Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-icon">📡</div>
-                <div class="card-title">Network & System</div>
-            </div>
-            <div class="status-grid">
-                <div class="status-item">
-                    <div class="status-label">WiFi Signal</div>
-                    <div class="status-value" id="wifiSignal">-</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-label">Free Heap</div>
-                    <div class="status-value" id="freeHeap">-</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-label">Temperature</div>
-                    <div class="status-value" id="temperature">-</div>
-                </div>
-            </div>
-        </div>
         
         <!-- Error Status Card -->
         <div class="card">
@@ -415,8 +365,12 @@ const char* dashboardHTML = R"rawliteral(
                     <div class="status-value" id="lastError">None</div>
                 </div>
                 <div class="status-item">
-                    <div class="status-label">Error Count</div>
-                    <div class="status-value" id="errorCount">0</div>
+                    <div class="status-label">Cut Motor Errors</div>
+                    <div class="status-value" id="cutMotorErrorCount">0</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Suction Errors</div>
+                    <div class="status-value" id="suctionErrorCount">0</div>
                 </div>
             </div>
         </div>
@@ -553,7 +507,6 @@ const char* dashboardHTML = R"rawliteral(
                 
                 if (data.type === 'system_status') {
                     document.getElementById('currentState').textContent = data.currentState;
-                    document.getElementById('systemHealth').textContent = data.systemHealth;
                     document.getElementById('uptime').textContent = formatUptime(data.uptime);
                 }
                 
@@ -561,9 +514,6 @@ const char* dashboardHTML = R"rawliteral(
                     updateSensorStatus(data);
                 }
                 
-                if (data.type === 'clamp_status') {
-                    updateClampStatus(data);
-                }
                 
                 if (data.type === 'led_status') {
                     updateLEDStatus(data);
@@ -572,19 +522,14 @@ const char* dashboardHTML = R"rawliteral(
                 if (data.type === 'performance_metrics') {
                     document.getElementById('lastCycleTime').textContent = data.lastCycleTime || '-';
                     document.getElementById('averageCycleTime').textContent = data.averageCycleTime || '-';
-                    document.getElementById('efficiency').textContent = data.efficiency ? data.efficiency.toFixed(1) + '%' : '-';
                 }
                 
                 if (data.type === 'error_status') {
                     document.getElementById('lastError').textContent = data.lastError;
-                    document.getElementById('errorCount').textContent = data.errorCount;
+                    document.getElementById('cutMotorErrorCount').textContent = data.cutMotorErrorCount || 0;
+                    document.getElementById('suctionErrorCount').textContent = data.suctionErrorCount || 0;
                 }
                 
-                if (data.type === 'network_info') {
-                    document.getElementById('wifiSignal').textContent = data.wifiSignal + ' dBm';
-                    document.getElementById('freeHeap').textContent = Math.round(data.freeHeap / 1024) + ' KB';
-                    document.getElementById('temperature').textContent = data.temperature ? data.temperature.toFixed(1) + '°C' : '-';
-                }
                 
                 if (data.type === 'event_log') {
                     updateEventLog(data.events);
@@ -613,11 +558,6 @@ const char* dashboardHTML = R"rawliteral(
             updateStatusItem('sensor_reload', data.reloadSwitch);
         }
         
-        function updateClampStatus(data) {
-            updateStatusItem('clamp_feed', data.feedClamp);
-            updateStatusItem('clamp_2x4', data._2x4SecureClamp);
-            updateStatusItem('clamp_rotation', data.rotationClamp);
-        }
         
         function updateLEDStatus(data) {
             updateLEDItem('led_red', data.red, 'led-red');

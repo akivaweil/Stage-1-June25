@@ -470,8 +470,8 @@ const char* dashboardHTML = R"rawliteral(
         let reconnectAttempts = 0;
         let lastPongReceived = 0;
         const maxReconnectAttempts = 20;
-        const heartbeatIntervalMs = 1000;
-        const heartbeatTimeoutMs = 3000; // Consider connection dead after 3 seconds without pong
+        const heartbeatIntervalMs = 500; // Send ping every 500ms for faster detection
+        const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
         
         function updateConnectionStatus(connected, message) {
             const statusEl = document.getElementById('connectionStatus');
@@ -539,7 +539,7 @@ const char* dashboardHTML = R"rawliteral(
             }
             
             reconnectAttempts++;
-            const delay = Math.min(500 + (reconnectAttempts * 200), 3000);
+            const delay = Math.min(250 + (reconnectAttempts * 100), 2000); // Faster reconnection attempts
             
             updateConnectionStatus(false, 'Reconnecting...');
             
@@ -568,7 +568,7 @@ const char* dashboardHTML = R"rawliteral(
                     ws.close();
                     forceDisconnect();
                 }
-            }, 2000);
+            }, 1000); // Reduced from 2000ms to 1000ms for faster connection attempts
             
             ws.onopen = function() {
                 clearTimeout(connectionTimeout);
@@ -768,6 +768,14 @@ const char* dashboardHTML = R"rawliteral(
                 }
             }
         }, 5000);
+        
+        // Aggressive connection monitoring - check WebSocket state every 250ms
+        setInterval(() => {
+            if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
+                console.log('WebSocket state changed to:', ws.readyState);
+                forceDisconnect();
+            }
+        }, 250);
     </script>
 </body>
 </html>

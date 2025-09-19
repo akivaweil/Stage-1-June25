@@ -250,7 +250,8 @@ void calculateTimeBasedMetrics() {
 
 // Update performance metrics
 void updatePerformanceMetrics(unsigned long cycleTime) {
-    performanceMetrics.lastCycleTime = cycleTime;
+    // Convert cycle time from milliseconds to seconds (with 1 decimal place)
+    performanceMetrics.lastCycleTime = (float)cycleTime / 1000.0;
     performanceMetrics.totalCycles++;
     
     // Store cycle timestamp
@@ -260,11 +261,12 @@ void updatePerformanceMetrics(unsigned long cycleTime) {
         performanceMetrics.cycleTimestampCount++;
     }
     
-    // Update average cycle time (simple moving average)
+    // Update average cycle time (simple moving average) - convert to seconds
+    float cycleTimeSeconds = (float)cycleTime / 1000.0;
     if (performanceMetrics.averageCycleTime == 0) {
-        performanceMetrics.averageCycleTime = cycleTime;
+        performanceMetrics.averageCycleTime = cycleTimeSeconds;
     } else {
-        performanceMetrics.averageCycleTime = (performanceMetrics.averageCycleTime + cycleTime) / 2;
+        performanceMetrics.averageCycleTime = (performanceMetrics.averageCycleTime + cycleTimeSeconds) / 2;
     }
     
     // Calculate time-based metrics
@@ -272,9 +274,9 @@ void updatePerformanceMetrics(unsigned long cycleTime) {
     
     // Calculate efficiency (simplified)
     unsigned long totalTime = millis() - systemStartTime;
-    unsigned long productiveTime = performanceMetrics.totalCycles * performanceMetrics.averageCycleTime;
+    float productiveTime = performanceMetrics.totalCycles * performanceMetrics.averageCycleTime * 1000.0; // Convert back to ms for calculation
     if (totalTime > 0) {
-        performanceMetrics.efficiency = (float)productiveTime / totalTime * 100.0;
+        performanceMetrics.efficiency = productiveTime / totalTime * 100.0;
     }
 }
 
@@ -568,7 +570,7 @@ void incrementCuttingCycleCounter() {
     updatePerformanceMetrics(cycleTime);
     
     // Add event to log
-    addEventToLog("Cutting cycle completed - " + String(cycleTime) + "ms");
+    addEventToLog("Cutting cycle completed - " + String((float)cycleTime / 1000.0, 1) + "s");
     
     // Broadcast the updated count to all connected clients
     broadcastCuttingCycleCount();

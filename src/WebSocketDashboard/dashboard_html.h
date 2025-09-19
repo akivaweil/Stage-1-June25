@@ -460,11 +460,11 @@ const char* dashboardHTML = R"rawliteral(
             <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
                 <div class="metric-item">
                     <div class="metric-value" id="lastCycleTime">-</div>
-                    <div class="metric-label">Last Cycle (ms)</div>
+                    <div class="metric-label">Last Cycle</div>
                 </div>
                 <div class="metric-item">
                     <div class="metric-value" id="averageCycleTime">-</div>
-                    <div class="metric-label">Avg Cycle (ms)</div>
+                    <div class="metric-label">Average Cycle Time</div>
                 </div>
             </div>
             
@@ -615,6 +615,11 @@ const char* dashboardHTML = R"rawliteral(
         const heartbeatIntervalMs = 500; // Send ping every 500ms for faster detection
         const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
         
+        // Cycle timing variables for smooth ticking
+        let currentCycleStartTime = null;
+        let cycleTimerInterval = null;
+        let isCycleInProgress = false;
+        
         function updateConnectionStatus(connected, message, isReconnecting = false) {
             const statusEl = document.getElementById('connectionStatus');
             const textEl = document.getElementById('connectionText');
@@ -749,6 +754,14 @@ const char* dashboardHTML = R"rawliteral(
                 if (data.type === 'system_status') {
                     document.getElementById('currentState').textContent = data.currentState;
                     document.getElementById('uptime').textContent = formatUptime(data.uptime);
+                    
+                    // Start cycle timer when entering CUTTING state
+                    if (data.currentState === 'CUTTING' && !isCycleInProgress) {
+                        startCycleTimer();
+                    } else if (data.currentState !== 'CUTTING' && isCycleInProgress) {
+                        // Stop timer if leaving CUTTING state
+                        stopCycleTimer();
+                    }
                 }
                 
                 if (data.type === 'sensor_status') {
@@ -762,8 +775,19 @@ const char* dashboardHTML = R"rawliteral(
                 
                 if (data.type === 'performance_metrics') {
                     document.getElementById('totalCycles').textContent = data.totalCycles || 0;
-                    document.getElementById('lastCycleTime').textContent = data.lastCycleTime || '-';
-                    document.getElementById('averageCycleTime').textContent = data.averageCycleTime || '-';
+                    
+                    // Handle last cycle time - if it's a completed cycle, stop timer and show final time
+                    if (data.lastCycleTime && data.lastCycleTime > 0) {
+                        stopCycleTimer();
+                        document.getElementById('lastCycleTime').textContent = data.lastCycleTime.toFixed(1);
+                    }
+                    
+                    // Update average cycle time with proper formatting
+                    if (data.averageCycleTime && data.averageCycleTime > 0) {
+                        document.getElementById('averageCycleTime').textContent = data.averageCycleTime.toFixed(1);
+                    } else {
+                        document.getElementById('averageCycleTime').textContent = '-';
+                    }
                     
                     const systemUptime = data.systemUptime || 0;
                     
@@ -831,6 +855,34 @@ const char* dashboardHTML = R"rawliteral(
             
             element.className = `status-item ${ledClass} ${isActive ? 'active' : 'inactive'}`;
             valueElement.textContent = ''; // Remove ON/OFF text, just show color
+        }
+        
+        // Cycle timing functions for smooth ticking
+        function startCycleTimer() {
+            if (cycleTimerInterval) {
+                clearInterval(cycleTimerInterval);
+            }
+            
+            currentCycleStartTime = Date.now();
+            isCycleInProgress = true;
+            
+            // Update every 100ms for smooth ticking
+            cycleTimerInterval = setInterval(updateCycleTimer, 100);
+        }
+        
+        function stopCycleTimer() {
+            if (cycleTimerInterval) {
+                clearInterval(cycleTimerInterval);
+                cycleTimerInterval = null;
+            }
+            isCycleInProgress = false;
+        }
+        
+        function updateCycleTimer() {
+            if (!isCycleInProgress || !currentCycleStartTime) return;
+            
+            const elapsed = (Date.now() - currentCycleStartTime) / 1000; // Convert to seconds
+            document.getElementById('lastCycleTime').textContent = elapsed.toFixed(1);
         }
         
         function updateEventLog(events) {

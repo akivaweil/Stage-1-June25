@@ -571,6 +571,14 @@ void startCuttingCycleTimer() {
 }
 
 void updateTimeSinceLastCycle() {
+    // Only update time since last cycle when system is in IDLE state
+    // During cutting and returning sequences, the system is actively working, not idle
+    SystemState currentState = getCurrentState();
+    
+    if (currentState != IDLE) {
+        return; // Don't update time counter during active operations
+    }
+    
     // Update the time since last cycle completion
     // Show time since last cycle if we've completed at least one cycle
     if (lastCycleCompletionTime > 0 && cuttingCycleCount > 0) {

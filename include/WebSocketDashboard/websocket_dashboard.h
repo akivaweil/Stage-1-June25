@@ -20,6 +20,7 @@
 // Function declarations
 void setupWebSocketDashboard();
 void startCuttingCycleTimer();
+void updateTimeSinceLastCycle();
 void incrementCuttingCycleCounter();
 unsigned long getCuttingCycleCount();
 void broadcastCuttingCycleCount();

@@ -17,6 +17,7 @@ AsyncWebSocket ws("/ws");
 unsigned long cuttingCycleCount = 0;
 unsigned long systemStartTime = 0;
 unsigned long lastCycleStartTime = 0;
+unsigned long lastCycleCompletionTime = 0;
 unsigned long lastStateChangeTime = 0;
 
 // Enhanced dashboard data structures
@@ -250,8 +251,13 @@ void calculateTimeBasedMetrics() {
 
 // Update performance metrics
 void updatePerformanceMetrics(unsigned long cycleTime) {
-    // Convert cycle time from milliseconds to seconds (with 1 decimal place)
-    performanceMetrics.lastCycleTime = (float)cycleTime / 1000.0;
+    // Calculate time since last cycle completion (in seconds)
+    // Only show time since last cycle if we've completed at least one cycle
+    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 1) {
+        performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
+    } else {
+        performanceMetrics.lastCycleTime = 0; // Show 0 for first cycle or no cycles completed
+    }
     performanceMetrics.totalCycles++;
     
     // Store cycle timestamp
@@ -562,9 +568,20 @@ void startCuttingCycleTimer() {
     lastCycleStartTime = millis();
 }
 
+void updateTimeSinceLastCycle() {
+    // Update the time since last cycle completion
+    // Only show time since last cycle if we've completed at least one cycle
+    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 1) {
+        performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
+    } else {
+        performanceMetrics.lastCycleTime = 0; // Show 0 for first cycle or no cycles completed
+    }
+}
+
 void incrementCuttingCycleCounter() {
     cuttingCycleCount++;
     unsigned long cycleTime = millis() - lastCycleStartTime;
+    lastCycleCompletionTime = millis(); // Record when this cycle completed
     
     Serial.print("Cutting cycle completed. Total cycles: ");
     Serial.println(cuttingCycleCount);
@@ -616,6 +633,9 @@ void onErrorOccurred(const String& errorType) {
 
 // Function to be called periodically to update all status
 void updateDashboardStatus() {
+    // Update time since last cycle continuously
+    updateTimeSinceLastCycle();
+    
     // Only update when motors are not moving to avoid timing interference
     if (getCurrentState() != CUTTING) {
         broadcastSystemStatus();
@@ -623,5 +643,6 @@ void updateDashboardStatus() {
         broadcastClampStatus();
         broadcastLEDStatus();
         broadcastNetworkInfo();
+        broadcastPerformanceMetrics(); // Broadcast updated time since last cycle
     }
 }

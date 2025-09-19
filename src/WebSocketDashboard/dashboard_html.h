@@ -772,7 +772,7 @@ const char* dashboardHTML = R"rawliteral(
                     
                     // Update time-based metrics
                     document.getElementById('cycles1Min').textContent = data.cycles1Min || 0;
-                    document.getElementById('avgCycles1Min').textContent = (data.avgCycles1Min || 0).toFixed(1);
+                    document.getElementById('avgCycles1Min').textContent = Math.round(data.avgCycles1Min || 0);
                     document.getElementById('cycles3Min').textContent = data.cycles3Min || 0;
                     document.getElementById('avgCycles3Min').textContent = (data.avgCycles3Min || 0).toFixed(1);
                     document.getElementById('cycles5Min').textContent = data.cycles5Min || 0;

@@ -35,6 +35,7 @@ void broadcastNetworkInfo();
 void broadcastEventLog();
 void addEventToLog(const String& event);
 void updatePerformanceMetrics(unsigned long cycleTime);
+void calculateTimeBasedMetrics();
 void updateErrorCount(const String& errorType);
 void onStateChange(SystemState newState);
 void onErrorOccurred(const String& errorType);
@@ -81,8 +82,27 @@ struct LEDStatus {
 struct PerformanceMetrics {
     unsigned long lastCycleTime;
     unsigned long averageCycleTime;
-    unsigned long dailyTotal;
-    unsigned long weeklyTotal;
+    unsigned long totalCycles;
+    
+    // Time-based cycle tracking
+    unsigned long cycles1Min;
+    unsigned long cycles3Min;
+    unsigned long cycles5Min;
+    unsigned long cycles15Min;
+    unsigned long cycles30Min;
+    
+    // Time-based averages (cycles per minute)
+    float avgCycles1Min;
+    float avgCycles3Min;
+    float avgCycles5Min;
+    float avgCycles15Min;
+    float avgCycles30Min;
+    
+    // Cycle timestamps for time-based calculations
+    unsigned long cycleTimestamps[100]; // Store last 100 cycle timestamps
+    int cycleTimestampIndex;
+    int cycleTimestampCount;
+    
     unsigned long totalUptime;
     float efficiency;
 };

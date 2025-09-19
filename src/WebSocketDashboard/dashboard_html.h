@@ -21,8 +21,9 @@ const char* dashboardHTML = R"rawliteral(
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 24px;
             overflow-x: hidden;
+            line-height: 1.6;
         }
         
         .background-animation {
@@ -53,77 +54,108 @@ const char* dashboardHTML = R"rawliteral(
             50% { transform: translateY(-20px) rotate(180deg); }
         }
         
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
         .container {
             max-width: 1400px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 24px;
+            padding: 0 8px;
+            animation: fadeInUp 0.8s ease-out;
         }
         
         .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 
+                        0 4px 16px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
         
         .card:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2), 
+                        0 8px 24px rgba(0, 0, 0, 0.15),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
         
         .card-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
         
         .card-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .card-title {
             color: #ffffff;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
+            letter-spacing: -0.02em;
         }
         
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 16px;
         }
         
         .status-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
             text-align: center;
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
         }
         
         .status-item.active {
-            background: rgba(34, 197, 94, 0.2);
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.25);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
         }
         
         .status-item.inactive {
-            background: rgba(107, 114, 128, 0.2);
-            border: 1px solid rgba(107, 114, 128, 0.3);
+            background: rgba(107, 114, 128, 0.15);
+            border: 1px solid rgba(107, 114, 128, 0.25);
         }
         
         /* LED-specific colors */
@@ -134,9 +166,9 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .status-item.led-yellow.active {
-            background: rgba(255, 255, 0, 0.6);
-            border: 2px solid rgba(255, 255, 0, 0.8);
-            box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
+            background: rgba(255, 165, 0, 0.6);
+            border: 2px solid rgba(255, 165, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
         }
         
         .status-item.led-green.active {
@@ -152,21 +184,28 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .status-label {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.8rem;
-            margin-bottom: 4px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            font-weight: 500;
         }
         
         .status-value {
             color: #ffffff;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            transition: all 0.3s ease;
+        }
+        
+        .status-value.loading {
+            animation: pulse 1.5s ease-in-out infinite;
         }
         
         .metric-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 20px;
         }
         
         .metric-item {
@@ -175,39 +214,54 @@ const char* dashboardHTML = R"rawliteral(
         
         .metric-value {
             color: #ffffff;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
         }
         
         .metric-label {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+            font-weight: 500;
         }
         
         .connection-status {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
+            top: 24px;
+            right: 24px;
+            background: rgba(0, 0, 0, 0.85);
             color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
             z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
         .connection-status.connected {
             background: rgba(34, 197, 94, 0.9);
+            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
         }
         
         .connection-status.disconnected {
             background: rgba(239, 68, 68, 0.9);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
         }
         
         .connection-status.reconnecting {
             background: rgba(245, 158, 11, 0.9);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
             animation: slowBlink 2s ease-in-out infinite;
+        }
+        
+        .connection-status:hover {
+            transform: translateY(-2px);
         }
         
         @keyframes slowBlink {
@@ -216,29 +270,49 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .event-log {
-            max-height: 300px;
+            max-height: 320px;
             overflow-y: auto;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 12px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .event-log::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .event-log::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .event-log::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .event-log::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
         
         .event-item {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.08);
-            border-left: 3px solid rgba(59, 130, 246, 0.6);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid rgba(59, 130, 246, 0.6);
             display: flex;
             align-items: center;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
         
         .event-item:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateX(2px);
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
         }
         
         .event-item.error {
@@ -300,18 +374,34 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .chart-container {
-            height: 200px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
+            height: 220px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1.1rem;
+            font-weight: 500;
         }
         
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 0 4px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .connection-status {
+                top: 16px;
+                right: 16px;
+                padding: 12px 20px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -343,14 +433,14 @@ const char* dashboardHTML = R"rawliteral(
         </div>
         
         <!-- Performance Metrics Card -->
-        <div class="card">
+        <div class="card full-width">
             <div class="card-header">
                 <div class="card-icon">📊</div>
-                <div class="card-title">Performance</div>
+                <div class="card-title">Performance Metrics</div>
             </div>
-            <div class="metric-grid">
+            <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
                 <div class="metric-item">
-                    <div class="metric-value" id="cuttingCycles">0</div>
+                    <div class="metric-value" id="totalCycles">0</div>
                     <div class="metric-label">Total Cycles</div>
                 </div>
                 <div class="metric-item">
@@ -360,6 +450,53 @@ const char* dashboardHTML = R"rawliteral(
                 <div class="metric-item">
                     <div class="metric-value" id="averageCycleTime">-</div>
                     <div class="metric-label">Avg Cycle (ms)</div>
+                </div>
+            </div>
+            
+            <!-- Time-based Performance Breakdown -->
+            <div style="margin-top: 24px;">
+                <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; text-align: center;">Cycles Over Time</h3>
+                <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;">
+                    <div class="metric-item">
+                        <div class="metric-value" id="cycles1Min" style="font-size: 1.8rem;">0</div>
+                        <div class="metric-label">1 Min Total</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgCycles1Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-label">1 Min Avg/min</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="cycles3Min" style="font-size: 1.8rem;">0</div>
+                        <div class="metric-label">3 Min Total</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgCycles3Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-label">3 Min Avg/min</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="cycles5Min" style="font-size: 1.8rem;">0</div>
+                        <div class="metric-label">5 Min Total</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgCycles5Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-label">5 Min Avg/min</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="cycles15Min" style="font-size: 1.8rem;">0</div>
+                        <div class="metric-label">15 Min Total</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgCycles15Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-label">15 Min Avg/min</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="cycles30Min" style="font-size: 1.8rem;">0</div>
+                        <div class="metric-label">30 Min Total</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgCycles30Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-label">30 Min Avg/min</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -611,7 +748,7 @@ const char* dashboardHTML = R"rawliteral(
                 }
                 
                 if (data.type === 'counter') {
-                    document.getElementById('cuttingCycles').textContent = data.count;
+                    document.getElementById('totalCycles').textContent = data.count;
                 }
                 
                 if (data.type === 'system_status') {
@@ -629,8 +766,21 @@ const char* dashboardHTML = R"rawliteral(
                 }
                 
                 if (data.type === 'performance_metrics') {
+                    document.getElementById('totalCycles').textContent = data.totalCycles || 0;
                     document.getElementById('lastCycleTime').textContent = data.lastCycleTime || '-';
                     document.getElementById('averageCycleTime').textContent = data.averageCycleTime || '-';
+                    
+                    // Update time-based metrics
+                    document.getElementById('cycles1Min').textContent = data.cycles1Min || 0;
+                    document.getElementById('avgCycles1Min').textContent = (data.avgCycles1Min || 0).toFixed(1);
+                    document.getElementById('cycles3Min').textContent = data.cycles3Min || 0;
+                    document.getElementById('avgCycles3Min').textContent = (data.avgCycles3Min || 0).toFixed(1);
+                    document.getElementById('cycles5Min').textContent = data.cycles5Min || 0;
+                    document.getElementById('avgCycles5Min').textContent = (data.avgCycles5Min || 0).toFixed(1);
+                    document.getElementById('cycles15Min').textContent = data.cycles15Min || 0;
+                    document.getElementById('avgCycles15Min').textContent = (data.avgCycles15Min || 0).toFixed(1);
+                    document.getElementById('cycles30Min').textContent = data.cycles30Min || 0;
+                    document.getElementById('avgCycles30Min').textContent = (data.avgCycles30Min || 0).toFixed(1);
                 }
                 
                 if (data.type === 'error_status') {

@@ -74,8 +74,29 @@ void initializeDashboardData() {
     // Initialize performance metrics
     performanceMetrics.lastCycleTime = 0;
     performanceMetrics.averageCycleTime = 0;
-    performanceMetrics.dailyTotal = 0;
-    performanceMetrics.weeklyTotal = 0;
+    performanceMetrics.totalCycles = 0;
+    
+    // Initialize time-based cycle tracking
+    performanceMetrics.cycles1Min = 0;
+    performanceMetrics.cycles3Min = 0;
+    performanceMetrics.cycles5Min = 0;
+    performanceMetrics.cycles15Min = 0;
+    performanceMetrics.cycles30Min = 0;
+    
+    // Initialize time-based averages
+    performanceMetrics.avgCycles1Min = 0.0;
+    performanceMetrics.avgCycles3Min = 0.0;
+    performanceMetrics.avgCycles5Min = 0.0;
+    performanceMetrics.avgCycles15Min = 0.0;
+    performanceMetrics.avgCycles30Min = 0.0;
+    
+    // Initialize cycle timestamp tracking
+    performanceMetrics.cycleTimestampIndex = 0;
+    performanceMetrics.cycleTimestampCount = 0;
+    for (int i = 0; i < 100; i++) {
+        performanceMetrics.cycleTimestamps[i] = 0;
+    }
+    
     performanceMetrics.totalUptime = 0;
     performanceMetrics.efficiency = 100.0;
     
@@ -161,9 +182,58 @@ void addEventToLog(const String& event) {
     }
 }
 
+// Calculate time-based performance metrics
+void calculateTimeBasedMetrics() {
+    unsigned long currentTime = millis();
+    
+    // Reset counters
+    performanceMetrics.cycles1Min = 0;
+    performanceMetrics.cycles3Min = 0;
+    performanceMetrics.cycles5Min = 0;
+    performanceMetrics.cycles15Min = 0;
+    performanceMetrics.cycles30Min = 0;
+    
+    // Count cycles within each time window
+    for (int i = 0; i < performanceMetrics.cycleTimestampCount; i++) {
+        unsigned long cycleTime = performanceMetrics.cycleTimestamps[i];
+        unsigned long timeDiff = currentTime - cycleTime;
+        
+        if (timeDiff <= 60000) {        // 1 minute
+            performanceMetrics.cycles1Min++;
+        }
+        if (timeDiff <= 180000) {       // 3 minutes
+            performanceMetrics.cycles3Min++;
+        }
+        if (timeDiff <= 300000) {       // 5 minutes
+            performanceMetrics.cycles5Min++;
+        }
+        if (timeDiff <= 900000) {       // 15 minutes
+            performanceMetrics.cycles15Min++;
+        }
+        if (timeDiff <= 1800000) {      // 30 minutes
+            performanceMetrics.cycles30Min++;
+        }
+    }
+    
+    // Calculate averages (cycles per minute)
+    performanceMetrics.avgCycles1Min = (float)performanceMetrics.cycles1Min / 1.0;
+    performanceMetrics.avgCycles3Min = (float)performanceMetrics.cycles3Min / 3.0;
+    performanceMetrics.avgCycles5Min = (float)performanceMetrics.cycles5Min / 5.0;
+    performanceMetrics.avgCycles15Min = (float)performanceMetrics.cycles15Min / 15.0;
+    performanceMetrics.avgCycles30Min = (float)performanceMetrics.cycles30Min / 30.0;
+}
+
 // Update performance metrics
 void updatePerformanceMetrics(unsigned long cycleTime) {
     performanceMetrics.lastCycleTime = cycleTime;
+    performanceMetrics.totalCycles++;
+    
+    // Store cycle timestamp
+    performanceMetrics.cycleTimestamps[performanceMetrics.cycleTimestampIndex] = millis();
+    performanceMetrics.cycleTimestampIndex = (performanceMetrics.cycleTimestampIndex + 1) % 100;
+    if (performanceMetrics.cycleTimestampCount < 100) {
+        performanceMetrics.cycleTimestampCount++;
+    }
     
     // Update average cycle time (simple moving average)
     if (performanceMetrics.averageCycleTime == 0) {
@@ -172,12 +242,12 @@ void updatePerformanceMetrics(unsigned long cycleTime) {
         performanceMetrics.averageCycleTime = (performanceMetrics.averageCycleTime + cycleTime) / 2;
     }
     
-    performanceMetrics.dailyTotal++;
-    performanceMetrics.weeklyTotal++;
+    // Calculate time-based metrics
+    calculateTimeBasedMetrics();
     
     // Calculate efficiency (simplified)
     unsigned long totalTime = millis() - systemStartTime;
-    unsigned long productiveTime = performanceMetrics.dailyTotal * performanceMetrics.averageCycleTime;
+    unsigned long productiveTime = performanceMetrics.totalCycles * performanceMetrics.averageCycleTime;
     if (totalTime > 0) {
         performanceMetrics.efficiency = (float)productiveTime / totalTime * 100.0;
     }
@@ -280,12 +350,29 @@ void broadcastLEDStatus() {
 // Broadcast performance metrics
 void broadcastPerformanceMetrics() {
     if (ws.getClients().size() > 0) {
+        // Recalculate time-based metrics before broadcasting
+        calculateTimeBasedMetrics();
+        
         JsonDocument doc;
         doc["type"] = "performance_metrics";
         doc["lastCycleTime"] = performanceMetrics.lastCycleTime;
         doc["averageCycleTime"] = performanceMetrics.averageCycleTime;
-        doc["dailyTotal"] = performanceMetrics.dailyTotal;
-        doc["weeklyTotal"] = performanceMetrics.weeklyTotal;
+        doc["totalCycles"] = performanceMetrics.totalCycles;
+        
+        // Time-based totals
+        doc["cycles1Min"] = performanceMetrics.cycles1Min;
+        doc["cycles3Min"] = performanceMetrics.cycles3Min;
+        doc["cycles5Min"] = performanceMetrics.cycles5Min;
+        doc["cycles15Min"] = performanceMetrics.cycles15Min;
+        doc["cycles30Min"] = performanceMetrics.cycles30Min;
+        
+        // Time-based averages (cycles per minute)
+        doc["avgCycles1Min"] = performanceMetrics.avgCycles1Min;
+        doc["avgCycles3Min"] = performanceMetrics.avgCycles3Min;
+        doc["avgCycles5Min"] = performanceMetrics.avgCycles5Min;
+        doc["avgCycles15Min"] = performanceMetrics.avgCycles15Min;
+        doc["avgCycles30Min"] = performanceMetrics.avgCycles30Min;
+        
         doc["totalUptime"] = performanceMetrics.totalUptime;
         doc["efficiency"] = performanceMetrics.efficiency;
         

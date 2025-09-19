@@ -384,12 +384,7 @@ void broadcastPerformanceMetrics() {
         doc["averageCycleTime"] = performanceMetrics.averageCycleTime;
         doc["totalCycles"] = performanceMetrics.totalCycles;
         
-        // Time-based totals
-        doc["cycles1Min"] = performanceMetrics.cycles1Min;
-        doc["cycles3Min"] = performanceMetrics.cycles3Min;
-        doc["cycles5Min"] = performanceMetrics.cycles5Min;
-        doc["cycles15Min"] = performanceMetrics.cycles15Min;
-        doc["cycles30Min"] = performanceMetrics.cycles30Min;
+        // Time-based totals (removed - no longer needed in dashboard)
         
         // Time-based averages (cycles per minute)
         doc["avgCycles1Min"] = performanceMetrics.avgCycles1Min;

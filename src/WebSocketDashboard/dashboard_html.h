@@ -451,11 +451,13 @@ const char* dashboardHTML = R"rawliteral(
                 <div class="card-icon">📊</div>
                 <div class="card-title">Performance Metrics</div>
             </div>
+            <!-- Unified Total Cycles Display -->
+            <div style="text-align: center; margin-bottom: 32px; padding: 24px; background: rgba(255, 255, 255, 0.1); border-radius: 16px; border: 2px solid rgba(255, 255, 255, 0.2);">
+                <div style="color: #ffffff; font-size: 4.5rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);" id="totalCycles">0</div>
+                <div style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; font-weight: 600; letter-spacing: 0.05em;">TOTAL CYCLES</div>
+            </div>
+            
             <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
-                <div class="metric-item">
-                    <div class="metric-value" id="totalCycles">0</div>
-                    <div class="metric-label">Total Cycles</div>
-                </div>
                 <div class="metric-item">
                     <div class="metric-value" id="lastCycleTime">-</div>
                     <div class="metric-label">Last Cycle (ms)</div>
@@ -469,45 +471,25 @@ const char* dashboardHTML = R"rawliteral(
             <!-- Time-based Performance Breakdown -->
             <div style="margin-top: 24px;">
                 <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; text-align: center;">Cycles Over Time</h3>
-                <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;">
+                <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
                     <div class="metric-item">
-                        <div class="metric-value" id="cycles1Min" style="font-size: 1.8rem;">0</div>
-                        <div class="metric-label">1 Min Total</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles1Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles1Min" style="font-size: 2.2rem;">0.0</div>
                         <div class="metric-label">1 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="cycles3Min" style="font-size: 1.8rem;">0</div>
-                        <div class="metric-label">3 Min Total</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles3Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles3Min" style="font-size: 2.2rem;">0.0</div>
                         <div class="metric-label">3 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="cycles5Min" style="font-size: 1.8rem;">0</div>
-                        <div class="metric-label">5 Min Total</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles5Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles5Min" style="font-size: 2.2rem;">0.0</div>
                         <div class="metric-label">5 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="cycles15Min" style="font-size: 1.8rem;">0</div>
-                        <div class="metric-label">15 Min Total</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles15Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles15Min" style="font-size: 2.2rem;">0.0</div>
                         <div class="metric-label">15 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="cycles30Min" style="font-size: 1.8rem;">0</div>
-                        <div class="metric-label">30 Min Total</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles30Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles30Min" style="font-size: 2.2rem;">0.0</div>
                         <div class="metric-label">30 Min Avg/min</div>
                     </div>
                 </div>
@@ -785,12 +767,12 @@ const char* dashboardHTML = R"rawliteral(
                     
                     const systemUptime = data.systemUptime || 0;
                     
-                    // Update time-based metrics with ghosting logic
-                    updateTimeBasedMetric('cycles1Min', 'avgCycles1Min', data.cycles1Min || 0, data.avgCycles1Min, systemUptime, 60000, true);
-                    updateTimeBasedMetric('cycles3Min', 'avgCycles3Min', data.cycles3Min || 0, data.avgCycles3Min, systemUptime, 180000, false);
-                    updateTimeBasedMetric('cycles5Min', 'avgCycles5Min', data.cycles5Min || 0, data.avgCycles5Min, systemUptime, 300000, false);
-                    updateTimeBasedMetric('cycles15Min', 'avgCycles15Min', data.cycles15Min || 0, data.avgCycles15Min, systemUptime, 900000, false);
-                    updateTimeBasedMetric('cycles30Min', 'avgCycles30Min', data.cycles30Min || 0, data.avgCycles30Min, systemUptime, 1800000, false);
+                    // Update time-based metrics with ghosting logic (only averages now)
+                    updateTimeBasedMetricAvg('avgCycles1Min', data.avgCycles1Min, systemUptime, 60000, true);
+                    updateTimeBasedMetricAvg('avgCycles3Min', data.avgCycles3Min, systemUptime, 180000, false);
+                    updateTimeBasedMetricAvg('avgCycles5Min', data.avgCycles5Min, systemUptime, 300000, false);
+                    updateTimeBasedMetricAvg('avgCycles15Min', data.avgCycles15Min, systemUptime, 900000, false);
+                    updateTimeBasedMetricAvg('avgCycles30Min', data.avgCycles30Min, systemUptime, 1800000, false);
                 }
                 
                 if (data.type === 'error_status') {
@@ -923,10 +905,8 @@ const char* dashboardHTML = R"rawliteral(
             return `${seconds}s`;
         }
         
-        function updateTimeBasedMetric(totalId, avgId, totalValue, avgValue, systemUptime, requiredTime, isWholeNumber) {
-            const totalElement = document.getElementById(totalId);
+        function updateTimeBasedMetricAvg(avgId, avgValue, systemUptime, requiredTime, isWholeNumber) {
             const avgElement = document.getElementById(avgId);
-            const totalMetricItem = totalElement.closest('.metric-item');
             const avgMetricItem = avgElement.closest('.metric-item');
             
             // Check if enough time has passed
@@ -934,11 +914,9 @@ const char* dashboardHTML = R"rawliteral(
             
             if (isReady) {
                 // Remove ghosted class
-                totalMetricItem.classList.remove('ghosted');
                 avgMetricItem.classList.remove('ghosted');
                 
                 // Update values
-                totalElement.textContent = totalValue;
                 if (avgValue >= 0) {
                     if (isWholeNumber) {
                         avgElement.textContent = Math.round(avgValue);
@@ -950,11 +928,9 @@ const char* dashboardHTML = R"rawliteral(
                 }
             } else {
                 // Add ghosted class
-                totalMetricItem.classList.add('ghosted');
                 avgMetricItem.classList.add('ghosted');
                 
                 // Show placeholder values
-                totalElement.textContent = '-';
                 avgElement.textContent = '-';
             }
         }

@@ -611,9 +611,10 @@ const char* dashboardHTML = R"rawliteral(
         let isConnected = false;
         let reconnectAttempts = 0;
         let lastPongReceived = 0;
-        const maxReconnectAttempts = 20;
-        const heartbeatIntervalMs = 500; // Send ping every 500ms for faster detection
-        const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
+        let isReconnecting = false;
+        const maxReconnectAttempts = 50; // Increased from 20 to 50 for more persistent reconnection
+        const heartbeatIntervalMs = 1000; // Send ping every 1 second (less aggressive)
+        const heartbeatTimeoutMs = 3000; // Consider connection dead after 3 seconds without pong
         
         // Cycle timing variables (removed smooth ticking - now shows time since last cycle)
         
@@ -685,14 +686,22 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         function attemptReconnect() {
+            if (isReconnecting) {
+                return; // Prevent multiple simultaneous reconnection attempts
+            }
+            
             if (reconnectAttempts >= maxReconnectAttempts) {
-                updateConnectionStatus(false, '', false);
-                document.getElementById('connectionText').textContent = 'Connection Failed - Click to Retry';
+                // Reset attempts after a longer delay to allow for network recovery
+                setTimeout(() => {
+                    reconnectAttempts = 0;
+                    attemptReconnect();
+                }, 10000); // Wait 10 seconds before resetting attempts
                 return;
             }
             
+            isReconnecting = true;
             reconnectAttempts++;
-            const delay = Math.min(250 + (reconnectAttempts * 100), 2000); // Faster reconnection attempts
+            const delay = Math.min(500 + (reconnectAttempts * 200), 5000); // Slower, more stable reconnection attempts
             
             updateConnectionStatus(false, '', true); // Show blinking "Reconnecting"
             
@@ -700,6 +709,7 @@ const char* dashboardHTML = R"rawliteral(
                 if (!isConnected) {
                     connect();
                 }
+                isReconnecting = false;
             }, delay);
         }
         
@@ -714,104 +724,115 @@ const char* dashboardHTML = R"rawliteral(
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}/ws`;
             
-            ws = new WebSocket(wsUrl);
-            
-            const connectionTimeout = setTimeout(() => {
-                if (ws.readyState === WebSocket.CONNECTING) {
-                    ws.close();
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                const connectionTimeout = setTimeout(() => {
+                    if (ws && ws.readyState === WebSocket.CONNECTING) {
+                        ws.close();
+                        forceDisconnect();
+                    }
+                }, 3000); // Increased timeout for more reliable connection
+                
+                ws.onopen = function() {
+                    clearTimeout(connectionTimeout);
+                    isConnected = true;
+                    isReconnecting = false;
+                    reconnectAttempts = 0;
+                    updateConnectionStatus(true, 'Connected');
+                    startHeartbeat();
+                    console.log('WebSocket connected successfully');
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'pong') {
+                            // Clear heartbeat timeout since we received a pong
+                            if (heartbeatTimeout) {
+                                clearTimeout(heartbeatTimeout);
+                                heartbeatTimeout = null;
+                            }
+                            lastPongReceived = Date.now();
+                            return;
+                        }
+                        
+                        if (data.type === 'counter') {
+                            document.getElementById('totalCycles').textContent = data.count;
+                        }
+                        
+                        if (data.type === 'system_status') {
+                            document.getElementById('currentState').textContent = data.currentState;
+                            document.getElementById('uptime').textContent = formatUptime(data.uptime);
+                        }
+                        
+                        if (data.type === 'sensor_status') {
+                            updateSensorStatus(data);
+                        }
+                        
+                        if (data.type === 'led_status') {
+                            updateLEDStatus(data);
+                        }
+                        
+                        if (data.type === 'performance_metrics') {
+                            document.getElementById('totalCycles').textContent = data.totalCycles || 0;
+                            
+                            // Update time since last cycle (shows elapsed time since last cycle completed)
+                            if (data.lastCycleTime !== undefined) {
+                                document.getElementById('lastCycleTime').textContent = formatTimeSinceLastCycle(data.lastCycleTime);
+                            } else {
+                                document.getElementById('lastCycleTime').textContent = '-';
+                            }
+                            
+                            // Update average cycle time with proper formatting
+                            if (data.averageCycleTime && data.averageCycleTime > 0) {
+                                document.getElementById('averageCycleTime').textContent = data.averageCycleTime.toFixed(1);
+                            } else {
+                                document.getElementById('averageCycleTime').textContent = '-';
+                            }
+                            
+                            const systemUptime = data.systemUptime || 0;
+                            
+                            // Update time-based metrics with ghosting logic (only averages now)
+                            updateTimeBasedMetricAvg('avgCycles1Min', data.avgCycles1Min, systemUptime, 60000, true);
+                            updateTimeBasedMetricAvg('avgCycles3Min', data.avgCycles3Min, systemUptime, 180000, false);
+                            updateTimeBasedMetricAvg('avgCycles5Min', data.avgCycles5Min, systemUptime, 300000, false);
+                            updateTimeBasedMetricAvg('avgCycles15Min', data.avgCycles15Min, systemUptime, 900000, false);
+                            updateTimeBasedMetricAvg('avgCycles30Min', data.avgCycles30Min, systemUptime, 1800000, false);
+                        }
+                        
+                        if (data.type === 'error_status') {
+                            document.getElementById('lastError').textContent = data.lastError;
+                            document.getElementById('cutMotorErrorCount').textContent = data.cutMotorErrorCount || 0;
+                            document.getElementById('suctionErrorCount').textContent = data.suctionErrorCount || 0;
+                        }
+                        
+                        if (data.type === 'event_log') {
+                            updateEventLog(data.events);
+                        }
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    clearTimeout(connectionTimeout);
+                    console.log('WebSocket closed:', event.code, event.reason);
+                    if (isConnected) {
+                        forceDisconnect();
+                    }
+                };
+                
+                ws.onerror = function(error) {
+                    clearTimeout(connectionTimeout);
+                    console.error('WebSocket error:', error);
                     forceDisconnect();
-                }
-            }, 1000); // Reduced from 2000ms to 1000ms for faster connection attempts
-            
-            ws.onopen = function() {
-                clearTimeout(connectionTimeout);
-                isConnected = true;
-                reconnectAttempts = 0;
-                updateConnectionStatus(true, 'Connected');
-                startHeartbeat();
-            };
-            
-            ws.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'pong') {
-                    // Clear heartbeat timeout since we received a pong
-                    if (heartbeatTimeout) {
-                        clearTimeout(heartbeatTimeout);
-                        heartbeatTimeout = null;
-                    }
-                    lastPongReceived = Date.now();
-                    return;
-                }
-                
-                if (data.type === 'counter') {
-                    document.getElementById('totalCycles').textContent = data.count;
-                }
-                
-                if (data.type === 'system_status') {
-                    document.getElementById('currentState').textContent = data.currentState;
-                    document.getElementById('uptime').textContent = formatUptime(data.uptime);
-                }
-                
-                if (data.type === 'sensor_status') {
-                    updateSensorStatus(data);
-                }
-                
-                
-                if (data.type === 'led_status') {
-                    updateLEDStatus(data);
-                }
-                
-                if (data.type === 'performance_metrics') {
-                    document.getElementById('totalCycles').textContent = data.totalCycles || 0;
-                    
-                    // Update time since last cycle (shows elapsed time since last cycle completed)
-                    if (data.lastCycleTime !== undefined) {
-                        document.getElementById('lastCycleTime').textContent = formatTimeSinceLastCycle(data.lastCycleTime);
-                    } else {
-                        document.getElementById('lastCycleTime').textContent = '-';
-                    }
-                    
-                    // Update average cycle time with proper formatting
-                    if (data.averageCycleTime && data.averageCycleTime > 0) {
-                        document.getElementById('averageCycleTime').textContent = data.averageCycleTime.toFixed(1);
-                    } else {
-                        document.getElementById('averageCycleTime').textContent = '-';
-                    }
-                    
-                    const systemUptime = data.systemUptime || 0;
-                    
-                    // Update time-based metrics with ghosting logic (only averages now)
-                    updateTimeBasedMetricAvg('avgCycles1Min', data.avgCycles1Min, systemUptime, 60000, true);
-                    updateTimeBasedMetricAvg('avgCycles3Min', data.avgCycles3Min, systemUptime, 180000, false);
-                    updateTimeBasedMetricAvg('avgCycles5Min', data.avgCycles5Min, systemUptime, 300000, false);
-                    updateTimeBasedMetricAvg('avgCycles15Min', data.avgCycles15Min, systemUptime, 900000, false);
-                    updateTimeBasedMetricAvg('avgCycles30Min', data.avgCycles30Min, systemUptime, 1800000, false);
-                }
-                
-                if (data.type === 'error_status') {
-                    document.getElementById('lastError').textContent = data.lastError;
-                    document.getElementById('cutMotorErrorCount').textContent = data.cutMotorErrorCount || 0;
-                    document.getElementById('suctionErrorCount').textContent = data.suctionErrorCount || 0;
-                }
-                
-                
-                if (data.type === 'event_log') {
-                    updateEventLog(data.events);
-                }
-            };
-            
-            ws.onclose = function(event) {
-                clearTimeout(connectionTimeout);
-                if (isConnected) {
-                    forceDisconnect();
-                }
-            };
-            
-            ws.onerror = function(error) {
-                clearTimeout(connectionTimeout);
+                };
+            } catch (error) {
+                console.error('Error creating WebSocket:', error);
                 forceDisconnect();
-            };
+            }
         }
         
         function updateSensorStatus(data) {
@@ -972,6 +993,11 @@ const char* dashboardHTML = R"rawliteral(
         document.getElementById('connectionStatus').addEventListener('click', function() {
             if (!isConnected) {
                 reconnectAttempts = 0;
+                isReconnecting = false;
+                if (reconnectTimeout) {
+                    clearTimeout(reconnectTimeout);
+                    reconnectTimeout = null;
+                }
                 connect();
             }
         });
@@ -979,7 +1005,12 @@ const char* dashboardHTML = R"rawliteral(
         // Request initial data and monitor connection health
         setInterval(() => {
             if (isConnected && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({type: 'request_all_data'}));
+                try {
+                    ws.send(JSON.stringify({type: 'request_all_data'}));
+                } catch (error) {
+                    console.error('Error sending data request:', error);
+                    forceDisconnect();
+                }
                 
                 // Additional connection health check - if no pong received recently, force disconnect
                 const timeSinceLastPong = Date.now() - lastPongReceived;
@@ -990,13 +1021,13 @@ const char* dashboardHTML = R"rawliteral(
             }
         }, 5000);
         
-        // Aggressive connection monitoring - check WebSocket state every 250ms
+        // Connection monitoring - check WebSocket state every 1 second (less aggressive)
         setInterval(() => {
             if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
                 console.log('WebSocket state changed to:', ws.readyState);
                 forceDisconnect();
             }
-        }, 250);
+        }, 1000);
     </script>
 </body>
 </html>

@@ -226,6 +226,19 @@ const char* dashboardHTML = R"rawliteral(
             font-weight: 500;
         }
         
+        .metric-item.ghosted {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        
+        .metric-item.ghosted .metric-value {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .metric-item.ghosted .metric-label {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
         .connection-status {
             position: fixed;
             top: 24px;
@@ -770,17 +783,14 @@ const char* dashboardHTML = R"rawliteral(
                     document.getElementById('lastCycleTime').textContent = data.lastCycleTime || '-';
                     document.getElementById('averageCycleTime').textContent = data.averageCycleTime || '-';
                     
-                    // Update time-based metrics
-                    document.getElementById('cycles1Min').textContent = data.cycles1Min || 0;
-                    document.getElementById('avgCycles1Min').textContent = Math.round(data.avgCycles1Min || 0);
-                    document.getElementById('cycles3Min').textContent = data.cycles3Min || 0;
-                    document.getElementById('avgCycles3Min').textContent = (data.avgCycles3Min || 0).toFixed(1);
-                    document.getElementById('cycles5Min').textContent = data.cycles5Min || 0;
-                    document.getElementById('avgCycles5Min').textContent = (data.avgCycles5Min || 0).toFixed(1);
-                    document.getElementById('cycles15Min').textContent = data.cycles15Min || 0;
-                    document.getElementById('avgCycles15Min').textContent = (data.avgCycles15Min || 0).toFixed(1);
-                    document.getElementById('cycles30Min').textContent = data.cycles30Min || 0;
-                    document.getElementById('avgCycles30Min').textContent = (data.avgCycles30Min || 0).toFixed(1);
+                    const systemUptime = data.systemUptime || 0;
+                    
+                    // Update time-based metrics with ghosting logic
+                    updateTimeBasedMetric('cycles1Min', 'avgCycles1Min', data.cycles1Min || 0, data.avgCycles1Min, systemUptime, 60000, true);
+                    updateTimeBasedMetric('cycles3Min', 'avgCycles3Min', data.cycles3Min || 0, data.avgCycles3Min, systemUptime, 180000, false);
+                    updateTimeBasedMetric('cycles5Min', 'avgCycles5Min', data.cycles5Min || 0, data.avgCycles5Min, systemUptime, 300000, false);
+                    updateTimeBasedMetric('cycles15Min', 'avgCycles15Min', data.cycles15Min || 0, data.avgCycles15Min, systemUptime, 900000, false);
+                    updateTimeBasedMetric('cycles30Min', 'avgCycles30Min', data.cycles30Min || 0, data.avgCycles30Min, systemUptime, 1800000, false);
                 }
                 
                 if (data.type === 'error_status') {
@@ -911,6 +921,42 @@ const char* dashboardHTML = R"rawliteral(
             if (hours > 0) return `${hours}h ${minutes % 60}m`;
             if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
             return `${seconds}s`;
+        }
+        
+        function updateTimeBasedMetric(totalId, avgId, totalValue, avgValue, systemUptime, requiredTime, isWholeNumber) {
+            const totalElement = document.getElementById(totalId);
+            const avgElement = document.getElementById(avgId);
+            const totalMetricItem = totalElement.closest('.metric-item');
+            const avgMetricItem = avgElement.closest('.metric-item');
+            
+            // Check if enough time has passed
+            const isReady = systemUptime >= requiredTime;
+            
+            if (isReady) {
+                // Remove ghosted class
+                totalMetricItem.classList.remove('ghosted');
+                avgMetricItem.classList.remove('ghosted');
+                
+                // Update values
+                totalElement.textContent = totalValue;
+                if (avgValue >= 0) {
+                    if (isWholeNumber) {
+                        avgElement.textContent = Math.round(avgValue);
+                    } else {
+                        avgElement.textContent = avgValue.toFixed(1);
+                    }
+                } else {
+                    avgElement.textContent = '0';
+                }
+            } else {
+                // Add ghosted class
+                totalMetricItem.classList.add('ghosted');
+                avgMetricItem.classList.add('ghosted');
+                
+                // Show placeholder values
+                totalElement.textContent = '-';
+                avgElement.textContent = '-';
+            }
         }
         
         // Connect on page load

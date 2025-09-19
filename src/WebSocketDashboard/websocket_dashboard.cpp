@@ -185,6 +185,7 @@ void addEventToLog(const String& event) {
 // Calculate time-based performance metrics
 void calculateTimeBasedMetrics() {
     unsigned long currentTime = millis();
+    unsigned long systemUptime = currentTime - systemStartTime;
     
     // Reset counters
     performanceMetrics.cycles1Min = 0;
@@ -215,12 +216,36 @@ void calculateTimeBasedMetrics() {
         }
     }
     
-    // Calculate averages (cycles per minute)
-    performanceMetrics.avgCycles1Min = (float)performanceMetrics.cycles1Min / 1.0;
-    performanceMetrics.avgCycles3Min = (float)performanceMetrics.cycles3Min / 3.0;
-    performanceMetrics.avgCycles5Min = (float)performanceMetrics.cycles5Min / 5.0;
-    performanceMetrics.avgCycles15Min = (float)performanceMetrics.cycles15Min / 15.0;
-    performanceMetrics.avgCycles30Min = (float)performanceMetrics.cycles30Min / 30.0;
+    // Calculate averages (cycles per minute) - only if enough time has passed
+    if (systemUptime >= 60000) {        // 1 minute
+        performanceMetrics.avgCycles1Min = (float)performanceMetrics.cycles1Min / 1.0;
+    } else {
+        performanceMetrics.avgCycles1Min = -1; // Indicate not ready
+    }
+    
+    if (systemUptime >= 180000) {       // 3 minutes
+        performanceMetrics.avgCycles3Min = (float)performanceMetrics.cycles3Min / 3.0;
+    } else {
+        performanceMetrics.avgCycles3Min = -1; // Indicate not ready
+    }
+    
+    if (systemUptime >= 300000) {       // 5 minutes
+        performanceMetrics.avgCycles5Min = (float)performanceMetrics.cycles5Min / 5.0;
+    } else {
+        performanceMetrics.avgCycles5Min = -1; // Indicate not ready
+    }
+    
+    if (systemUptime >= 900000) {       // 15 minutes
+        performanceMetrics.avgCycles15Min = (float)performanceMetrics.cycles15Min / 15.0;
+    } else {
+        performanceMetrics.avgCycles15Min = -1; // Indicate not ready
+    }
+    
+    if (systemUptime >= 1800000) {      // 30 minutes
+        performanceMetrics.avgCycles30Min = (float)performanceMetrics.cycles30Min / 30.0;
+    } else {
+        performanceMetrics.avgCycles30Min = -1; // Indicate not ready
+    }
 }
 
 // Update performance metrics
@@ -374,6 +399,7 @@ void broadcastPerformanceMetrics() {
         doc["avgCycles30Min"] = performanceMetrics.avgCycles30Min;
         
         doc["totalUptime"] = performanceMetrics.totalUptime;
+        doc["systemUptime"] = millis() - systemStartTime;
         doc["efficiency"] = performanceMetrics.efficiency;
         
         String message;

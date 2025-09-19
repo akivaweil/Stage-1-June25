@@ -173,6 +173,9 @@ void handleReturningYes2x4Sequence() {
                     resetConsecutiveYeswoodCount();
                 }
                 
+                // Increment cycle counter when completing a cycle (regardless of next state)
+                incrementCuttingCycleCounter();
+                
                 // Check for continuous operation mode
                 if (getStartCycleSwitch()->read() == HIGH && getStartSwitchSafe()) {
                     extendFeedClamp();

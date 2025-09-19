@@ -2,6 +2,7 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "Config/Pins_Definitions.h"
+#include "WebSocketDashboard/websocket_dashboard.h"
 
 // Timing constants for this state
 const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
@@ -196,6 +197,9 @@ void handleReturningNo2x4Step(int step) {
                 // Complete sequence and transition to IDLE
                 resetReturningNo2x4Steps();
                 setCuttingCycleInProgress(false);
+                
+                // Increment cycle counter when completing a cycle
+                incrementCuttingCycleCounter();
                 
                 // When no wood is detected, require manual reset of cycle switch
                 // This prevents automatic restart when no wood is present

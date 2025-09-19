@@ -58,12 +58,7 @@ void executeIdleState() {
 }
 
 void onEnterIdleState() {
-    // Check if we're completing a cutting cycle (coming from RETURNING states)
-    SystemState previousState = getPreviousState();
-    if (previousState == RETURNING_YES_2x4 || previousState == RETURNING_NO_2x4) {
-        // Complete the cutting cycle - this includes the full cycle from CUTTING through RETURNING
-        incrementCuttingCycleCounter();
-    }
+    // Cycle counter is now incremented in RETURNING states to handle continuous mode properly
     
     // CRITICAL: Secure 2x4 clamp MUST remain extended in normal idle state
     // Only retracts when entering reload mode (handled in handleReloadModeLogic)

@@ -251,8 +251,13 @@ void calculateTimeBasedMetrics() {
 
 // Update performance metrics
 void updatePerformanceMetrics(unsigned long cycleTime) {
-    // Don't update lastCycleTime here - it will be updated continuously by updateTimeSinceLastCycle()
-    // This function is called when a cycle completes, so we just record the completion time
+    // Calculate time since last cycle completion (in seconds)
+    // Show time since last cycle if we've completed at least one cycle
+    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 0) {
+        performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
+    } else {
+        performanceMetrics.lastCycleTime = 0; // Show 0 for no cycles completed
+    }
     performanceMetrics.totalCycles++;
     
     // Store cycle timestamp
@@ -561,6 +566,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
 
 void startCuttingCycleTimer() {
     lastCycleStartTime = millis();
+    // Reset time since last cycle to 0 when starting a new cycle
+    performanceMetrics.lastCycleTime = 0;
 }
 
 void updateTimeSinceLastCycle() {
@@ -570,18 +577,6 @@ void updateTimeSinceLastCycle() {
         performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
     } else {
         performanceMetrics.lastCycleTime = 0; // Show 0 for no cycles completed
-    }
-    
-    // Debug output (remove after testing)
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime > 5000) { // Every 5 seconds
-        Serial.print("Debug - cuttingCycleCount: ");
-        Serial.print(cuttingCycleCount);
-        Serial.print(", lastCycleCompletionTime: ");
-        Serial.print(lastCycleCompletionTime);
-        Serial.print(", lastCycleTime: ");
-        Serial.println(performanceMetrics.lastCycleTime);
-        lastDebugTime = millis();
     }
 }
 
@@ -643,15 +638,13 @@ void updateDashboardStatus() {
     // Update time since last cycle continuously
     updateTimeSinceLastCycle();
     
-    // Always broadcast performance metrics to keep "time since last cycle" updated
-    broadcastPerformanceMetrics();
-    
-    // Only update other status when motors are not moving to avoid timing interference
+    // Only update when motors are not moving to avoid timing interference
     if (getCurrentState() != CUTTING) {
         broadcastSystemStatus();
         broadcastSensorStatus();
         broadcastClampStatus();
         broadcastLEDStatus();
         broadcastNetworkInfo();
+        broadcastPerformanceMetrics(); // Broadcast updated time since last cycle
     }
 }

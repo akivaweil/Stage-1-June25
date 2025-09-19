@@ -767,7 +767,7 @@ const char* dashboardHTML = R"rawliteral(
                     
                     // Update time since last cycle (shows elapsed time since last cycle completed)
                     if (data.lastCycleTime !== undefined) {
-                        document.getElementById('lastCycleTime').textContent = data.lastCycleTime.toFixed(1);
+                        document.getElementById('lastCycleTime').textContent = Math.round(data.lastCycleTime);
                     } else {
                         document.getElementById('lastCycleTime').textContent = '-';
                     }

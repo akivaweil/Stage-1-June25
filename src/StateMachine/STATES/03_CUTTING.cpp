@@ -26,6 +26,7 @@ static unsigned long lastWoodSensorCheckTime = 0;
 
 void onEnterCuttingState() {
     resetCuttingSteps();
+    startCuttingCycleTimer();
 }
 
 void onExitCuttingState() {

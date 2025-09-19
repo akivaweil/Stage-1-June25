@@ -558,10 +558,13 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
     }
 }
 
+void startCuttingCycleTimer() {
+    lastCycleStartTime = millis();
+}
+
 void incrementCuttingCycleCounter() {
     cuttingCycleCount++;
     unsigned long cycleTime = millis() - lastCycleStartTime;
-    lastCycleStartTime = millis();
     
     Serial.print("Cutting cycle completed. Total cycles: ");
     Serial.println(cuttingCycleCount);

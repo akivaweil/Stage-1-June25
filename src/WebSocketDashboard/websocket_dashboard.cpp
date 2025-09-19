@@ -134,9 +134,24 @@ void updateNetworkInfo() {
     networkInfo.uptime = millis() - systemStartTime;
 }
 
+// Helper function to format timestamp
+String formatTimestamp(unsigned long timestamp) {
+    unsigned long seconds = timestamp / 1000;
+    unsigned long minutes = seconds / 60;
+    unsigned long hours = minutes / 60;
+    
+    seconds = seconds % 60;
+    minutes = minutes % 60;
+    hours = hours % 24;
+    
+    char timeStr[10];
+    snprintf(timeStr, sizeof(timeStr), "%02lu:%02lu:%02lu", hours, minutes, seconds);
+    return String(timeStr);
+}
+
 // Add event to log
 void addEventToLog(const String& event) {
-    String timestamp = String(millis());
+    String timestamp = formatTimestamp(millis());
     String logEntry = "[" + timestamp + "] " + event;
     
     eventLog.events[eventLog.eventIndex] = logEntry;
@@ -175,7 +190,7 @@ void updateErrorCount(const String& errorType) {
     errorInfo.errorCount++;
     
     // Add to error history
-    String timestamp = String(millis());
+    String timestamp = formatTimestamp(millis());
     String errorEntry = "[" + timestamp + "] " + errorType;
     errorInfo.errorHistory[errorInfo.errorHistoryIndex] = errorEntry;
     errorInfo.errorHistoryIndex = (errorInfo.errorHistoryIndex + 1) % 10;

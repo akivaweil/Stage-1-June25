@@ -214,12 +214,75 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .event-item {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.8rem;
-            margin-bottom: 4px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-left: 3px solid rgba(59, 130, 246, 0.6);
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .event-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(2px);
+        }
+        
+        .event-item.error {
+            border-left-color: rgba(239, 68, 68, 0.8);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .event-item.error:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
+        
+        .event-item.state-change {
+            border-left-color: rgba(34, 197, 94, 0.8);
+            background: rgba(34, 197, 94, 0.08);
+        }
+        
+        .event-item.state-change:hover {
+            background: rgba(34, 197, 94, 0.12);
+        }
+        
+        .event-item.system {
+            border-left-color: rgba(168, 85, 247, 0.8);
+            background: rgba(168, 85, 247, 0.08);
+        }
+        
+        .event-item.system:hover {
+            background: rgba(168, 85, 247, 0.12);
+        }
+        
+        .event-item.performance {
+            border-left-color: rgba(245, 158, 11, 0.8);
+            background: rgba(245, 158, 11, 0.08);
+        }
+        
+        .event-item.performance:hover {
+            background: rgba(245, 158, 11, 0.12);
+        }
+        
+        .event-icon {
+            margin-right: 8px;
+            font-size: 0.9rem;
+            min-width: 16px;
+        }
+        
+        .event-timestamp {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            margin-right: 8px;
+            min-width: 70px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .event-message {
+            flex: 1;
         }
         
         .full-width {
@@ -589,7 +652,53 @@ const char* dashboardHTML = R"rawliteral(
             events.forEach(event => {
                 const eventItem = document.createElement('div');
                 eventItem.className = 'event-item';
-                eventItem.textContent = event;
+                
+                // Parse the event string to extract timestamp and message
+                const match = event.match(/^\[(\d{2}:\d{2}:\d{2})\] (.+)$/);
+                if (match) {
+                    const timestamp = match[1];
+                    const message = match[2];
+                    
+                    // Create timestamp element
+                    const timestampEl = document.createElement('span');
+                    timestampEl.className = 'event-timestamp';
+                    timestampEl.textContent = timestamp;
+                    
+                    // Create icon element
+                    const iconEl = document.createElement('span');
+                    iconEl.className = 'event-icon';
+                    
+                    // Create message element
+                    const messageEl = document.createElement('span');
+                    messageEl.className = 'event-message';
+                    messageEl.textContent = message;
+                    
+                    // Determine event type and styling
+                    if (message.toLowerCase().includes('error')) {
+                        eventItem.classList.add('error');
+                        iconEl.textContent = '⚠️';
+                    } else if (message.toLowerCase().includes('state changed') || message.toLowerCase().includes('->')) {
+                        eventItem.classList.add('state-change');
+                        iconEl.textContent = '🔄';
+                    } else if (message.toLowerCase().includes('cycle completed') || message.toLowerCase().includes('performance')) {
+                        eventItem.classList.add('performance');
+                        iconEl.textContent = '📊';
+                    } else if (message.toLowerCase().includes('system') || message.toLowerCase().includes('initialized')) {
+                        eventItem.classList.add('system');
+                        iconEl.textContent = '⚙️';
+                    } else {
+                        iconEl.textContent = '📝';
+                    }
+                    
+                    // Append elements
+                    eventItem.appendChild(timestampEl);
+                    eventItem.appendChild(iconEl);
+                    eventItem.appendChild(messageEl);
+                } else {
+                    // Fallback for events that don't match the expected format
+                    eventItem.textContent = event;
+                }
+                
                 logContainer.appendChild(eventItem);
             });
             

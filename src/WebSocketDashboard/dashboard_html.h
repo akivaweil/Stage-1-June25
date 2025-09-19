@@ -767,7 +767,7 @@ const char* dashboardHTML = R"rawliteral(
                     
                     // Update time since last cycle (shows elapsed time since last cycle completed)
                     if (data.lastCycleTime !== undefined) {
-                        document.getElementById('lastCycleTime').textContent = Math.round(data.lastCycleTime);
+                        document.getElementById('lastCycleTime').textContent = formatTimeSinceLastCycle(data.lastCycleTime);
                     } else {
                         document.getElementById('lastCycleTime').textContent = '-';
                     }
@@ -919,6 +919,20 @@ const char* dashboardHTML = R"rawliteral(
             if (hours > 0) return `${hours}h ${minutes % 60}m`;
             if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
             return `${seconds}s`;
+        }
+        
+        function formatTimeSinceLastCycle(seconds) {
+            if (seconds === 0) return '0s';
+            
+            const totalSeconds = Math.floor(seconds);
+            const minutes = Math.floor(totalSeconds / 60);
+            const remainingSeconds = totalSeconds % 60;
+            
+            if (minutes > 0) {
+                return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+            } else {
+                return `${remainingSeconds}s`;
+            }
         }
         
         function updateTimeBasedMetricAvg(avgId, avgValue, systemUptime, requiredTime, isWholeNumber) {

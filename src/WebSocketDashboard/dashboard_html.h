@@ -134,9 +134,9 @@ const char* dashboardHTML = R"rawliteral(
         }
         
         .status-item.led-yellow.active {
-            background: rgba(217, 119, 6, 0.6);
-            border: 2px solid rgba(217, 119, 6, 0.8);
-            box-shadow: 0 0 15px rgba(217, 119, 6, 0.5);
+            background: rgba(255, 255, 0, 0.6);
+            border: 2px solid rgba(255, 255, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
         }
         
         .status-item.led-green.active {

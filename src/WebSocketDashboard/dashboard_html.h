@@ -643,6 +643,7 @@ const char* dashboardHTML = R"rawliteral(
         let currentMonth = new Date().getMonth(); // Start with current month
         let currentYear = new Date().getFullYear(); // Start with current year
         let selectedDay = null;
+        let currentDayIndex = 0; // Current day index from ESP32
         
         // Cycle timing variables (removed smooth ticking - now shows time since last cycle)
         
@@ -778,8 +779,13 @@ const char* dashboardHTML = R"rawliteral(
                 const dayElement = document.createElement('div');
                 dayElement.style.cssText = 'height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 1px solid rgba(255, 255, 255, 0.1);';
                 
-                // Calculate day index (simplified - in real implementation, use actual date)
-                const dayIndex = (currentMonth * 30) + day - 1;
+                // Calculate ESP32 day index for this calendar day
+                // ESP32 uses a rolling 255-day buffer (0-254) based on system uptime
+                // Map calendar days to ESP32 day indices by calculating days since a reference point
+                const today = new Date();
+                const currentDate = new Date(currentYear, currentMonth, day);
+                const daysDiff = Math.floor((today - currentDate) / (1000 * 60 * 60 * 24));
+                const dayIndex = (currentDayIndex - daysDiff + 255) % 255;
                 const cycles = dailyCycles[dayIndex] || 0;
                 
                 // Day number
@@ -811,10 +817,25 @@ const char* dashboardHTML = R"rawliteral(
                     selectDay(dayIndex, day, cycles);
                 });
                 
-                // Highlight current day (simplified)
-                if (day === new Date().getDate() && currentMonth === new Date().getMonth()) {
+                // Highlight current day (today)
+                if (day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear()) {
                     dayElement.style.background = 'rgba(34, 197, 94, 0.3)';
                     dayElement.style.border = '2px solid rgba(34, 197, 94, 0.6)';
+                }
+                
+                // Highlight ESP32 current day (where new cycles are being recorded)
+                const today = new Date();
+                const currentDate = new Date(currentYear, currentMonth, day);
+                const daysDiff = Math.floor((today - currentDate) / (1000 * 60 * 60 * 24));
+                const esp32DayIndex = (currentDayIndex - daysDiff + 255) % 255;
+                if (esp32DayIndex === currentDayIndex) {
+                    dayElement.style.background = 'rgba(59, 130, 246, 0.4)';
+                    dayElement.style.border = '2px solid rgba(59, 130, 246, 0.7)';
+                    // Add a small indicator
+                    const indicator = document.createElement('div');
+                    indicator.style.cssText = 'position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; background: rgba(59, 130, 246, 0.8); border-radius: 50%;';
+                    dayElement.style.position = 'relative';
+                    dayElement.appendChild(indicator);
                 }
                 
                 calendar.appendChild(dayElement);
@@ -968,6 +989,7 @@ const char* dashboardHTML = R"rawliteral(
                         
                         if (data.type === 'calendar_data') {
                             dailyCycles = data.dailyCycles || [];
+                            currentDayIndex = data.currentDayIndex || 0;
                             updateCalendar();
                         }
                         

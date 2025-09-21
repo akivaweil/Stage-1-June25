@@ -93,8 +93,18 @@ String getCurrentDate() {
 // Get day index for current date (0-254)
 int getCurrentDayIndex() {
     // Simple implementation - in real use, parse actual date
+    // Use a more stable calculation to ensure consistent day indexing
     unsigned long daysSinceStart = (millis() - systemStartTime) / (24UL * 60 * 60 * 1000);
-    return daysSinceStart % MAX_DAYS;
+    int dayIndex = daysSinceStart % MAX_DAYS;
+    
+    // Debug output to help track day index changes
+    static int lastDayIndex = -1;
+    if (dayIndex != lastDayIndex) {
+        Serial.println("Day index changed to: " + String(dayIndex) + " (days since start: " + String(daysSinceStart) + ")");
+        lastDayIndex = dayIndex;
+    }
+    
+    return dayIndex;
 }
 
 // Save daily cycles to EEPROM
@@ -111,6 +121,7 @@ void incrementDailyCycleCount() {
     dailyCycles[dayIndex]++;
     saveDailyCycles();
     Serial.println("Daily cycle count for day " + String(dayIndex) + ": " + String(dailyCycles[dayIndex]));
+    Serial.println("Total cycles in dailyCycles array: " + String(dailyCycles[dayIndex]));
 }
 
 // Get cycle count for specific day
@@ -695,6 +706,7 @@ void incrementCuttingCycleCounter() {
     // Broadcast the updated count to all connected clients
     broadcastCuttingCycleCount();
     broadcastPerformanceMetrics();
+    broadcastCalendarData(); // Also broadcast updated calendar data
 }
 
 unsigned long getCuttingCycleCount() {

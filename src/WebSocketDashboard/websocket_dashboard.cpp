@@ -24,7 +24,7 @@ unsigned long lastStateChangeTime = 0;
 // Daily cycle tracking
 const int EEPROM_SIZE = 1024;
 const int DAILY_CYCLES_OFFSET = 0;
-const int MAX_DAYS = 365; // One year of data
+const int MAX_DAYS = 255; // Fits in 1KB EEPROM (255 × 4 = 1,020 bytes)
 unsigned long dailyCycles[MAX_DAYS] = {0};
 String currentDate = "";
 
@@ -90,7 +90,7 @@ String getCurrentDate() {
     return "2024-01-" + String((daysSinceStart % 30) + 1);
 }
 
-// Get day index for current date (0-364)
+// Get day index for current date (0-254)
 int getCurrentDayIndex() {
     // Simple implementation - in real use, parse actual date
     unsigned long daysSinceStart = (millis() - systemStartTime) / (24UL * 60 * 60 * 1000);

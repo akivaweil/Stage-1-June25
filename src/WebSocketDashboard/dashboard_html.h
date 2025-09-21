@@ -640,8 +640,8 @@ const char* dashboardHTML = R"rawliteral(
         
         // Calendar variables
         let dailyCycles = [];
-        let currentMonth = 0; // 0-11 for January-December
-        let currentYear = 2024;
+        let currentMonth = new Date().getMonth(); // Start with current month
+        let currentYear = new Date().getFullYear(); // Start with current year
         let selectedDay = null;
         
         // Cycle timing variables (removed smooth ticking - now shows time since last cycle)

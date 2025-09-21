@@ -4,6 +4,7 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "Config/Pins_Definitions.h"
 #include <ArduinoJson.h>
+#include <EEPROM.h>
 
 //* ************************************************************************
 //* ********************** WEBSOCKET DASHBOARD ****************************
@@ -19,6 +20,13 @@ unsigned long systemStartTime = 0;
 unsigned long lastCycleStartTime = 0;
 unsigned long lastCycleCompletionTime = 0;
 unsigned long lastStateChangeTime = 0;
+
+// Daily cycle tracking
+const int EEPROM_SIZE = 1024;
+const int DAILY_CYCLES_OFFSET = 0;
+const int MAX_DAYS = 365; // One year of data
+unsigned long dailyCycles[MAX_DAYS] = {0};
+String currentDate = "";
 
 // Enhanced dashboard data structures
 SystemStatus systemStatus;
@@ -60,10 +68,74 @@ String getSystemHealth() {
     }
 }
 
+// Initialize EEPROM and load daily cycle data
+void initializeDailyCycles() {
+    EEPROM.begin(EEPROM_SIZE);
+    
+    // Load daily cycle data from EEPROM
+    for (int i = 0; i < MAX_DAYS; i++) {
+        EEPROM.get(DAILY_CYCLES_OFFSET + (i * sizeof(unsigned long)), dailyCycles[i]);
+    }
+    
+    // Get current date
+    currentDate = getCurrentDate();
+    Serial.println("Daily cycles initialized. Current date: " + currentDate);
+}
+
+// Get current date as YYYY-MM-DD string
+String getCurrentDate() {
+    // For now, use a simple day counter based on system uptime
+    // In a real implementation, you'd use an RTC or NTP time
+    unsigned long daysSinceStart = (millis() - systemStartTime) / (24UL * 60 * 60 * 1000);
+    return "2024-01-" + String((daysSinceStart % 30) + 1);
+}
+
+// Get day index for current date (0-364)
+int getCurrentDayIndex() {
+    // Simple implementation - in real use, parse actual date
+    unsigned long daysSinceStart = (millis() - systemStartTime) / (24UL * 60 * 60 * 1000);
+    return daysSinceStart % MAX_DAYS;
+}
+
+// Save daily cycles to EEPROM
+void saveDailyCycles() {
+    for (int i = 0; i < MAX_DAYS; i++) {
+        EEPROM.put(DAILY_CYCLES_OFFSET + (i * sizeof(unsigned long)), dailyCycles[i]);
+    }
+    EEPROM.commit();
+}
+
+// Increment daily cycle count
+void incrementDailyCycleCount() {
+    int dayIndex = getCurrentDayIndex();
+    dailyCycles[dayIndex]++;
+    saveDailyCycles();
+    Serial.println("Daily cycle count for day " + String(dayIndex) + ": " + String(dailyCycles[dayIndex]));
+}
+
+// Get cycle count for specific day
+unsigned long getDailyCycleCount(int dayIndex) {
+    if (dayIndex >= 0 && dayIndex < MAX_DAYS) {
+        return dailyCycles[dayIndex];
+    }
+    return 0;
+}
+
+// Get all daily cycle data
+void getAllDailyCycles(unsigned long* cycles, int maxDays) {
+    int daysToCopy = min(maxDays, MAX_DAYS);
+    for (int i = 0; i < daysToCopy; i++) {
+        cycles[i] = dailyCycles[i];
+    }
+}
+
 // Initialize dashboard data structures
 void initializeDashboardData() {
     systemStartTime = millis();
     lastStateChangeTime = millis();
+    
+    // Initialize daily cycles
+    initializeDailyCycles();
     
     // Initialize system status
     systemStatus.currentState = getStateName(getCurrentState());
@@ -552,6 +624,21 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         broadcastErrorStatus();
                         broadcastNetworkInfo();
                         broadcastEventLog();
+                    } else if (type == "request_calendar_data") {
+                        // Send daily cycle data for calendar
+                        broadcastCalendarData();
+                    } else if (type == "request_daily_cycles") {
+                        int dayIndex = doc["dayIndex"];
+                        unsigned long cycles = getDailyCycleCount(dayIndex);
+                        
+                        JsonDocument response;
+                        response["type"] = "daily_cycles";
+                        response["dayIndex"] = dayIndex;
+                        response["cycles"] = cycles;
+                        
+                        String message;
+                        serializeJson(response, message);
+                        client->text(message);
                     }
                 }
             }
@@ -593,6 +680,9 @@ void incrementCuttingCycleCounter() {
     unsigned long cycleTime = millis() - lastCycleStartTime;
     lastCycleCompletionTime = millis(); // Record when this cycle completed
     
+    // Increment daily cycle count
+    incrementDailyCycleCount();
+    
     Serial.print("Cutting cycle completed. Total cycles: ");
     Serial.println(cuttingCycleCount);
     
@@ -614,6 +704,26 @@ unsigned long getCuttingCycleCount() {
 void broadcastCuttingCycleCount() {
     if (ws.getClients().size() > 0) {
         String message = "{\"type\":\"counter\",\"count\":" + String(cuttingCycleCount) + "}";
+        ws.textAll(message);
+    }
+}
+
+// Broadcast calendar data
+void broadcastCalendarData() {
+    if (ws.getClients().size() > 0) {
+        JsonDocument doc;
+        doc["type"] = "calendar_data";
+        
+        JsonArray cycles = doc["dailyCycles"].to<JsonArray>();
+        for (int i = 0; i < MAX_DAYS; i++) {
+            cycles.add(dailyCycles[i]);
+        }
+        
+        doc["currentDate"] = currentDate;
+        doc["currentDayIndex"] = getCurrentDayIndex();
+        
+        String message;
+        serializeJson(doc, message);
         ws.textAll(message);
     }
 }

@@ -43,6 +43,16 @@ void onStateChange(SystemState newState);
 void onErrorOccurred(const String& errorType);
 void updateDashboardStatus();
 
+// Daily cycle tracking functions
+void initializeDailyCycles();
+String getCurrentDate();
+int getCurrentDayIndex();
+void saveDailyCycles();
+void incrementDailyCycleCount();
+unsigned long getDailyCycleCount(int dayIndex);
+void getAllDailyCycles(unsigned long* cycles, int maxDays);
+void broadcastCalendarData();
+
 // Global variables
 extern AsyncWebServer server;
 extern AsyncWebSocket ws;

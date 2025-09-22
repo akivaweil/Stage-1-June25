@@ -227,20 +227,32 @@ void resetCuttingSteps() {
 //* *********************** WOOD SENSOR CHECKING ***************************
 //* ************************************************************************
 // Checks wood present sensor every 100ms during cutting and updates LED accordingly
-// Blue LED = wood present (sensor LOW), Yellow LED = no wood (sensor HIGH)
+// Yellow LED = wood present (sensor LOW), Blue LED = no wood (sensor HIGH)
 
 void checkWoodPresentSensor() {
     extern const int _2x4_PRESENT_SENSOR;
     
     // Check every 100ms
     if (millis() - lastWoodSensorCheckTime >= 100) {
-        int sensorValue = digitalRead(_2x4_PRESENT_SENSOR);
-        bool woodPresent = (sensorValue == LOW); // Active LOW sensor
+        // Read sensor multiple times for stability
+        int sensorValue1 = digitalRead(_2x4_PRESENT_SENSOR);
+        delay(5); // Small delay between readings
+        int sensorValue2 = digitalRead(_2x4_PRESENT_SENSOR);
+        delay(5);
+        int sensorValue3 = digitalRead(_2x4_PRESENT_SENSOR);
+        
+        // Use majority vote for stable reading
+        int lowCount = 0;
+        if (sensorValue1 == LOW) lowCount++;
+        if (sensorValue2 == LOW) lowCount++;
+        if (sensorValue3 == LOW) lowCount++;
+        
+        bool woodPresent = (lowCount >= 2); // Majority vote: wood present if 2 or more readings are LOW
         
         if (woodPresent) {
-            turnBlueLedOn(); // Wood present - blue LED
+            turnYellowLedOn(); // Wood present - yellow LED
         } else {
-            turnYellowLedOn(); // No wood - yellow LED
+            turnBlueLedOn(); // No wood - blue LED
         }
         
         lastWoodSensorCheckTime = millis();

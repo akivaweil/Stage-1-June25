@@ -166,8 +166,6 @@ void checkStartConditions() {
         extendFeedClamp();
         extend2x4SecureClamp();
         
-        if (!_2x4Present) {
-            turnBlueLedOn();
-        }
+        // LED status will be handled by cutting state based on wood sensor
     }
 } 

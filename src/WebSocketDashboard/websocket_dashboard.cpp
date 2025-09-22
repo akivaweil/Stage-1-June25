@@ -593,6 +593,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
     switch(type) {
         case WS_EVT_CONNECT: {
             Serial.printf("Client %u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+            Serial.println("WebSocket connection established successfully");
             
             // Send all current data to newly connected client
             // Use daily cycles for the counter instead of lifetime cycles
@@ -615,6 +616,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
             
         case WS_EVT_DISCONNECT:
             Serial.printf("Client %u disconnected\n", client->id());
+            Serial.println("WebSocket client disconnected");
             break;
             
         case WS_EVT_DATA: {

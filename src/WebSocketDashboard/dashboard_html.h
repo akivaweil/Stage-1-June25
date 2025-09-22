@@ -824,10 +824,9 @@ const char* dashboardHTML = R"rawliteral(
                 }
                 
                 // Highlight ESP32 current day (where new cycles are being recorded)
-                const today = new Date();
-                const currentDate = new Date(currentYear, currentMonth, day);
-                const daysDiff = Math.floor((today - currentDate) / (1000 * 60 * 60 * 24));
-                const esp32DayIndex = (currentDayIndex - daysDiff + 255) % 255;
+                const esp32CurrentDate = new Date(currentYear, currentMonth, day);
+                const esp32DaysDiff = Math.floor((today - esp32CurrentDate) / (1000 * 60 * 60 * 24));
+                const esp32DayIndex = (currentDayIndex - esp32DaysDiff + 255) % 255;
                 if (esp32DayIndex === currentDayIndex) {
                     dayElement.style.background = 'rgba(59, 130, 246, 0.4)';
                     dayElement.style.border = '2px solid rgba(59, 130, 246, 0.7)';

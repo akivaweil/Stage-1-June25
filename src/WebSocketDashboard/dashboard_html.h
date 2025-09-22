@@ -795,12 +795,16 @@ const char* dashboardHTML = R"rawliteral(
                 
                 dayElement.appendChild(dayNumber);
                 
-                // Cycle count - only show if cycles > 0
+                // Cycle count - only show if cycles > 0, with distinct styling
                 if (cycles > 0) {
                     const cycleCount = document.createElement('div');
-                    cycleCount.style.cssText = 'color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; margin-top: 2px;';
+                    cycleCount.style.cssText = 'color: rgba(34, 197, 94, 0.9); font-size: 0.7rem; margin-top: 2px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);';
                     cycleCount.textContent = cycles;
                     dayElement.appendChild(cycleCount);
+                    
+                    // Also highlight the day background slightly for days with activity
+                    dayElement.style.background = 'rgba(34, 197, 94, 0.15)';
+                    dayElement.style.border = '1px solid rgba(34, 197, 94, 0.3)';
                 }
                 
                 // Add hover effects

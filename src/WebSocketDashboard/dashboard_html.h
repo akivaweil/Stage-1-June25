@@ -496,6 +496,28 @@ const char* dashboardHTML = R"rawliteral(
             </div>
         </div>
         
+        <!-- Daily Cycles Calendar Card -->
+        <div class="card full-width">
+            <div class="card-header">
+                <div class="card-icon">📅</div>
+                <div class="card-title">Daily Cutting Cycles</div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <button id="prevMonth" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">← Previous</button>
+                    <h3 id="currentMonth" style="color: white; font-size: 1.2rem; font-weight: 600; margin: 0;">January 2024</h3>
+                    <button id="nextMonth" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">Next →</button>
+                </div>
+                <div id="calendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: rgba(0, 0, 0, 0.2); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <!-- Calendar will be populated by JavaScript -->
+                </div>
+                <div id="selectedDayInfo" style="margin-top: 16px; padding: 16px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); display: none;">
+                    <div style="color: white; font-size: 1.1rem; font-weight: 600;" id="selectedDayText">Selected Day</div>
+                    <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-top: 4px;" id="selectedDayCycles">Cycles: 0</div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Sensor Status Card -->
         <div class="card">
             <div class="card-header">
@@ -588,28 +610,6 @@ const char* dashboardHTML = R"rawliteral(
             </div>
             <div class="event-log" id="eventLog">
                 <div class="event-item">System initializing...</div>
-            </div>
-        </div>
-        
-        <!-- Daily Cycles Calendar Card -->
-        <div class="card full-width">
-            <div class="card-header">
-                <div class="card-icon">📅</div>
-                <div class="card-title">Daily Cutting Cycles</div>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <button id="prevMonth" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">← Previous</button>
-                    <h3 id="currentMonth" style="color: white; font-size: 1.2rem; font-weight: 600; margin: 0;">January 2024</h3>
-                    <button id="nextMonth" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">Next →</button>
-                </div>
-                <div id="calendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: rgba(0, 0, 0, 0.2); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <!-- Calendar will be populated by JavaScript -->
-                </div>
-                <div id="selectedDayInfo" style="margin-top: 16px; padding: 16px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); display: none;">
-                    <div style="color: white; font-size: 1.1rem; font-weight: 600;" id="selectedDayText">Selected Day</div>
-                    <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-top: 4px;" id="selectedDayCycles">Cycles: 0</div>
-                </div>
             </div>
         </div>
         

@@ -169,8 +169,7 @@ void handleCuttingStep2() {
     if (cutMotor && !cutMotor->isRunning()) {
         Serial.println("Cut cycle complete - transitioning to return sequence");
         
-        // Increment cutting cycle counter
-        incrementCuttingCycleCounter();
+        // Cycle counter will be incremented in RETURNING state when sequence completes
         
         configureCutMotorForReturn();
         transferArmSignalSentThisCycle = false;

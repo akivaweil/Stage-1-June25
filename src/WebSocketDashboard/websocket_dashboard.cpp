@@ -73,8 +73,22 @@ void initializeDailyCycles() {
     EEPROM.begin(EEPROM_SIZE);
     
     // Load daily cycle data from EEPROM
+    bool needsSaving = false;
     for (int i = 0; i < MAX_DAYS; i++) {
         EEPROM.get(DAILY_CYCLES_OFFSET + (i * sizeof(unsigned long)), dailyCycles[i]);
+        
+        // Check if EEPROM data is uninitialized (0xFFFFFFFF)
+        // If so, initialize to 0
+        if (dailyCycles[i] == 0xFFFFFFFF) {
+            dailyCycles[i] = 0;
+            needsSaving = true;
+        }
+    }
+    
+    // Save corrected data back to EEPROM if needed
+    if (needsSaving) {
+        saveDailyCycles();
+        Serial.println("EEPROM data corrected - uninitialized values set to 0");
     }
     
     // Get current date

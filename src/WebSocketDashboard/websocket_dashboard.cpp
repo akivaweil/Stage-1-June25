@@ -97,11 +97,13 @@ int getCurrentDayIndex() {
     unsigned long daysSinceStart = (millis() - systemStartTime) / (24UL * 60 * 60 * 1000);
     int dayIndex = daysSinceStart % MAX_DAYS;
     
-    // Debug output to help track day index changes
+    // Only log day index changes occasionally to avoid spam
     static int lastDayIndex = -1;
-    if (dayIndex != lastDayIndex) {
+    static unsigned long lastLogTime = 0;
+    if (dayIndex != lastDayIndex && (millis() - lastLogTime) > 60000) { // Log max once per minute
         Serial.println("Day index changed to: " + String(dayIndex) + " (days since start: " + String(daysSinceStart) + ")");
         lastDayIndex = dayIndex;
+        lastLogTime = millis();
     }
     
     return dayIndex;
@@ -158,7 +160,9 @@ void initializeDashboardData() {
     // Initialize performance metrics
     performanceMetrics.lastCycleTime = 0;
     performanceMetrics.averageCycleTime = 0;
-    performanceMetrics.totalCycles = 0;
+    // Initialize totalCycles to show current day's cycle count
+    int currentDayIndex = getCurrentDayIndex();
+    performanceMetrics.totalCycles = getDailyCycleCount(currentDayIndex);
     
     // Initialize time-based cycle tracking
     performanceMetrics.cycles1Min = 0;
@@ -341,7 +345,9 @@ void updatePerformanceMetrics(unsigned long cycleTime) {
     } else {
         performanceMetrics.lastCycleTime = 0; // Show 0 for no cycles completed
     }
-    performanceMetrics.totalCycles++;
+    // Update totalCycles to show daily cycles instead of lifetime cycles
+    int currentDayIndex = getCurrentDayIndex();
+    performanceMetrics.totalCycles = getDailyCycleCount(currentDayIndex);
     
     // Store cycle timestamp
     performanceMetrics.cycleTimestamps[performanceMetrics.cycleTimestampIndex] = millis();
@@ -361,7 +367,7 @@ void updatePerformanceMetrics(unsigned long cycleTime) {
     // Calculate time-based metrics
     calculateTimeBasedMetrics();
     
-    // Calculate efficiency (simplified)
+    // Calculate efficiency (simplified) - use daily cycles for calculation
     unsigned long totalTime = millis() - systemStartTime;
     float productiveTime = performanceMetrics.totalCycles * performanceMetrics.averageCycleTime * 1000.0; // Convert back to ms for calculation
     if (totalTime > 0) {
@@ -589,7 +595,10 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
             Serial.printf("Client %u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
             
             // Send all current data to newly connected client
-            String counterMessage = "{\"type\":\"counter\",\"count\":" + String(cuttingCycleCount) + "}";
+            // Use daily cycles for the counter instead of lifetime cycles
+            int currentDayIndex = getCurrentDayIndex();
+            unsigned long dailyCount = getDailyCycleCount(currentDayIndex);
+            String counterMessage = "{\"type\":\"counter\",\"count\":" + String(dailyCount) + "}";
             client->text(counterMessage);
             
             // Send all status data
@@ -715,7 +724,10 @@ unsigned long getCuttingCycleCount() {
 
 void broadcastCuttingCycleCount() {
     if (ws.getClients().size() > 0) {
-        String message = "{\"type\":\"counter\",\"count\":" + String(cuttingCycleCount) + "}";
+        // Use daily cycles for the counter instead of lifetime cycles
+        int currentDayIndex = getCurrentDayIndex();
+        unsigned long dailyCount = getDailyCycleCount(currentDayIndex);
+        String message = "{\"type\":\"counter\",\"count\":" + String(dailyCount) + "}";
         ws.textAll(message);
     }
 }
@@ -767,6 +779,14 @@ void onErrorOccurred(const String& errorType) {
 void updateDashboardStatus() {
     // Update time since last cycle continuously
     updateTimeSinceLastCycle();
+    
+    // Only update daily cycle count occasionally to avoid excessive EEPROM access
+    static unsigned long lastDailyCycleUpdate = 0;
+    if (millis() - lastDailyCycleUpdate > 10000) { // Update every 10 seconds
+        int currentDayIndex = getCurrentDayIndex();
+        performanceMetrics.totalCycles = getDailyCycleCount(currentDayIndex);
+        lastDailyCycleUpdate = millis();
+    }
     
     // Only update when motors are not moving to avoid timing interference
     if (getCurrentState() != CUTTING) {

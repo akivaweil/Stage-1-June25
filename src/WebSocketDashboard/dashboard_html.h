@@ -793,13 +793,15 @@ const char* dashboardHTML = R"rawliteral(
                 dayNumber.style.cssText = 'color: white; font-weight: 600; font-size: 0.9rem;';
                 dayNumber.textContent = day;
                 
-                // Cycle count
-                const cycleCount = document.createElement('div');
-                cycleCount.style.cssText = 'color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; margin-top: 2px;';
-                cycleCount.textContent = cycles > 0 ? cycles : '';
-                
                 dayElement.appendChild(dayNumber);
-                dayElement.appendChild(cycleCount);
+                
+                // Cycle count - only show if cycles > 0
+                if (cycles > 0) {
+                    const cycleCount = document.createElement('div');
+                    cycleCount.style.cssText = 'color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; margin-top: 2px;';
+                    cycleCount.textContent = cycles;
+                    dayElement.appendChild(cycleCount);
+                }
                 
                 // Add hover effects
                 dayElement.addEventListener('mouseenter', function() {

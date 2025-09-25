@@ -252,7 +252,7 @@ void handleFeedWoodMovement() {
         case 0: // Start feed wood movement to 3.4 inches
             if (feedMotor) {
                 configureFeedMotorForNormalOperation();
-                feedMotor->moveTo(3.4 * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
             }
             feedMotorHomingSubStep = 1;
             break;

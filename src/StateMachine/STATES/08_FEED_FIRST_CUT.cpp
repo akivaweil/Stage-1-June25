@@ -7,7 +7,7 @@
 //* ************************************************************************
 // Feed motor absolute position constants for this state (specific to this state)
 const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
-const float FEED_MOTOR_FIRST_RUN_END_POSITION = FEED_TRAVEL_DISTANCE; // inches - absolute position for first run end
+const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end (FEED_TRAVEL_DISTANCE)
 const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
 const float FEED_MOTOR_SECOND_RUN_END_POSITION = 2.3; // inches - absolute position for second run end
 

@@ -202,31 +202,38 @@ void handleFeedMotorReturnSequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
     
     switch (feedMotorReturnSubStep) {
-        case 0: // Move feed motor back by the same distance it will later move forward
+        case 0: // Retract feed clamp first
             //! ************************************************************************
-            //! STEP 6: MOVE FEED MOTOR RETURN DISTANCE
+            //! STEP 6: RETRACT FEED CLAMP
+            //! ************************************************************************
+            retractFeedClamp();
+            feedMotorReturnSubStep = 1;
+            break;
+            
+        case 1: // Move feed motor back by the same distance it will later move forward
+            //! ************************************************************************
+            //! STEP 7: MOVE FEED MOTOR RETURN DISTANCE
             //! ************************************************************************
             configureFeedMotorForReturn();
             if (feedMotor) {
                 feedMotor->move(-FEED_WOOD_DISTANCE_RETURNING_YES_2X4 * FEED_MOTOR_STEPS_PER_INCH);
             }
-            feedMotorReturnSubStep = 1;
+            feedMotorReturnSubStep = 2;
             break;
             
-        case 1: // Wait for move completion then adjust clamps
+        case 2: // Wait for move completion then extend 2x4 secure clamp
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 7: RETRACT FEED CLAMP AND EXTEND 2X4 SECURE CLAMP
+                //! STEP 8: EXTEND 2X4 SECURE CLAMP
                 //! ************************************************************************
-                retractFeedClamp();
                 extend2x4SecureClamp();
-                feedMotorReturnSubStep = 2;
+                feedMotorReturnSubStep = 3;
             }
             break;
             
-        case 2: // Start feed motor return to home
+        case 3: // Start feed motor return to home
             //! ************************************************************************
-            //! STEP 8: RETURN FEED MOTOR TO HOME POSITION
+            //! STEP 9: RETURN FEED MOTOR TO HOME POSITION
             //! ************************************************************************
             if (feedMotor) {
                 moveFeedMotorToHome();

@@ -53,7 +53,6 @@ extern const unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
 //* ************************************************************************
 // Position and movement constants
 extern const long LARGE_POSITION_VALUE;
-extern const float FEED_MOTOR_RETURN_DISTANCE;
 extern const float FEED_MOTOR_OFFSET_FROM_SENSOR;
 extern const float FEED_WOOD_DISTANCE_RETURNING_YES_2X4;
 

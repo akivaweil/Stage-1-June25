@@ -120,7 +120,7 @@ void handleReturningYes2x4Sequence() {
                     
                     retract2x4SecureClamp();
                     configureFeedMotorForNormalOperation();
-                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                    moveFeedMotorToPosition(3.4);
                     returningYes2x4SubStep = 3;
                 } else {
                     // Home switch not detected - try incremental move recovery
@@ -252,7 +252,7 @@ void handleFeedWoodMovement() {
         case 0: // Start feed wood movement to 3.4 inches
             if (feedMotor) {
                 configureFeedMotorForNormalOperation();
-                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotor->moveTo(3.4 * FEED_MOTOR_STEPS_PER_INCH);
             }
             feedMotorHomingSubStep = 1;
             break;

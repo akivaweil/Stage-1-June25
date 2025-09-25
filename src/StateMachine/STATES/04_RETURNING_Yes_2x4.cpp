@@ -202,13 +202,13 @@ void handleFeedMotorReturnSequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
     
     switch (feedMotorReturnSubStep) {
-        case 0: // Move feed motor back specified distance
+        case 0: // Move feed motor back by the same distance it will later move forward
             //! ************************************************************************
             //! STEP 6: MOVE FEED MOTOR RETURN DISTANCE
             //! ************************************************************************
             configureFeedMotorForReturn();
             if (feedMotor) {
-                feedMotor->move(-FEED_MOTOR_RETURN_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotor->move(-FEED_WOOD_DISTANCE_RETURNING_YES_2X4 * FEED_MOTOR_STEPS_PER_INCH);
             }
             feedMotorReturnSubStep = 1;
             break;

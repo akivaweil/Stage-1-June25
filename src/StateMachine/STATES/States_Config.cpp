@@ -95,9 +95,9 @@ const unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150; // delay before return
 //* ************************************************************************
 // Position and movement constants
 const long LARGE_POSITION_VALUE = 10000; // Large position value for homing moves
-const float FEED_MOTOR_RETURN_DISTANCE = 0.0;
+const float FEED_MOTOR_RETURN_DISTANCE = 3.25;
 const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;
-const float FEED_WOOD_DISTANCE_RETURNING_YES_2X4 = 1.25;
+const float FEED_WOOD_DISTANCE_RETURNING_YES_2X4 = 3.25;
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************

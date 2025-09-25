@@ -7,9 +7,9 @@
 //* ************************************************************************
 // Feed motor absolute position constants for this state (specific to this state)
 const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
-const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end (FEED_TRAVEL_DISTANCE)
+const float FEED_MOTOR_FIRST_RUN_END_POSITION = FEED_TRAVEL_DISTANCE; // inches - absolute position for first run end (FEED_TRAVEL_DISTANCE)
 const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
-const float FEED_MOTOR_SECOND_RUN_END_POSITION = 2.4; // inches - absolute position for second run end
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = 2.3; // inches - absolute position for second run end
 
 // Timing constants for this state
 const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed clamp and retracting secure clamp
@@ -40,7 +40,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 200; // Delay after extending feed cla
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: MOVE TO FIRST RUN END POSITION (3.4 INCHES)
+//! STEP 5: MOVE TO FIRST RUN END POSITION (FEED_TRAVEL_DISTANCE)
 //! ************************************************************************
 
 //! ************************************************************************
@@ -148,7 +148,7 @@ void executeFeedFirstCutStep() {
         case MOVE_TO_FIRST_RUN_END_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_MOTOR_FIRST_RUN_END_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to first run end position (3.4 inches)");
+                //serial.println("FeedFirstCut: Moving feed motor to first run end position (FEED_TRAVEL_DISTANCE)");
                 advanceToNextFeedFirstCutStep();
             }
             break;

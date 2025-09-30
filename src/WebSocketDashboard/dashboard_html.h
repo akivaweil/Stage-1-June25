@@ -950,7 +950,7 @@ const char* dashboardHTML = R"rawliteral(
                             document.getElementById('totalCycles').textContent = data.totalCycles || 0;
                             
                             // Update reload time (shows time from no 2x4 state end to feed first cut or cutting state)
-                            if (data.reloadTime !== undefined) {
+                            if (data.reloadTime !== undefined && data.reloadTime > 0) {
                                 document.getElementById('reloadTime').textContent = formatTimeSinceLastCycle(data.reloadTime);
                             } else {
                                 document.getElementById('reloadTime').textContent = '-';

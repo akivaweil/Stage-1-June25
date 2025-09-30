@@ -823,6 +823,12 @@ void onErrorOccurred(const String& errorType) {
 
 // Function to be called periodically to update all status
 void updateDashboardStatus() {
+    // Update reload time continuously when timer is active
+    if (reloadTimeActive) {
+        // Force broadcast performance metrics when reload timer is running
+        broadcastPerformanceMetrics();
+    }
+    
     // Update time since last cycle continuously
     updateTimeSinceLastCycle();
     

@@ -209,7 +209,10 @@ void setup() {
 }
 
 void loop() {
-  handleOTA(); // Handle OTA requests
+  // Only handle OTA requests when in IDLE state for safety
+  if (currentState == IDLE) {
+    handleOTA();
+  }
 
   // Execute the state machine - all the logic below has been moved to function-based state management
   executeStateMachine();

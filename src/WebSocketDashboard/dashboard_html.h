@@ -257,30 +257,24 @@ const char* dashboardHTML = R"rawliteral(
             transition: all 0.3s ease;
         }
         
+        .connection-status.disconnected {
+            background: rgba(239, 68, 68, 0.9);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+            font-size: 1.9rem;
+            padding: 28px 48px;
+            font-weight: 700;
+        }
+        
         .connection-status.connected {
             background: rgba(34, 197, 94, 0.9);
             box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
         }
         
-        .connection-status.disconnected {
-            background: rgba(239, 68, 68, 0.9);
-            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
-        }
-        
-        .connection-status.reconnecting {
-            background: rgba(245, 158, 11, 0.9);
-            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
-            animation: slowBlink 2s ease-in-out infinite;
-        }
         
         .connection-status:hover {
             transform: translateY(-2px);
         }
         
-        @keyframes slowBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
         
         .event-log {
             max-height: 320px;
@@ -654,9 +648,6 @@ const char* dashboardHTML = R"rawliteral(
             if (connected) {
                 statusEl.className = 'connection-status connected';
                 textEl.textContent = 'Connected';
-            } else if (isReconnecting) {
-                statusEl.className = 'connection-status reconnecting';
-                textEl.textContent = 'Reconnecting';
             } else {
                 statusEl.className = 'connection-status disconnected';
                 textEl.textContent = 'Disconnected';
@@ -732,7 +723,7 @@ const char* dashboardHTML = R"rawliteral(
             reconnectAttempts++;
             const delay = Math.min(500 + (reconnectAttempts * 200), 5000); // Slower, more stable reconnection attempts
             
-            updateConnectionStatus(false, '', true); // Show blinking "Reconnecting"
+            updateConnectionStatus(false, '', false); // Show "Disconnected"
             
             reconnectTimeout = setTimeout(() => {
                 if (!isConnected) {
@@ -896,7 +887,7 @@ const char* dashboardHTML = R"rawliteral(
                 reconnectTimeout = null;
             }
             
-            updateConnectionStatus(false, '', true); // Show blinking "Reconnecting"
+            updateConnectionStatus(false, '', false); // Show "Disconnected"
             
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}/ws`;

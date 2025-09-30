@@ -27,6 +27,7 @@ static unsigned long lastWoodSensorCheckTime = 0;
 void onEnterCuttingState() {
     resetCuttingSteps();
     startCuttingCycleTimer();
+    stopReloadTimer(); // Stop reload time tracking when entering cutting state
 }
 
 void onExitCuttingState() {

@@ -453,8 +453,8 @@ const char* dashboardHTML = R"rawliteral(
             
             <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
                 <div class="metric-item">
-                    <div class="metric-value" id="lastCycleTime">-</div>
-                    <div class="metric-label">Time Since Last Cycle</div>
+                    <div class="metric-value" id="reloadTime">-</div>
+                    <div class="metric-label">Reload Time</div>
                 </div>
                 <div class="metric-item">
                     <div class="metric-value" id="averageCycleTime">-</div>
@@ -949,11 +949,11 @@ const char* dashboardHTML = R"rawliteral(
                         if (data.type === 'performance_metrics') {
                             document.getElementById('totalCycles').textContent = data.totalCycles || 0;
                             
-                            // Update time since last cycle (shows elapsed time since last cycle completed)
-                            if (data.lastCycleTime !== undefined) {
-                                document.getElementById('lastCycleTime').textContent = formatTimeSinceLastCycle(data.lastCycleTime);
+                            // Update reload time (shows time from no 2x4 state end to feed first cut or cutting state)
+                            if (data.reloadTime !== undefined) {
+                                document.getElementById('reloadTime').textContent = formatTimeSinceLastCycle(data.reloadTime);
                             } else {
-                                document.getElementById('lastCycleTime').textContent = '-';
+                                document.getElementById('reloadTime').textContent = '-';
                             }
                             
                             // Update average cycle time with proper formatting

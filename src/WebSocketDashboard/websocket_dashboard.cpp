@@ -20,6 +20,9 @@ unsigned long systemStartTime = 0;
 unsigned long lastCycleStartTime = 0;
 unsigned long lastCycleCompletionTime = 0;
 unsigned long lastStateChangeTime = 0;
+unsigned long reloadTimeStart = 0;
+float reloadTimeSeconds = 0.0;
+bool reloadTimeActive = false;
 
 // Daily cycle tracking
 const int EEPROM_SIZE = 1024;
@@ -491,7 +494,7 @@ void broadcastPerformanceMetrics() {
         
         JsonDocument doc;
         doc["type"] = "performance_metrics";
-        doc["lastCycleTime"] = performanceMetrics.lastCycleTime;
+        doc["reloadTime"] = getReloadTime();
         doc["averageCycleTime"] = performanceMetrics.averageCycleTime;
         doc["totalCycles"] = performanceMetrics.totalCycles;
         
@@ -732,6 +735,33 @@ void incrementCuttingCycleCounter() {
     broadcastCuttingCycleCount();
     broadcastPerformanceMetrics();
     broadcastCalendarData(); // Also broadcast updated calendar data
+}
+
+// Start reload time timer when exiting RETURNING_NO_2x4 state
+void startReloadTimer() {
+    reloadTimeStart = millis();
+    reloadTimeActive = true;
+    reloadTimeSeconds = 0.0;
+    Serial.println("Reload timer started");
+}
+
+// Stop reload time timer when entering FEED_FIRST_CUT or CUTTING state
+void stopReloadTimer() {
+    if (reloadTimeActive) {
+        reloadTimeSeconds = (float)(millis() - reloadTimeStart) / 1000.0;
+        reloadTimeActive = false;
+        Serial.println("Reload timer stopped - Time: " + String(reloadTimeSeconds, 1) + "s");
+        addEventToLog("Reload completed - " + String(reloadTimeSeconds, 1) + "s");
+    }
+}
+
+// Get current reload time (either active timer or last completed time)
+float getReloadTime() {
+    if (reloadTimeActive) {
+        return (float)(millis() - reloadTimeStart) / 1000.0;
+    } else {
+        return reloadTimeSeconds;
+    }
 }
 
 unsigned long getCuttingCycleCount() {

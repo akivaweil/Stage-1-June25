@@ -114,6 +114,7 @@ void onEnterReturningNo2x4State() {
 
 void onExitReturningNo2x4State() {
     resetReturningNo2x4Steps();
+    startReloadTimer(); // Start reload time tracking when exiting no 2x4 state
 }
 
 void handleReturningNo2x4Sequence() {

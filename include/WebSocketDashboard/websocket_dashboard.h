@@ -24,6 +24,9 @@ void updateTimeSinceLastCycle();
 void incrementCuttingCycleCounter();
 unsigned long getCuttingCycleCount();
 void broadcastCuttingCycleCount();
+void startReloadTimer();
+void stopReloadTimer();
+float getReloadTime();
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 
 // Enhanced dashboard functions

@@ -121,7 +121,6 @@ bool hasLEDStatusChanged() {
 
 bool hasPerformanceMetricsChanged() {
     return (performanceMetrics.lastCycleTime != previousPerformanceMetrics.lastCycleTime ||
-            performanceMetrics.averageCycleTime != previousPerformanceMetrics.averageCycleTime ||
             performanceMetrics.totalCycles != previousPerformanceMetrics.totalCycles ||
             performanceMetrics.cycles1Min != previousPerformanceMetrics.cycles1Min ||
             performanceMetrics.cycles3Min != previousPerformanceMetrics.cycles3Min ||
@@ -552,7 +551,6 @@ void initializeDashboardData() {
     
     // Initialize performance metrics
     performanceMetrics.lastCycleTime = 0;
-    performanceMetrics.averageCycleTime = 0;
     // Initialize totalCycles to show current day's cycle count
     int currentDayIndex = getCurrentDayIndex();
     performanceMetrics.totalCycles = getDailyCycleCount(currentDayIndex);
@@ -759,23 +757,8 @@ void updatePerformanceMetrics(unsigned long cycleTime) {
         performanceMetrics.cycleTimestampCount++;
     }
     
-    // Update average cycle time (simple moving average) - convert to seconds
-    float cycleTimeSeconds = (float)cycleTime / 1000.0;
-    if (performanceMetrics.averageCycleTime == 0) {
-        performanceMetrics.averageCycleTime = cycleTimeSeconds;
-    } else {
-        performanceMetrics.averageCycleTime = (performanceMetrics.averageCycleTime + cycleTimeSeconds) / 2;
-    }
-    
     // Calculate time-based metrics
     calculateTimeBasedMetrics();
-    
-    // Calculate efficiency (simplified) - use daily cycles for calculation
-    unsigned long totalTime = millis() - systemStartTime;
-    float productiveTime = performanceMetrics.totalCycles * performanceMetrics.averageCycleTime * 1000.0; // Convert back to ms for calculation
-    if (totalTime > 0) {
-        performanceMetrics.efficiency = productiveTime / totalTime * 100.0;
-    }
 }
 
 // Update error count
@@ -907,7 +890,6 @@ void broadcastPerformanceMetrics() {
             JsonDocument doc;
             doc["type"] = "performance_metrics";
             doc["reloadTime"] = getReloadTime();
-            doc["averageCycleTime"] = performanceMetrics.averageCycleTime;
             doc["totalCycles"] = performanceMetrics.totalCycles;
             
             // Time-based averages (cycles per minute)
@@ -1114,32 +1096,133 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         client->text(message);
                     } else if (type == "update_config") {
                         String configKey = doc["key"];
+                        JsonDocument response;
+                        response["type"] = "config_updated";
+                        response["key"] = configKey;
+                        
+                        // Handle all configuration settings
                         if (configKey == "feed_travel_distance") {
                             float newValue = doc["value"];
-                            setFeedTravelDistance(newValue);
-                            
-                            // Send confirmation back
-                            JsonDocument response;
-                            response["type"] = "config_updated";
-                            response["key"] = configKey;
-                            response["value"] = newValue;
-                            
-                            String message;
-                            serializeJson(response, message);
-                            client->text(message);
+                            if (newValue >= 0.1 && newValue <= 10.0) {
+                                FEED_TRAVEL_DISTANCE = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: FEED_TRAVEL_DISTANCE = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (0.1-10.0)";
+                            }
+                        } else if (configKey == "cut_travel_distance") {
+                            float newValue = doc["value"];
+                            if (newValue >= 1.0 && newValue <= 20.0) {
+                                CUT_TRAVEL_DISTANCE = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: CUT_TRAVEL_DISTANCE = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (1.0-20.0)";
+                            }
+                        } else if (configKey == "cut_motor_normal_speed") {
+                            float newValue = doc["value"];
+                            if (newValue >= 100 && newValue <= 5000) {
+                                CUT_MOTOR_NORMAL_SPEED = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: CUT_MOTOR_NORMAL_SPEED = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (100-5000)";
+                            }
+                        } else if (configKey == "cut_motor_return_speed") {
+                            float newValue = doc["value"];
+                            if (newValue >= 1000 && newValue <= 50000) {
+                                CUT_MOTOR_RETURN_SPEED = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: CUT_MOTOR_RETURN_SPEED = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (1000-50000)";
+                            }
+                        } else if (configKey == "feed_motor_normal_speed") {
+                            float newValue = doc["value"];
+                            if (newValue >= 1000 && newValue <= 50000) {
+                                FEED_MOTOR_NORMAL_SPEED = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: FEED_MOTOR_NORMAL_SPEED = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (1000-50000)";
+                            }
+                        } else if (configKey == "rotation_servo_home_position") {
+                            int newValue = doc["value"];
+                            if (newValue >= 0 && newValue <= 180) {
+                                ROTATION_SERVO_HOME_POSITION = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: ROTATION_SERVO_HOME_POSITION = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (0-180)";
+                            }
+                        } else if (configKey == "rotation_servo_active_position") {
+                            int newValue = doc["value"];
+                            if (newValue >= 0 && newValue <= 180) {
+                                ROTATION_SERVO_ACTIVE_POSITION = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: ROTATION_SERVO_ACTIVE_POSITION = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (0-180)";
+                            }
+                        } else {
+                            response["error"] = "Unknown configuration key";
                         }
+                        
+                        String message;
+                        serializeJson(response, message);
+                        client->text(message);
+                        
                     } else if (type == "request_config") {
                         String configKey = doc["key"];
+                        JsonDocument response;
+                        response["type"] = "config_value";
+                        response["key"] = configKey;
+                        
+                        // Return current values for all configuration settings
                         if (configKey == "feed_travel_distance") {
-                            JsonDocument response;
-                            response["type"] = "config_value";
-                            response["key"] = configKey;
-                            response["value"] = getFeedTravelDistance();
-                            
-                            String message;
-                            serializeJson(response, message);
-                            client->text(message);
+                            response["value"] = FEED_TRAVEL_DISTANCE;
+                        } else if (configKey == "cut_travel_distance") {
+                            response["value"] = CUT_TRAVEL_DISTANCE;
+                        } else if (configKey == "cut_motor_normal_speed") {
+                            response["value"] = CUT_MOTOR_NORMAL_SPEED;
+                        } else if (configKey == "cut_motor_return_speed") {
+                            response["value"] = CUT_MOTOR_RETURN_SPEED;
+                        } else if (configKey == "feed_motor_normal_speed") {
+                            response["value"] = FEED_MOTOR_NORMAL_SPEED;
+                        } else if (configKey == "rotation_servo_home_position") {
+                            response["value"] = ROTATION_SERVO_HOME_POSITION;
+                        } else if (configKey == "rotation_servo_active_position") {
+                            response["value"] = ROTATION_SERVO_ACTIVE_POSITION;
+                        } else {
+                            response["error"] = "Unknown configuration key";
                         }
+                        
+                        String message;
+                        serializeJson(response, message);
+                        client->text(message);
+                        
+                    } else if (type == "request_all_config") {
+                        // Send all configuration values at once
+                        JsonDocument response;
+                        response["type"] = "all_config";
+                        response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
+                        response["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
+                        response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
+                        response["cut_motor_return_speed"] = CUT_MOTOR_RETURN_SPEED;
+                        response["feed_motor_normal_speed"] = FEED_MOTOR_NORMAL_SPEED;
+                        response["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
+                        response["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
+                        
+                        String message;
+                        serializeJson(response, message);
+                        client->text(message);
                     }
                 }
             }

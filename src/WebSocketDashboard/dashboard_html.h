@@ -19,11 +19,13 @@ const char* dashboardHTML = R"rawliteral(
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             min-height: 100vh;
             padding: 24px;
             overflow-x: hidden;
             line-height: 1.6;
+            display: block !important;
+            visibility: visible !important;
         }
         
         .background-animation {
@@ -73,11 +75,12 @@ const char* dashboardHTML = R"rawliteral(
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            display: grid;
+            display: grid !important;
             grid-template-columns: 1fr 1fr;
             gap: 24px;
             padding: 0 8px;
             animation: fadeInUp 0.8s ease-out;
+            visibility: visible !important;
         }
         
         .card {
@@ -451,15 +454,9 @@ const char* dashboardHTML = R"rawliteral(
                 <div style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; font-weight: 600; letter-spacing: 0.05em;">TOTAL CYCLES</div>
             </div>
             
-            <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
-                <div class="metric-item">
-                    <div class="metric-value" id="reloadTime">-</div>
-                    <div class="metric-label">Reload Time</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value" id="averageCycleTime">-</div>
-                    <div class="metric-label">Average Cycle Time</div>
-                </div>
+            <div style="text-align: center; padding: 24px; background: rgba(255, 255, 255, 0.1); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div style="color: #ffffff; font-size: 3rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em;" id="reloadTime">-</div>
+                <div style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; letter-spacing: 0.05em;">RELOAD TIME</div>
             </div>
             
             <!-- Time-based Performance Breakdown -->
@@ -597,23 +594,108 @@ const char* dashboardHTML = R"rawliteral(
         </div>
         
         <!-- Configuration Card -->
-        <div class="card">
+        <div class="card full-width">
             <div class="card-header">
                 <div class="card-icon">⚙️</div>
-                <div class="card-title">Configuration</div>
+                <div class="card-title">Configuration Settings</div>
             </div>
             <div style="padding: 16px;">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; font-weight: 500; margin-bottom: 8px;">Feed Travel Distance (inches)</label>
-                    <div style="display: flex; gap: 12px; align-items: center;">
-                        <input type="number" id="feedTravelDistance" step="0.01" min="0.1" max="10.0" 
-                               style="flex: 1; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 1rem; font-weight: 500;" 
-                               placeholder="3.43">
-                        <button id="updateFeedTravel" style="padding: 12px 20px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 8px; color: white; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">Update</button>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                    
+                    <!-- Motor Configuration Section -->
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Motor Configuration</h3>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Feed Travel Distance (inches)</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="feedTravelDistance" step="0.01" min="0.1" max="10.0" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="3.43">
+                                <button onclick="updateConfig('feed_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0.1 - 10.0</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Travel Distance (inches)</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="cutTravelDistance" step="0.1" min="1.0" max="20.0" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="9.2">
+                                <button onclick="updateConfig('cut_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 1.0 - 20.0</div>
+                        </div>
                     </div>
-                    <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; margin-top: 4px;">Range: 0.1 - 10.0 inches</div>
+                    
+                    <!-- Speed Configuration Section -->
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Motor Speeds</h3>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Motor Normal Speed</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="cutMotorNormalSpeed" step="10" min="100" max="5000" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="640">
+                                <button onclick="updateConfig('cut_motor_normal_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 100 - 5000</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Motor Return Speed</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="cutMotorReturnSpeed" step="100" min="1000" max="50000" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="25000">
+                                <button onclick="updateConfig('cut_motor_return_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 1000 - 50000</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Feed Motor Normal Speed</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="feedMotorNormalSpeed" step="100" min="1000" max="50000" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="22000">
+                                <button onclick="updateConfig('feed_motor_normal_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 1000 - 50000</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Servo Configuration Section -->
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Servo Configuration</h3>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Rotation Servo Home Position</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="rotationServoHomePosition" step="1" min="0" max="180" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="12">
+                                <button onclick="updateConfig('rotation_servo_home_position')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0 - 180 degrees</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Rotation Servo Active Position</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="rotationServoActivePosition" step="1" min="0" max="180" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="105">
+                                <button onclick="updateConfig('rotation_servo_active_position')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0 - 180 degrees</div>
+                        </div>
+                    </div>
                 </div>
-                <div id="configStatus" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; display: none;"></div>
+                
+                <div id="configStatus" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; display: none; margin-top: 16px;"></div>
             </div>
         </div>
         
@@ -641,6 +723,7 @@ const char* dashboardHTML = R"rawliteral(
     </div>
 
     <script>
+        console.log('Dashboard script starting...');
         let ws;
         let reconnectTimeout;
         let heartbeatInterval;
@@ -935,8 +1018,8 @@ const char* dashboardHTML = R"rawliteral(
                     // Request calendar data when connected
                     requestCalendarData();
                     
-                    // Request current configuration
-                    requestCurrentConfig();
+                    // Request all configuration values
+                    requestAllConfig();
                 };
                 
                 ws.onmessage = function(event) {
@@ -980,13 +1063,6 @@ const char* dashboardHTML = R"rawliteral(
                                 document.getElementById('reloadTime').textContent = '-';
                             }
                             
-                            // Update average cycle time with proper formatting
-                            if (data.averageCycleTime && data.averageCycleTime > 0) {
-                                document.getElementById('averageCycleTime').textContent = data.averageCycleTime.toFixed(1);
-                            } else {
-                                document.getElementById('averageCycleTime').textContent = '-';
-                            }
-                            
                             const systemUptime = data.systemUptime || 0;
                             
                             // Update time-based metrics with ghosting logic (only averages now)
@@ -1018,15 +1094,26 @@ const char* dashboardHTML = R"rawliteral(
                         }
                         
                         if (data.type === 'config_value') {
-                            if (data.key === 'feed_travel_distance') {
-                                document.getElementById('feedTravelDistance').value = data.value;
-                            }
+                            updateConfigField(data.key, data.value);
                         }
                         
                         if (data.type === 'config_updated') {
-                            if (data.key === 'feed_travel_distance') {
+                            if (data.error) {
+                                showConfigStatus('Error: ' + data.error, 'error');
+                            } else {
                                 showConfigStatus('Configuration updated successfully!', 'success');
                             }
+                        }
+                        
+                        if (data.type === 'all_config') {
+                            // Populate all configuration fields
+                            updateConfigField('feed_travel_distance', data.feed_travel_distance);
+                            updateConfigField('cut_travel_distance', data.cut_travel_distance);
+                            updateConfigField('cut_motor_normal_speed', data.cut_motor_normal_speed);
+                            updateConfigField('cut_motor_return_speed', data.cut_motor_return_speed);
+                            updateConfigField('feed_motor_normal_speed', data.feed_motor_normal_speed);
+                            updateConfigField('rotation_servo_home_position', data.rotation_servo_home_position);
+                            updateConfigField('rotation_servo_active_position', data.rotation_servo_active_position);
                         }
                     } catch (error) {
                         console.error('Error parsing WebSocket message:', error);
@@ -1225,19 +1312,88 @@ const char* dashboardHTML = R"rawliteral(
             }, 3000);
         }
         
-        function updateFeedTravelDistance() {
-            const input = document.getElementById('feedTravelDistance');
-            const value = parseFloat(input.value);
+        // Configuration field mapping
+        const configFieldMap = {
+            'feed_travel_distance': 'feedTravelDistance',
+            'cut_travel_distance': 'cutTravelDistance',
+            'cut_motor_normal_speed': 'cutMotorNormalSpeed',
+            'cut_motor_return_speed': 'cutMotorReturnSpeed',
+            'feed_motor_normal_speed': 'feedMotorNormalSpeed',
+            'rotation_servo_home_position': 'rotationServoHomePosition',
+            'rotation_servo_active_position': 'rotationServoActivePosition'
+        };
+        
+        function updateConfigField(key, value) {
+            const fieldId = configFieldMap[key];
+            if (fieldId) {
+                const element = document.getElementById(fieldId);
+                if (element) {
+                    element.value = value;
+                }
+            }
+        }
+        
+        function updateConfig(key) {
+            const fieldId = configFieldMap[key];
+            if (!fieldId) {
+                showConfigStatus('Unknown configuration key', 'error');
+                return;
+            }
             
-            if (isNaN(value) || value < 0.1 || value > 10.0) {
-                showConfigStatus('Invalid value. Please enter a number between 0.1 and 10.0', 'error');
+            const input = document.getElementById(fieldId);
+            if (!input) {
+                showConfigStatus('Configuration field not found', 'error');
+                return;
+            }
+            
+            const value = key.includes('position') ? parseInt(input.value) : parseFloat(input.value);
+            
+            if (isNaN(value)) {
+                showConfigStatus('Invalid value. Please enter a valid number', 'error');
+                return;
+            }
+            
+            // Validate ranges
+            let isValid = true;
+            let errorMsg = '';
+            
+            switch (key) {
+                case 'feed_travel_distance':
+                    isValid = value >= 0.1 && value <= 10.0;
+                    errorMsg = 'Range: 0.1 - 10.0 inches';
+                    break;
+                case 'cut_travel_distance':
+                    isValid = value >= 1.0 && value <= 20.0;
+                    errorMsg = 'Range: 1.0 - 20.0 inches';
+                    break;
+                case 'cut_motor_normal_speed':
+                    isValid = value >= 100 && value <= 5000;
+                    errorMsg = 'Range: 100 - 5000';
+                    break;
+                case 'cut_motor_return_speed':
+                    isValid = value >= 1000 && value <= 50000;
+                    errorMsg = 'Range: 1000 - 50000';
+                    break;
+                case 'feed_motor_normal_speed':
+                    isValid = value >= 1000 && value <= 50000;
+                    errorMsg = 'Range: 1000 - 50000';
+                    break;
+                case 'rotation_servo_home_position':
+                case 'rotation_servo_active_position':
+                    isValid = value >= 0 && value <= 180;
+                    errorMsg = 'Range: 0 - 180 degrees';
+                    break;
+            }
+            
+            if (!isValid) {
+                showConfigStatus('Invalid value. ' + errorMsg, 'error');
                 return;
             }
             
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
                     type: 'update_config',
-                    key: 'feed_travel_distance',
+                    key: key,
                     value: value
                 }));
             } else {
@@ -1245,20 +1401,22 @@ const char* dashboardHTML = R"rawliteral(
             }
         }
         
-        function requestCurrentConfig() {
+        function requestAllConfig() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
-                    type: 'request_config',
-                    key: 'feed_travel_distance'
+                    type: 'request_all_config'
                 }));
             }
         }
 
         // Connect on page load
+        console.log('Initializing dashboard...');
+        console.log('Body background:', window.getComputedStyle(document.body).background);
         connect();
         
         // Initialize calendar
         updateCalendar();
+        console.log('Dashboard initialized successfully');
         
         // Calendar event listeners
         document.getElementById('prevMonth').addEventListener('click', function() {
@@ -1269,15 +1427,7 @@ const char* dashboardHTML = R"rawliteral(
             changeMonth(1);
         });
         
-        // Configuration event listeners
-        document.getElementById('updateFeedTravel').addEventListener('click', updateFeedTravelDistance);
-        
-        // Allow Enter key to update configuration
-        document.getElementById('feedTravelDistance').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                updateFeedTravelDistance();
-            }
-        });
+        // Configuration event listeners - using onclick handlers in HTML instead
         
         // Handle manual reconnection
         document.getElementById('connectionStatus').addEventListener('click', function() {

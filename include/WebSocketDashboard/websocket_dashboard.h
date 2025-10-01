@@ -102,7 +102,6 @@ struct LEDStatus {
 
 struct PerformanceMetrics {
     float lastCycleTime;
-    float averageCycleTime;
     unsigned long totalCycles;
     
     // Time-based cycle tracking

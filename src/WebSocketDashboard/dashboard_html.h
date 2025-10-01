@@ -629,8 +629,8 @@ const char* dashboardHTML = R"rawliteral(
         let lastPongReceived = 0;
         let isReconnecting = false;
         const maxReconnectAttempts = 50; // Increased from 20 to 50 for more persistent reconnection
-        const heartbeatIntervalMs = 1000; // Send ping every 1 second (less aggressive)
-        const heartbeatTimeoutMs = 3000; // Consider connection dead after 3 seconds without pong
+        const heartbeatIntervalMs = 500; // Send ping every 0.5 seconds (more aggressive)
+        const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
         
         // Calendar variables
         let dailyCycles = [];
@@ -900,7 +900,7 @@ const char* dashboardHTML = R"rawliteral(
                         ws.close();
                         forceDisconnect();
                     }
-                }, 3000); // Increased timeout for more reliable connection
+                }, 2000); // Reduced timeout for faster disconnection detection
                 
                 ws.onopen = function() {
                     clearTimeout(connectionTimeout);
@@ -1214,13 +1214,13 @@ const char* dashboardHTML = R"rawliteral(
             }
         }, 5000);
         
-        // Connection monitoring - check WebSocket state every 1 second (less aggressive)
+        // Connection monitoring - check WebSocket state every 0.5 seconds (more responsive)
         setInterval(() => {
             if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
                 console.log('WebSocket state changed to:', ws.readyState);
                 forceDisconnect();
             }
-        }, 1000);
+        }, 500);
     </script>
 </body>
 </html>

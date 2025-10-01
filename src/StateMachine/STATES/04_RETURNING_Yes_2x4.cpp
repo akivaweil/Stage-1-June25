@@ -13,7 +13,7 @@
 //* ************************************************************************
 // Handles the simultaneous return sequence when wood sensor detects lumber.
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
-// Includes final feed wood movement to 3.4 inches before transitioning to next cycle or IDLE.
+// Includes final feed wood movement to configured distance before transitioning to next cycle or IDLE.
 // 
 // Feed clamp extension occurs immediately after feed motor completion.
 
@@ -155,7 +155,7 @@ void handleReturningYes2x4Sequence() {
             }
             break;
             
-        case 3: // Execute feed wood movement to 3.4 inches
+        case 3: // Execute feed wood movement to configured distance
             handleFeedWoodMovement();
             break;
             
@@ -202,31 +202,38 @@ void handleFeedMotorReturnSequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
     
     switch (feedMotorReturnSubStep) {
-        case 0: // Move feed motor back specified distance
+        case 0: // Retract feed clamp first
             //! ************************************************************************
-            //! STEP 6: MOVE FEED MOTOR RETURN DISTANCE
+            //! STEP 6: RETRACT FEED CLAMP
             //! ************************************************************************
-            configureFeedMotorForReturn();
-            if (feedMotor) {
-                feedMotor->move(-FEED_MOTOR_RETURN_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-            }
+            retractFeedClamp();
             feedMotorReturnSubStep = 1;
             break;
             
-        case 1: // Wait for move completion then adjust clamps
+        case 1: // Move feed motor back by the same distance it will later move forward
+            //! ************************************************************************
+            //! STEP 7: MOVE FEED MOTOR RETURN DISTANCE
+            //! ************************************************************************
+            configureFeedMotorForReturn();
+            if (feedMotor) {
+                feedMotor->move(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+            }
+            feedMotorReturnSubStep = 2;
+            break;
+            
+        case 2: // Wait for move completion then extend 2x4 secure clamp
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 7: RETRACT FEED CLAMP AND EXTEND 2X4 SECURE CLAMP
+                //! STEP 8: EXTEND 2X4 SECURE CLAMP
                 //! ************************************************************************
-                retractFeedClamp();
                 extend2x4SecureClamp();
-                feedMotorReturnSubStep = 2;
+                feedMotorReturnSubStep = 3;
             }
             break;
             
-        case 2: // Start feed motor return to home
+        case 3: // Start feed motor return to home
             //! ************************************************************************
-            //! STEP 8: RETURN FEED MOTOR TO HOME POSITION
+            //! STEP 9: RETURN FEED MOTOR TO HOME POSITION
             //! ************************************************************************
             if (feedMotor) {
                 moveFeedMotorToHome();
@@ -239,7 +246,7 @@ void handleFeedMotorReturnSequence() {
 //* ************************************************************************
 //* ****************** FEED WOOD MOVEMENT SEQUENCE *************************
 //* ************************************************************************
-// Handles the feed wood movement to 3.4 inches with feed clamp extended
+// Handles the feed wood movement to configured distance with feed clamp extended
 
 void handleFeedWoodMovement() {
     FastAccelStepper* feedMotor = getFeedMotor();
@@ -247,12 +254,12 @@ void handleFeedWoodMovement() {
     extern const float FEED_TRAVEL_DISTANCE;
     extern const float FEED_MOTOR_STEPS_PER_INCH;
     
-    // Non-blocking feed wood movement to 3.4 inches
+    // Non-blocking feed wood movement to configured distance
     switch (feedMotorHomingSubStep) {
-        case 0: // Start feed wood movement to 3.4 inches
+        case 0: // Start feed wood movement to configured distance
             if (feedMotor) {
                 configureFeedMotorForNormalOperation();
-                feedMotor->moveTo(3.4 * FEED_MOTOR_STEPS_PER_INCH);
+                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
             }
             feedMotorHomingSubStep = 1;
             break;

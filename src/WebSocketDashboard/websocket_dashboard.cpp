@@ -41,6 +41,16 @@ ErrorInfo errorInfo;
 NetworkInfo networkInfo;
 EventLog eventLog;
 
+// Previous values for change detection
+SystemStatus previousSystemStatus;
+SensorStatus previousSensorStatus;
+ClampStatus previousClampStatus;
+LEDStatus previousLEDStatus;
+PerformanceMetrics previousPerformanceMetrics;
+ErrorInfo previousErrorInfo;
+NetworkInfo previousNetworkInfo;
+EventLog previousEventLog;
+
 // Helper function to get state name
 String getStateName(SystemState state) {
     switch(state) {
@@ -69,6 +79,76 @@ String getSystemHealth() {
     } else {
         return "HEALTHY";
     }
+}
+
+// Change detection helper functions
+bool hasSystemStatusChanged() {
+    return (systemStatus.currentState != previousSystemStatus.currentState ||
+            systemStatus.previousState != previousSystemStatus.previousState ||
+            systemStatus.systemHealth != previousSystemStatus.systemHealth ||
+            systemStatus.uptime != previousSystemStatus.uptime ||
+            systemStatus.lastStateChange != previousSystemStatus.lastStateChange);
+}
+
+bool hasSensorStatusChanged() {
+    return (sensorStatus._2x4Present != previousSensorStatus._2x4Present ||
+            sensorStatus.woodSuctionConfirm != previousSensorStatus.woodSuctionConfirm ||
+            sensorStatus.firstCutOrWoodFwdOne != previousSensorStatus.firstCutOrWoodFwdOne ||
+            sensorStatus.cutMotorHomeSwitch != previousSensorStatus.cutMotorHomeSwitch ||
+            sensorStatus.feedMotorHomeSensor != previousSensorStatus.feedMotorHomeSensor ||
+            sensorStatus.reloadSwitch != previousSensorStatus.reloadSwitch ||
+            sensorStatus.startCycleSwitch != previousSensorStatus.startCycleSwitch ||
+            sensorStatus.manualFeedSwitch != previousSensorStatus.manualFeedSwitch);
+}
+
+bool hasClampStatusChanged() {
+    return (clampStatus.feedClamp != previousClampStatus.feedClamp ||
+            clampStatus._2x4SecureClamp != previousClampStatus._2x4SecureClamp ||
+            clampStatus.rotationClamp != previousClampStatus.rotationClamp);
+}
+
+bool hasLEDStatusChanged() {
+    return (ledStatus.red != previousLEDStatus.red ||
+            ledStatus.yellow != previousLEDStatus.yellow ||
+            ledStatus.green != previousLEDStatus.green ||
+            ledStatus.blue != previousLEDStatus.blue);
+}
+
+bool hasPerformanceMetricsChanged() {
+    return (performanceMetrics.lastCycleTime != previousPerformanceMetrics.lastCycleTime ||
+            performanceMetrics.averageCycleTime != previousPerformanceMetrics.averageCycleTime ||
+            performanceMetrics.totalCycles != previousPerformanceMetrics.totalCycles ||
+            performanceMetrics.cycles1Min != previousPerformanceMetrics.cycles1Min ||
+            performanceMetrics.cycles3Min != previousPerformanceMetrics.cycles3Min ||
+            performanceMetrics.cycles5Min != previousPerformanceMetrics.cycles5Min ||
+            performanceMetrics.cycles15Min != previousPerformanceMetrics.cycles15Min ||
+            performanceMetrics.cycles30Min != previousPerformanceMetrics.cycles30Min ||
+            performanceMetrics.avgCycles1Min != previousPerformanceMetrics.avgCycles1Min ||
+            performanceMetrics.avgCycles3Min != previousPerformanceMetrics.avgCycles3Min ||
+            performanceMetrics.avgCycles5Min != previousPerformanceMetrics.avgCycles5Min ||
+            performanceMetrics.avgCycles15Min != previousPerformanceMetrics.avgCycles15Min ||
+            performanceMetrics.avgCycles30Min != previousPerformanceMetrics.avgCycles30Min ||
+            performanceMetrics.totalUptime != previousPerformanceMetrics.totalUptime ||
+            performanceMetrics.efficiency != previousPerformanceMetrics.efficiency);
+}
+
+bool hasErrorStatusChanged() {
+    return (errorInfo.lastError != previousErrorInfo.lastError ||
+            errorInfo.lastErrorTime != previousErrorInfo.lastErrorTime ||
+            errorInfo.errorCount != previousErrorInfo.errorCount);
+}
+
+bool hasNetworkInfoChanged() {
+    return (networkInfo.wifiSignal != previousNetworkInfo.wifiSignal ||
+            networkInfo.freeHeap != previousNetworkInfo.freeHeap ||
+            networkInfo.freePSRAM != previousNetworkInfo.freePSRAM ||
+            networkInfo.temperature != previousNetworkInfo.temperature ||
+            networkInfo.uptime != previousNetworkInfo.uptime);
+}
+
+bool hasEventLogChanged() {
+    return (eventLog.eventCount != previousEventLog.eventCount ||
+            eventLog.eventIndex != previousEventLog.eventIndex);
 }
 
 // Initialize EEPROM and load daily cycle data
@@ -222,6 +302,16 @@ void initializeDashboardData() {
     }
     
     addEventToLog("System initialized");
+    
+    // Initialize previous values for change detection
+    previousSystemStatus = systemStatus;
+    previousSensorStatus = sensorStatus;
+    previousClampStatus = clampStatus;
+    previousLEDStatus = ledStatus;
+    previousPerformanceMetrics = performanceMetrics;
+    previousErrorInfo = errorInfo;
+    previousNetworkInfo = networkInfo;
+    previousEventLog = eventLog;
 }
 
 // Update sensor status
@@ -415,17 +505,23 @@ void broadcastSystemStatus() {
         systemStatus.systemHealth = getSystemHealth();
         systemStatus.uptime = millis() - systemStartTime;
         
-        JsonDocument doc;
-        doc["type"] = "system_status";
-        doc["currentState"] = systemStatus.currentState;
-        doc["previousState"] = systemStatus.previousState;
-        doc["systemHealth"] = systemStatus.systemHealth;
-        doc["uptime"] = systemStatus.uptime;
-        doc["lastStateChange"] = systemStatus.lastStateChange;
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
+        // Only broadcast if something changed
+        if (hasSystemStatusChanged()) {
+            JsonDocument doc;
+            doc["type"] = "system_status";
+            doc["currentState"] = systemStatus.currentState;
+            doc["previousState"] = systemStatus.previousState;
+            doc["systemHealth"] = systemStatus.systemHealth;
+            doc["uptime"] = systemStatus.uptime;
+            doc["lastStateChange"] = systemStatus.lastStateChange;
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousSystemStatus = systemStatus;
+        }
     }
 }
 
@@ -434,20 +530,26 @@ void broadcastSensorStatus() {
     if (ws.getClients().size() > 0) {
         updateSensorStatus();
         
-        JsonDocument doc;
-        doc["type"] = "sensor_status";
-        doc["_2x4Present"] = sensorStatus._2x4Present;
-        doc["woodSuctionConfirm"] = sensorStatus.woodSuctionConfirm;
-        doc["firstCutOrWoodFwdOne"] = sensorStatus.firstCutOrWoodFwdOne;
-        doc["cutMotorHomeSwitch"] = sensorStatus.cutMotorHomeSwitch;
-        doc["feedMotorHomeSensor"] = sensorStatus.feedMotorHomeSensor;
-        doc["reloadSwitch"] = sensorStatus.reloadSwitch;
-        doc["startCycleSwitch"] = sensorStatus.startCycleSwitch;
-        doc["manualFeedSwitch"] = sensorStatus.manualFeedSwitch;
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
+        // Only broadcast if something changed
+        if (hasSensorStatusChanged()) {
+            JsonDocument doc;
+            doc["type"] = "sensor_status";
+            doc["_2x4Present"] = sensorStatus._2x4Present;
+            doc["woodSuctionConfirm"] = sensorStatus.woodSuctionConfirm;
+            doc["firstCutOrWoodFwdOne"] = sensorStatus.firstCutOrWoodFwdOne;
+            doc["cutMotorHomeSwitch"] = sensorStatus.cutMotorHomeSwitch;
+            doc["feedMotorHomeSensor"] = sensorStatus.feedMotorHomeSensor;
+            doc["reloadSwitch"] = sensorStatus.reloadSwitch;
+            doc["startCycleSwitch"] = sensorStatus.startCycleSwitch;
+            doc["manualFeedSwitch"] = sensorStatus.manualFeedSwitch;
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousSensorStatus = sensorStatus;
+        }
     }
 }
 
@@ -456,15 +558,21 @@ void broadcastClampStatus() {
     if (ws.getClients().size() > 0) {
         updateClampStatus();
         
-        JsonDocument doc;
-        doc["type"] = "clamp_status";
-        doc["feedClamp"] = clampStatus.feedClamp;
-        doc["_2x4SecureClamp"] = clampStatus._2x4SecureClamp;
-        doc["rotationClamp"] = clampStatus.rotationClamp;
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
+        // Only broadcast if something changed
+        if (hasClampStatusChanged()) {
+            JsonDocument doc;
+            doc["type"] = "clamp_status";
+            doc["feedClamp"] = clampStatus.feedClamp;
+            doc["_2x4SecureClamp"] = clampStatus._2x4SecureClamp;
+            doc["rotationClamp"] = clampStatus.rotationClamp;
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousClampStatus = clampStatus;
+        }
     }
 }
 
@@ -473,16 +581,22 @@ void broadcastLEDStatus() {
     if (ws.getClients().size() > 0) {
         updateLEDStatus();
         
-        JsonDocument doc;
-        doc["type"] = "led_status";
-        doc["red"] = ledStatus.red;
-        doc["yellow"] = ledStatus.yellow;
-        doc["green"] = ledStatus.green;
-        doc["blue"] = ledStatus.blue;
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
+        // Only broadcast if something changed
+        if (hasLEDStatusChanged()) {
+            JsonDocument doc;
+            doc["type"] = "led_status";
+            doc["red"] = ledStatus.red;
+            doc["yellow"] = ledStatus.yellow;
+            doc["green"] = ledStatus.green;
+            doc["blue"] = ledStatus.blue;
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousLEDStatus = ledStatus;
+        }
     }
 }
 
@@ -492,50 +606,60 @@ void broadcastPerformanceMetrics() {
         // Recalculate time-based metrics before broadcasting
         calculateTimeBasedMetrics();
         
-        JsonDocument doc;
-        doc["type"] = "performance_metrics";
-        doc["reloadTime"] = getReloadTime();
-        doc["averageCycleTime"] = performanceMetrics.averageCycleTime;
-        doc["totalCycles"] = performanceMetrics.totalCycles;
-        
-        // Time-based totals (removed - no longer needed in dashboard)
-        
-        // Time-based averages (cycles per minute)
-        doc["avgCycles1Min"] = performanceMetrics.avgCycles1Min;
-        doc["avgCycles3Min"] = performanceMetrics.avgCycles3Min;
-        doc["avgCycles5Min"] = performanceMetrics.avgCycles5Min;
-        doc["avgCycles15Min"] = performanceMetrics.avgCycles15Min;
-        doc["avgCycles30Min"] = performanceMetrics.avgCycles30Min;
-        
-        doc["totalUptime"] = performanceMetrics.totalUptime;
-        doc["systemUptime"] = millis() - systemStartTime;
-        doc["efficiency"] = performanceMetrics.efficiency;
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
+        // Only broadcast if something changed
+        if (hasPerformanceMetricsChanged()) {
+            JsonDocument doc;
+            doc["type"] = "performance_metrics";
+            doc["reloadTime"] = getReloadTime();
+            doc["averageCycleTime"] = performanceMetrics.averageCycleTime;
+            doc["totalCycles"] = performanceMetrics.totalCycles;
+            
+            // Time-based averages (cycles per minute)
+            doc["avgCycles1Min"] = performanceMetrics.avgCycles1Min;
+            doc["avgCycles3Min"] = performanceMetrics.avgCycles3Min;
+            doc["avgCycles5Min"] = performanceMetrics.avgCycles5Min;
+            doc["avgCycles15Min"] = performanceMetrics.avgCycles15Min;
+            doc["avgCycles30Min"] = performanceMetrics.avgCycles30Min;
+            
+            doc["totalUptime"] = performanceMetrics.totalUptime;
+            doc["systemUptime"] = millis() - systemStartTime;
+            doc["efficiency"] = performanceMetrics.efficiency;
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousPerformanceMetrics = performanceMetrics;
+        }
     }
 }
 
 // Broadcast error status
 void broadcastErrorStatus() {
     if (ws.getClients().size() > 0) {
-        JsonDocument doc;
-        doc["type"] = "error_status";
-        doc["lastError"] = errorInfo.lastError;
-        doc["lastErrorTime"] = errorInfo.lastErrorTime;
-        doc["errorCount"] = errorInfo.errorCount;
-        
-        JsonArray history = doc["errorHistory"].to<JsonArray>();
-        for (int i = 0; i < 10; i++) {
-            if (errorInfo.errorHistory[i].length() > 0) {
-                history.add(errorInfo.errorHistory[i]);
+        // Only broadcast if something changed
+        if (hasErrorStatusChanged()) {
+            JsonDocument doc;
+            doc["type"] = "error_status";
+            doc["lastError"] = errorInfo.lastError;
+            doc["lastErrorTime"] = errorInfo.lastErrorTime;
+            doc["errorCount"] = errorInfo.errorCount;
+            
+            JsonArray history = doc["errorHistory"].to<JsonArray>();
+            for (int i = 0; i < 10; i++) {
+                if (errorInfo.errorHistory[i].length() > 0) {
+                    history.add(errorInfo.errorHistory[i]);
+                }
             }
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousErrorInfo = errorInfo;
         }
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
     }
 }
 
@@ -544,37 +668,51 @@ void broadcastNetworkInfo() {
     if (ws.getClients().size() > 0) {
         updateNetworkInfo();
         
-        JsonDocument doc;
-        doc["type"] = "network_info";
-        doc["wifiSignal"] = networkInfo.wifiSignal;
-        doc["freeHeap"] = networkInfo.freeHeap;
-        doc["freePSRAM"] = networkInfo.freePSRAM;
-        doc["temperature"] = networkInfo.temperature;
-        doc["uptime"] = networkInfo.uptime;
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
+        // Only broadcast if something changed (check every 10 seconds for network info)
+        static unsigned long lastNetworkBroadcast = 0;
+        if (hasNetworkInfoChanged() || (millis() - lastNetworkBroadcast > 10000)) {
+            JsonDocument doc;
+            doc["type"] = "network_info";
+            doc["wifiSignal"] = networkInfo.wifiSignal;
+            doc["freeHeap"] = networkInfo.freeHeap;
+            doc["freePSRAM"] = networkInfo.freePSRAM;
+            doc["temperature"] = networkInfo.temperature;
+            doc["uptime"] = networkInfo.uptime;
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousNetworkInfo = networkInfo;
+            lastNetworkBroadcast = millis();
+        }
     }
 }
 
 // Broadcast event log
 void broadcastEventLog() {
     if (ws.getClients().size() > 0) {
-        JsonDocument doc;
-        doc["type"] = "event_log";
-        
-        JsonArray events = doc["events"].to<JsonArray>();
-        for (int i = 0; i < eventLog.eventCount; i++) {
-            int index = (eventLog.eventIndex - eventLog.eventCount + i + 50) % 50;
-            if (eventLog.events[index].length() > 0) {
-                events.add(eventLog.events[index]);
+        // Only broadcast if something changed
+        if (hasEventLogChanged()) {
+            JsonDocument doc;
+            doc["type"] = "event_log";
+            
+            JsonArray events = doc["events"].to<JsonArray>();
+            for (int i = 0; i < eventLog.eventCount; i++) {
+                int index = (eventLog.eventIndex - eventLog.eventCount + i + 50) % 50;
+                if (eventLog.events[index].length() > 0) {
+                    events.add(eventLog.events[index]);
+                }
             }
+            
+            String message;
+            serializeJson(doc, message);
+            ws.textAll(message);
+            
+            // Update previous values
+            previousEventLog = eventLog;
         }
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
     }
 }
 
@@ -825,7 +963,7 @@ void onErrorOccurred(const String& errorType) {
 void updateDashboardStatus() {
     // Update reload time continuously when timer is active
     if (reloadTimeActive) {
-        // Force broadcast performance metrics when reload timer is running
+        // Force broadcast performance metrics when reload timer is running (time changes frequently)
         broadcastPerformanceMetrics();
     }
     
@@ -840,13 +978,14 @@ void updateDashboardStatus() {
         lastDailyCycleUpdate = millis();
     }
     
-    // Only update when motors are not moving to avoid timing interference
+    // Only broadcast when motors are not moving to avoid timing interference
+    // Now each broadcast function checks for changes internally
     if (getCurrentState() != CUTTING) {
         broadcastSystemStatus();
         broadcastSensorStatus();
         broadcastClampStatus();
         broadcastLEDStatus();
         broadcastNetworkInfo();
-        broadcastPerformanceMetrics(); // Broadcast updated time since last cycle
+        broadcastPerformanceMetrics();
     }
 }

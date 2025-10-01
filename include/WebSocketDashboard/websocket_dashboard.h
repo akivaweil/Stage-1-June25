@@ -131,6 +131,8 @@ struct ErrorInfo {
     String lastError;
     unsigned long lastErrorTime;
     int errorCount;
+    int cutMotorErrorCount;
+    int suctionErrorCount;
     String errorHistory[10];
     int errorHistoryIndex;
 };

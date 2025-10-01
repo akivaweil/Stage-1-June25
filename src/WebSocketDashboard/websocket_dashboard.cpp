@@ -139,7 +139,9 @@ bool hasPerformanceMetricsChanged() {
 bool hasErrorStatusChanged() {
     return (errorInfo.lastError != previousErrorInfo.lastError ||
             errorInfo.lastErrorTime != previousErrorInfo.lastErrorTime ||
-            errorInfo.errorCount != previousErrorInfo.errorCount);
+            errorInfo.errorCount != previousErrorInfo.errorCount ||
+            errorInfo.cutMotorErrorCount != previousErrorInfo.cutMotorErrorCount ||
+            errorInfo.suctionErrorCount != previousErrorInfo.suctionErrorCount);
 }
 
 bool hasNetworkInfoChanged() {
@@ -583,6 +585,8 @@ void initializeDashboardData() {
     errorInfo.lastError = "None";
     errorInfo.lastErrorTime = 0;
     errorInfo.errorCount = 0;
+    errorInfo.cutMotorErrorCount = 0;
+    errorInfo.suctionErrorCount = 0;
     errorInfo.errorHistoryIndex = 0;
     for (int i = 0; i < 10; i++) {
         errorInfo.errorHistory[i] = "";
@@ -767,6 +771,13 @@ void updateErrorCount(const String& errorType) {
     errorInfo.lastErrorTime = millis();
     errorInfo.errorCount++;
     
+    // Increment specific error type counters
+    if (errorType.indexOf("Cut motor") >= 0 || errorType.indexOf("cut motor") >= 0) {
+        errorInfo.cutMotorErrorCount++;
+    } else if (errorType.indexOf("Wood suction") >= 0 || errorType.indexOf("suction") >= 0) {
+        errorInfo.suctionErrorCount++;
+    }
+    
     // Add to error history
     String timestamp = formatTimestamp(millis());
     String errorEntry = "[" + timestamp + "] " + errorType;
@@ -923,6 +934,8 @@ void broadcastErrorStatus() {
             doc["lastError"] = errorInfo.lastError;
             doc["lastErrorTime"] = errorInfo.lastErrorTime;
             doc["errorCount"] = errorInfo.errorCount;
+            doc["cutMotorErrorCount"] = errorInfo.cutMotorErrorCount;
+            doc["suctionErrorCount"] = errorInfo.suctionErrorCount;
             
             JsonArray history = doc["errorHistory"].to<JsonArray>();
             for (int i = 0; i < 10; i++) {

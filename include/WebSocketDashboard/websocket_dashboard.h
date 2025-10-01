@@ -56,6 +56,12 @@ unsigned long getDailyCycleCount(int dayIndex);
 void getAllDailyCycles(unsigned long* cycles, int maxDays);
 void broadcastCalendarData();
 
+// Configuration management functions
+void loadConfiguration();
+void saveConfiguration();
+float getFeedTravelDistance();
+void setFeedTravelDistance(float value);
+
 // Global variables
 extern AsyncWebServer server;
 extern AsyncWebSocket ws;

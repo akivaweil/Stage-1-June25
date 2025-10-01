@@ -596,6 +596,27 @@ const char* dashboardHTML = R"rawliteral(
             </div>
         </div>
         
+        <!-- Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">⚙️</div>
+                <div class="card-title">Configuration</div>
+            </div>
+            <div style="padding: 16px;">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; font-weight: 500; margin-bottom: 8px;">Feed Travel Distance (inches)</label>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <input type="number" id="feedTravelDistance" step="0.01" min="0.1" max="10.0" 
+                               style="flex: 1; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 1rem; font-weight: 500;" 
+                               placeholder="3.43">
+                        <button id="updateFeedTravel" style="padding: 12px 20px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 8px; color: white; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">Update</button>
+                    </div>
+                    <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; margin-top: 4px;">Range: 0.1 - 10.0 inches</div>
+                </div>
+                <div id="configStatus" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; display: none;"></div>
+            </div>
+        </div>
+        
         <!-- Event Log Card -->
         <div class="card full-width">
             <div class="card-header">
@@ -913,6 +934,9 @@ const char* dashboardHTML = R"rawliteral(
                     
                     // Request calendar data when connected
                     requestCalendarData();
+                    
+                    // Request current configuration
+                    requestCurrentConfig();
                 };
                 
                 ws.onmessage = function(event) {
@@ -991,6 +1015,18 @@ const char* dashboardHTML = R"rawliteral(
                         
                         if (data.type === 'daily_cycles') {
                             updateSelectedDayInfo(data.dayIndex, data.cycles);
+                        }
+                        
+                        if (data.type === 'config_value') {
+                            if (data.key === 'feed_travel_distance') {
+                                document.getElementById('feedTravelDistance').value = data.value;
+                            }
+                        }
+                        
+                        if (data.type === 'config_updated') {
+                            if (data.key === 'feed_travel_distance') {
+                                showConfigStatus('Configuration updated successfully!', 'success');
+                            }
                         }
                     } catch (error) {
                         console.error('Error parsing WebSocket message:', error);
@@ -1167,6 +1203,57 @@ const char* dashboardHTML = R"rawliteral(
             }
         }
         
+        // Configuration functions
+        function showConfigStatus(message, type) {
+            const statusEl = document.getElementById('configStatus');
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            
+            if (type === 'success') {
+                statusEl.style.background = 'rgba(34, 197, 94, 0.2)';
+                statusEl.style.border = '1px solid rgba(34, 197, 94, 0.4)';
+                statusEl.style.color = 'rgba(34, 197, 94, 0.9)';
+            } else if (type === 'error') {
+                statusEl.style.background = 'rgba(239, 68, 68, 0.2)';
+                statusEl.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                statusEl.style.color = 'rgba(239, 68, 68, 0.9)';
+            }
+            
+            // Hide status after 3 seconds
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+        
+        function updateFeedTravelDistance() {
+            const input = document.getElementById('feedTravelDistance');
+            const value = parseFloat(input.value);
+            
+            if (isNaN(value) || value < 0.1 || value > 10.0) {
+                showConfigStatus('Invalid value. Please enter a number between 0.1 and 10.0', 'error');
+                return;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'update_config',
+                    key: 'feed_travel_distance',
+                    value: value
+                }));
+            } else {
+                showConfigStatus('Not connected to server', 'error');
+            }
+        }
+        
+        function requestCurrentConfig() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'request_config',
+                    key: 'feed_travel_distance'
+                }));
+            }
+        }
+
         // Connect on page load
         connect();
         
@@ -1180,6 +1267,16 @@ const char* dashboardHTML = R"rawliteral(
         
         document.getElementById('nextMonth').addEventListener('click', function() {
             changeMonth(1);
+        });
+        
+        // Configuration event listeners
+        document.getElementById('updateFeedTravel').addEventListener('click', updateFeedTravelDistance);
+        
+        // Allow Enter key to update configuration
+        document.getElementById('feedTravelDistance').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                updateFeedTravelDistance();
+            }
         });
         
         // Handle manual reconnection

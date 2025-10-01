@@ -71,7 +71,6 @@ void onExitReturningYes2x4State() {
 void handleReturningYes2x4Sequence() {
     FastAccelStepper* feedMotor = getFeedMotor();
     FastAccelStepper* cutMotor = getCutMotor();
-    extern const float FEED_TRAVEL_DISTANCE;
     extern bool cutMotorInReturningYes2x4Return;
     
     switch (returningYes2x4SubStep) {
@@ -124,9 +123,6 @@ void handleReturningYes2x4Sequence() {
                     returningYes2x4SubStep = 3;
                 } else {
                     // Home switch not detected - try incremental move recovery
-                    extern const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
-                    extern const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
-                    extern const float CUT_MOTOR_STEPS_PER_INCH;
                     
                     if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
                         Serial.print("Attempting incremental move. Total moved: ");
@@ -250,9 +246,6 @@ void handleFeedMotorReturnSequence() {
 
 void handleFeedWoodMovement() {
     FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_MOTOR_HOMING_SPEED;
-    extern const float FEED_TRAVEL_DISTANCE;
-    extern const float FEED_MOTOR_STEPS_PER_INCH;
     
     // Non-blocking feed wood movement to configured distance
     switch (feedMotorHomingSubStep) {

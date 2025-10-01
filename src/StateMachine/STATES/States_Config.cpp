@@ -10,19 +10,19 @@
 //* ************************ SERVO CONFIGURATION **************************
 //* ************************************************************************
 // Rotation servo position settings
-const int ROTATION_SERVO_HOME_POSITION = 12.0;
-const int ROTATION_SERVO_ACTIVE_POSITION = 105;
+int ROTATION_SERVO_HOME_POSITION = 12;  // Now adjustable via dashboard
+int ROTATION_SERVO_ACTIVE_POSITION = 105;  // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ MOTOR CONFIGURATION **************************
 //* ************************************************************************
 // Motor step calculations and travel distances
-const float CUT_MOTOR_STEPS_PER_INCH = 500.0;  // 4x increase from 38
-const float FEED_MOTOR_STEPS_PER_INCH = 1000.0;
-const float CUT_TRAVEL_DISTANCE = 9.2;
-const float FEED_TRAVEL_DISTANCE = 3.4;
-const float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
-const float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
+float CUT_MOTOR_STEPS_PER_INCH = 500.0;  // Now adjustable via dashboard
+float FEED_MOTOR_STEPS_PER_INCH = 1000.0;  // Now adjustable via dashboard
+float CUT_TRAVEL_DISTANCE = 9.2;  // Now adjustable via dashboard
+float FEED_TRAVEL_DISTANCE = 3.43;  // Now adjustable via dashboard
+float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;  // Now adjustable via dashboard
+float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;  // Now adjustable via dashboard
 
 // Motor homing direction constants
 const int CUT_HOMING_DIRECTION = -1;
@@ -32,80 +32,80 @@ const int FEED_HOMING_DIRECTION = 1;
 //* ************************ CUT MOTOR SPEED SETTINGS ********************
 //* ************************************************************************
 // Normal Cutting Operation (Cutting State)
-const float CUT_MOTOR_NORMAL_SPEED = 640;
-const float CUT_MOTOR_NORMAL_ACCELERATION = 17000;
+float CUT_MOTOR_NORMAL_SPEED = 640;  // Now adjustable via dashboard
+float CUT_MOTOR_NORMAL_ACCELERATION = 17000;  // Now adjustable via dashboard
 
 // Return Stroke (Returning State / End of Cutting State)
-const float CUT_MOTOR_RETURN_SPEED = 25000;
+float CUT_MOTOR_RETURN_SPEED = 25000;  // Now adjustable via dashboard
 
 // Homing Operation (Homing State)
-const float CUT_MOTOR_HOMING_SPEED = 1500;
+float CUT_MOTOR_HOMING_SPEED = 1500;  // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ FEED MOTOR SPEED SETTINGS *******************
 //* ************************************************************************
 // Normal Feed Operation (Feed State / Parts of Cutting State)
-const float FEED_MOTOR_NORMAL_SPEED = 22000;
-const float FEED_MOTOR_NORMAL_ACCELERATION = 22000;
+float FEED_MOTOR_NORMAL_SPEED = 22000;  // Now adjustable via dashboard
+float FEED_MOTOR_NORMAL_ACCELERATION = 22000;  // Now adjustable via dashboard
 
 // Return to Home/Start (Returning State / End of Cutting State / Homing after initial move)
-const float FEED_MOTOR_RETURN_SPEED = 22000;
-const float FEED_MOTOR_RETURN_ACCELERATION = 30000;
+float FEED_MOTOR_RETURN_SPEED = 22000;  // Now adjustable via dashboard
+float FEED_MOTOR_RETURN_ACCELERATION = 30000;  // Now adjustable via dashboard
 
 // Homing Operation (Homing State)
-const float FEED_MOTOR_HOMING_SPEED = 2000;
+float FEED_MOTOR_HOMING_SPEED = 2000;  // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ TIMING CONFIGURATION *************************
 //* ************************************************************************
 // Servo timing configuration
-const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
+unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;  // Now adjustable via dashboard
 
 // Rotation clamp timing
-const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2300;
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2300;  // Now adjustable via dashboard
 
 // Cut motor homing timeout
-const unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds
+unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds - Now adjustable via dashboard
 
 // Transfer Arm signal timing
-const unsigned long TA_SIGNAL_DURATION = 500;
+unsigned long TA_SIGNAL_DURATION = 500;  // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ OPERATIONAL CONSTANTS ***********************
 //* ************************************************************************
 // Rotation clamp early activation offset
-const float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7; // 1.45 for 3 inch squares and 2.7 for 2.65 inch squares
+float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7; // Now adjustable via dashboard
 
 // Rotation servo early activation offset
-const float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
+float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;  // Now adjustable via dashboard
 
 // Transfer Arm signal early activation offset
-const float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
+float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;  // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ SAFETY CONSTANTS *****************************
 //* ************************************************************************
 // Rotation servo safety timing
-const unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000; // threshold for extended wait due to failure to suction
-const unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 3000; // additional safety delay before returning servo to home
-const unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150; // delay before returning servo to home regardless of suction state 
+unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000; // Now adjustable via dashboard
+unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 3000; // Now adjustable via dashboard
+unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150; // Now adjustable via dashboard 
 
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************
 //* ************************************************************************
 // Position and movement constants
-const long LARGE_POSITION_VALUE = 10000; // Large position value for homing moves
-const float FEED_MOTOR_RETURN_DISTANCE = 0.0;
-const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;
+long LARGE_POSITION_VALUE = 10000; // Now adjustable via dashboard
+float FEED_MOTOR_RETURN_DISTANCE = 0.0;  // Now adjustable via dashboard
+float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;  // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************
 //* ************************************************************************
 // Motor operation timing
-const unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Timeout for cut motor recovery attempts
-const unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Delay for final cut motor position verification
-const unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Delay for sensor reading stabilization
-const float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2; // Distance cut motor must travel before checking suction sensor
+unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Now adjustable via dashboard
+unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Now adjustable via dashboard
+unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Now adjustable via dashboard
+float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2; // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ******************** PRE-CALCULATED STEP VALUES ***********************

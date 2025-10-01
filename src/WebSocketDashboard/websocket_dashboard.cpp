@@ -2,6 +2,7 @@
 #include "WebSocketDashboard/dashboard_html.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/STATES/States_Config.h"
 #include "Config/Pins_Definitions.h"
 #include <ArduinoJson.h>
 #include <EEPROM.h>
@@ -28,6 +29,10 @@ bool reloadTimeActive = false;
 const int EEPROM_SIZE = 1024;
 const int DAILY_CYCLES_OFFSET = 0;
 const int MAX_DAYS = 255; // Fits in 1KB EEPROM (255 × 4 = 1,020 bytes)
+
+// Configuration storage - Need more space for all settings
+const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
+const int CONFIG_OFFSET = 0; // Configuration starts at beginning of extended EEPROM
 unsigned long dailyCycles[MAX_DAYS] = {0};
 String currentDate = "";
 
@@ -239,6 +244,294 @@ void getAllDailyCycles(unsigned long* cycles, int maxDays) {
     }
 }
 
+// Configuration structure for all settings
+struct ConfigurationData {
+    // Servo Configuration
+    int ROTATION_SERVO_HOME_POSITION;
+    int ROTATION_SERVO_ACTIVE_POSITION;
+    
+    // Motor Configuration
+    float CUT_MOTOR_STEPS_PER_INCH;
+    float FEED_MOTOR_STEPS_PER_INCH;
+    float CUT_TRAVEL_DISTANCE;
+    float FEED_TRAVEL_DISTANCE;
+    float CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
+    float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
+    
+    // Cut Motor Speed Settings
+    float CUT_MOTOR_NORMAL_SPEED;
+    float CUT_MOTOR_NORMAL_ACCELERATION;
+    float CUT_MOTOR_RETURN_SPEED;
+    float CUT_MOTOR_HOMING_SPEED;
+    
+    // Feed Motor Speed Settings
+    float FEED_MOTOR_NORMAL_SPEED;
+    float FEED_MOTOR_NORMAL_ACCELERATION;
+    float FEED_MOTOR_RETURN_SPEED;
+    float FEED_MOTOR_RETURN_ACCELERATION;
+    float FEED_MOTOR_HOMING_SPEED;
+    
+    // Timing Configuration
+    unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
+    unsigned long CUT_HOME_TIMEOUT;
+    unsigned long TA_SIGNAL_DURATION;
+    
+    // Operational Constants
+    float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
+    float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
+    float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    
+    // Safety Constants
+    unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS;
+    unsigned long ROTATION_SERVO_SAFETY_DELAY_MS;
+    unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
+    
+    // Motor Control Constants
+    long LARGE_POSITION_VALUE;
+    float FEED_MOTOR_RETURN_DISTANCE;
+    float FEED_MOTOR_OFFSET_FROM_SENSOR;
+    
+    // Timing Constants
+    unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS;
+    unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
+    unsigned long SENSOR_STABILIZATION_DELAY_MS;
+    float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
+    
+    // Version and checksum
+    uint32_t version;
+    uint32_t checksum;
+};
+
+// Default configuration values
+ConfigurationData getDefaultConfiguration() {
+    ConfigurationData config;
+    
+    // Servo Configuration
+    config.ROTATION_SERVO_HOME_POSITION = 12;
+    config.ROTATION_SERVO_ACTIVE_POSITION = 105;
+    
+    // Motor Configuration
+    config.CUT_MOTOR_STEPS_PER_INCH = 500.0;
+    config.FEED_MOTOR_STEPS_PER_INCH = 1000.0;
+    config.CUT_TRAVEL_DISTANCE = 9.2;
+    config.FEED_TRAVEL_DISTANCE = 3.43;
+    config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
+    config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
+    
+    // Cut Motor Speed Settings
+    config.CUT_MOTOR_NORMAL_SPEED = 640;
+    config.CUT_MOTOR_NORMAL_ACCELERATION = 17000;
+    config.CUT_MOTOR_RETURN_SPEED = 25000;
+    config.CUT_MOTOR_HOMING_SPEED = 1500;
+    
+    // Feed Motor Speed Settings
+    config.FEED_MOTOR_NORMAL_SPEED = 22000;
+    config.FEED_MOTOR_NORMAL_ACCELERATION = 22000;
+    config.FEED_MOTOR_RETURN_SPEED = 22000;
+    config.FEED_MOTOR_RETURN_ACCELERATION = 30000;
+    config.FEED_MOTOR_HOMING_SPEED = 2000;
+    
+    // Timing Configuration
+    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
+    config.ROTATION_CLAMP_EXTEND_DURATION_MS = 2300;
+    config.CUT_HOME_TIMEOUT = 5000;
+    config.TA_SIGNAL_DURATION = 500;
+    
+    // Operational Constants
+    config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
+    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
+    config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
+    
+    // Safety Constants
+    config.ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000;
+    config.ROTATION_SERVO_SAFETY_DELAY_MS = 3000;
+    config.ROTATION_SERVO_RETURN_DELAY_MS = 150;
+    
+    // Motor Control Constants
+    config.LARGE_POSITION_VALUE = 10000;
+    config.FEED_MOTOR_RETURN_DISTANCE = 0.0;
+    config.FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;
+    
+    // Timing Constants
+    config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;
+    config.CUT_MOTOR_VERIFICATION_DELAY_MS = 20;
+    config.SENSOR_STABILIZATION_DELAY_MS = 30;
+    config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2;
+    
+    config.version = 1;
+    config.checksum = 0; // Will be calculated
+    
+    return config;
+}
+
+// Apply configuration to global variables
+void applyConfiguration(const ConfigurationData& config) {
+    // Servo Configuration
+    ROTATION_SERVO_HOME_POSITION = config.ROTATION_SERVO_HOME_POSITION;
+    ROTATION_SERVO_ACTIVE_POSITION = config.ROTATION_SERVO_ACTIVE_POSITION;
+    
+    // Motor Configuration
+    CUT_MOTOR_STEPS_PER_INCH = config.CUT_MOTOR_STEPS_PER_INCH;
+    FEED_MOTOR_STEPS_PER_INCH = config.FEED_MOTOR_STEPS_PER_INCH;
+    CUT_TRAVEL_DISTANCE = config.CUT_TRAVEL_DISTANCE;
+    FEED_TRAVEL_DISTANCE = config.FEED_TRAVEL_DISTANCE;
+    CUT_MOTOR_INCREMENTAL_MOVE_INCHES = config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
+    CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
+    
+    // Cut Motor Speed Settings
+    CUT_MOTOR_NORMAL_SPEED = config.CUT_MOTOR_NORMAL_SPEED;
+    CUT_MOTOR_NORMAL_ACCELERATION = config.CUT_MOTOR_NORMAL_ACCELERATION;
+    CUT_MOTOR_RETURN_SPEED = config.CUT_MOTOR_RETURN_SPEED;
+    CUT_MOTOR_HOMING_SPEED = config.CUT_MOTOR_HOMING_SPEED;
+    
+    // Feed Motor Speed Settings
+    FEED_MOTOR_NORMAL_SPEED = config.FEED_MOTOR_NORMAL_SPEED;
+    FEED_MOTOR_NORMAL_ACCELERATION = config.FEED_MOTOR_NORMAL_ACCELERATION;
+    FEED_MOTOR_RETURN_SPEED = config.FEED_MOTOR_RETURN_SPEED;
+    FEED_MOTOR_RETURN_ACCELERATION = config.FEED_MOTOR_RETURN_ACCELERATION;
+    FEED_MOTOR_HOMING_SPEED = config.FEED_MOTOR_HOMING_SPEED;
+    
+    // Timing Configuration
+    ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    ROTATION_CLAMP_EXTEND_DURATION_MS = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
+    CUT_HOME_TIMEOUT = config.CUT_HOME_TIMEOUT;
+    TA_SIGNAL_DURATION = config.TA_SIGNAL_DURATION;
+    
+    // Operational Constants
+    ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
+    ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
+    TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    
+    // Safety Constants
+    ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = config.ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS;
+    ROTATION_SERVO_SAFETY_DELAY_MS = config.ROTATION_SERVO_SAFETY_DELAY_MS;
+    ROTATION_SERVO_RETURN_DELAY_MS = config.ROTATION_SERVO_RETURN_DELAY_MS;
+    
+    // Motor Control Constants
+    LARGE_POSITION_VALUE = config.LARGE_POSITION_VALUE;
+    FEED_MOTOR_RETURN_DISTANCE = config.FEED_MOTOR_RETURN_DISTANCE;
+    FEED_MOTOR_OFFSET_FROM_SENSOR = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
+    
+    // Timing Constants
+    CUT_MOTOR_RECOVERY_TIMEOUT_MS = config.CUT_MOTOR_RECOVERY_TIMEOUT_MS;
+    CUT_MOTOR_VERIFICATION_DELAY_MS = config.CUT_MOTOR_VERIFICATION_DELAY_MS;
+    SENSOR_STABILIZATION_DELAY_MS = config.SENSOR_STABILIZATION_DELAY_MS;
+    SUCTION_SENSOR_CHECK_DISTANCE_INCHES = config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
+}
+
+// Calculate checksum for configuration
+uint32_t calculateChecksum(const ConfigurationData& config) {
+    uint32_t checksum = 0;
+    const uint8_t* data = (const uint8_t*)&config;
+    size_t size = sizeof(config) - sizeof(config.checksum); // Exclude checksum field
+    
+    for (size_t i = 0; i < size; i++) {
+        checksum += data[i];
+    }
+    
+    return checksum;
+}
+
+// Configuration management functions
+void loadConfiguration() {
+    EEPROM.begin(CONFIG_EEPROM_SIZE);
+    
+    ConfigurationData config;
+    EEPROM.get(CONFIG_OFFSET, config);
+    
+    // Validate configuration
+    bool isValid = true;
+    
+    // Check version
+    if (config.version != 1) {
+        isValid = false;
+        Serial.println("Configuration version mismatch, using defaults");
+    }
+    
+    // Check checksum
+    uint32_t calculatedChecksum = calculateChecksum(config);
+    if (config.checksum != calculatedChecksum) {
+        isValid = false;
+        Serial.println("Configuration checksum invalid, using defaults");
+    }
+    
+    // Check for reasonable value ranges
+    if (config.FEED_TRAVEL_DISTANCE < 0.1 || config.FEED_TRAVEL_DISTANCE > 10.0) {
+        isValid = false;
+        Serial.println("FEED_TRAVEL_DISTANCE out of range, using defaults");
+    }
+    
+    if (!isValid) {
+        config = getDefaultConfiguration();
+        saveConfiguration();
+        Serial.println("Configuration loaded: Using default values");
+    } else {
+        Serial.println("Configuration loaded: Using stored values");
+    }
+    
+    applyConfiguration(config);
+}
+
+void saveConfiguration() {
+    ConfigurationData config;
+    
+    // Get current values
+    config.ROTATION_SERVO_HOME_POSITION = ROTATION_SERVO_HOME_POSITION;
+    config.ROTATION_SERVO_ACTIVE_POSITION = ROTATION_SERVO_ACTIVE_POSITION;
+    config.CUT_MOTOR_STEPS_PER_INCH = CUT_MOTOR_STEPS_PER_INCH;
+    config.FEED_MOTOR_STEPS_PER_INCH = FEED_MOTOR_STEPS_PER_INCH;
+    config.CUT_TRAVEL_DISTANCE = CUT_TRAVEL_DISTANCE;
+    config.FEED_TRAVEL_DISTANCE = FEED_TRAVEL_DISTANCE;
+    config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES = CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
+    config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
+    config.CUT_MOTOR_NORMAL_SPEED = CUT_MOTOR_NORMAL_SPEED;
+    config.CUT_MOTOR_NORMAL_ACCELERATION = CUT_MOTOR_NORMAL_ACCELERATION;
+    config.CUT_MOTOR_RETURN_SPEED = CUT_MOTOR_RETURN_SPEED;
+    config.CUT_MOTOR_HOMING_SPEED = CUT_MOTOR_HOMING_SPEED;
+    config.FEED_MOTOR_NORMAL_SPEED = FEED_MOTOR_NORMAL_SPEED;
+    config.FEED_MOTOR_NORMAL_ACCELERATION = FEED_MOTOR_NORMAL_ACCELERATION;
+    config.FEED_MOTOR_RETURN_SPEED = FEED_MOTOR_RETURN_SPEED;
+    config.FEED_MOTOR_RETURN_ACCELERATION = FEED_MOTOR_RETURN_ACCELERATION;
+    config.FEED_MOTOR_HOMING_SPEED = FEED_MOTOR_HOMING_SPEED;
+    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    config.ROTATION_CLAMP_EXTEND_DURATION_MS = ROTATION_CLAMP_EXTEND_DURATION_MS;
+    config.CUT_HOME_TIMEOUT = CUT_HOME_TIMEOUT;
+    config.TA_SIGNAL_DURATION = TA_SIGNAL_DURATION;
+    config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
+    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
+    config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    config.ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS;
+    config.ROTATION_SERVO_SAFETY_DELAY_MS = ROTATION_SERVO_SAFETY_DELAY_MS;
+    config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
+    config.LARGE_POSITION_VALUE = LARGE_POSITION_VALUE;
+    config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
+    config.FEED_MOTOR_OFFSET_FROM_SENSOR = FEED_MOTOR_OFFSET_FROM_SENSOR;
+    config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
+    config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
+    config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
+    config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES = SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
+    
+    config.version = 1;
+    config.checksum = calculateChecksum(config);
+    
+    EEPROM.put(CONFIG_OFFSET, config);
+    EEPROM.commit();
+    Serial.println("Configuration saved");
+}
+
+float getFeedTravelDistance() {
+    return FEED_TRAVEL_DISTANCE;
+}
+
+void setFeedTravelDistance(float value) {
+    if (value >= 0.1 && value <= 10.0) {
+        FEED_TRAVEL_DISTANCE = value;
+        saveConfiguration();
+        addEventToLog("Configuration updated: FEED_TRAVEL_DISTANCE = " + String(value));
+    }
+}
+
 // Initialize dashboard data structures
 void initializeDashboardData() {
     systemStartTime = millis();
@@ -246,6 +539,9 @@ void initializeDashboardData() {
     
     // Initialize daily cycles
     initializeDailyCycles();
+    
+    // Load configuration
+    loadConfiguration();
     
     // Initialize system status
     systemStatus.currentState = getStateName(getCurrentState());
@@ -816,6 +1112,34 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         String message;
                         serializeJson(response, message);
                         client->text(message);
+                    } else if (type == "update_config") {
+                        String configKey = doc["key"];
+                        if (configKey == "feed_travel_distance") {
+                            float newValue = doc["value"];
+                            setFeedTravelDistance(newValue);
+                            
+                            // Send confirmation back
+                            JsonDocument response;
+                            response["type"] = "config_updated";
+                            response["key"] = configKey;
+                            response["value"] = newValue;
+                            
+                            String message;
+                            serializeJson(response, message);
+                            client->text(message);
+                        }
+                    } else if (type == "request_config") {
+                        String configKey = doc["key"];
+                        if (configKey == "feed_travel_distance") {
+                            JsonDocument response;
+                            response["type"] = "config_value";
+                            response["key"] = configKey;
+                            response["value"] = getFeedTravelDistance();
+                            
+                            String message;
+                            serializeJson(response, message);
+                            client->text(message);
+                        }
                     }
                 }
             }

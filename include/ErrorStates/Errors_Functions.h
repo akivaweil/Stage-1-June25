@@ -126,22 +126,7 @@ extern const int STATUS_LED_RED;
 extern const int STATUS_LED_YELLOW;
 extern const int STATUS_LED_GREEN;
 extern const int STATUS_LED_BLUE;
-extern const int ROTATION_SERVO_ACTIVE_POSITION;
-extern const int ROTATION_SERVO_HOME_POSITION;
-extern const unsigned long TA_SIGNAL_DURATION;
-extern const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
-extern const float CUT_TRAVEL_DISTANCE;
-extern const float FEED_TRAVEL_DISTANCE;
-// CUT_MOTOR_STEPS_PER_INCH and FEED_MOTOR_STEPS_PER_INCH are declared in General_Functions.h
-extern const float CUT_MOTOR_NORMAL_SPEED;
-extern const float CUT_MOTOR_RETURN_SPEED;
-extern const float CUT_MOTOR_HOMING_SPEED;
-extern const float CUT_MOTOR_NORMAL_ACCELERATION;
-extern const float FEED_MOTOR_NORMAL_SPEED;
-extern const float FEED_MOTOR_RETURN_SPEED;
-extern const float FEED_MOTOR_HOMING_SPEED;
-extern const float FEED_MOTOR_NORMAL_ACCELERATION;
-extern const float FEED_MOTOR_RETURN_ACCELERATION;
+// Configuration constants moved to States_Config.h
 
 
 

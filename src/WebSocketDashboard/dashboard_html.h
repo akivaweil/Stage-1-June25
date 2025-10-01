@@ -1,7 +1,9 @@
 #ifndef DASHBOARD_HTML_H
 #define DASHBOARD_HTML_H
 
-const char* dashboardHTML = R"rawliteral(
+#include <Arduino.h>
+
+const char dashboardHTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -1005,7 +1005,9 @@ void setupWebSocketDashboard() {
     
     // Setup web server to serve the dashboard
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/html", dashboardHTML);
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", dashboardHTML);
+        response->addHeader("Connection", "close");
+        request->send(response);
     });
     
     // Setup WebSocket event handler

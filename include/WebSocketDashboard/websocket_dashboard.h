@@ -57,6 +57,10 @@ void getAllDailyCycles(unsigned long* cycles, int maxDays);
 void clearAllDailyCycles();
 void broadcastCalendarData();
 
+// Cutting cycle count persistence functions
+void saveCuttingCycleCount();
+void loadCuttingCycleCount();
+
 // Configuration management functions
 void loadConfiguration();
 void saveConfiguration();

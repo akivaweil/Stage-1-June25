@@ -28,6 +28,7 @@ bool reloadTimeActive = false;
 // Daily cycle tracking
 const int EEPROM_SIZE = 1024;
 const int DAILY_CYCLES_OFFSET = 0;
+const int CUTTING_CYCLE_COUNT_OFFSET = 1020; // Store cuttingCycleCount at end of EEPROM
 const int MAX_DAYS = 255; // Fits in 1KB EEPROM (255 × 4 = 1,020 bytes)
 
 // Configuration storage - Need more space for all settings
@@ -157,13 +158,30 @@ bool hasEventLogChanged() {
             eventLog.eventIndex != previousEventLog.eventIndex);
 }
 
+// Save cutting cycle count to EEPROM
+void saveCuttingCycleCount() {
+    EEPROM.put(CUTTING_CYCLE_COUNT_OFFSET, cuttingCycleCount);
+    EEPROM.commit();
+}
+
+// Load cutting cycle count from EEPROM
+void loadCuttingCycleCount() {
+    EEPROM.get(CUTTING_CYCLE_COUNT_OFFSET, cuttingCycleCount);
+}
+
 // Initialize EEPROM and load daily cycle data
 void initializeDailyCycles() {
     EEPROM.begin(EEPROM_SIZE);
     
-    // Clear all daily cycle data to fix corrupted EEPROM values
-    clearAllDailyCycles();
-    Serial.println("Daily cycle data cleared - starting fresh");
+    // Load existing daily cycle data from EEPROM
+    for (int i = 0; i < MAX_DAYS; i++) {
+        EEPROM.get(DAILY_CYCLES_OFFSET + (i * sizeof(unsigned long)), dailyCycles[i]);
+    }
+    Serial.println("Daily cycle data loaded from EEPROM");
+    
+    // Load cutting cycle count from EEPROM
+    loadCuttingCycleCount();
+    Serial.println("Cutting cycle count loaded: " + String(cuttingCycleCount));
     
     // Get current date
     currentDate = getCurrentDate();
@@ -1283,6 +1301,9 @@ void incrementCuttingCycleCounter() {
     cuttingCycleCount++;
     unsigned long cycleTime = millis() - lastCycleStartTime;
     lastCycleCompletionTime = millis(); // Record when this cycle completed
+    
+    // Save cutting cycle count to EEPROM
+    saveCuttingCycleCount();
     
     // Increment daily cycle count
     incrementDailyCycleCount();

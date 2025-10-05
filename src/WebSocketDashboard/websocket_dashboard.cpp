@@ -222,11 +222,22 @@ void saveDailyCycles() {
 
 // Increment daily cycle count
 void incrementDailyCycleCount() {
+    static int lastDayIndex = -1;  // Track the last day we incremented
     int dayIndex = getCurrentDayIndex();
-    dailyCycles[dayIndex]++;
+    
+    // Check if we've moved to a new day
+    if (lastDayIndex != -1 && dayIndex != lastDayIndex) {
+        // New day detected - reset counter for this day
+        dailyCycles[dayIndex] = 1;
+        Serial.println("New day detected! Day index changed from " + String(lastDayIndex) + " to " + String(dayIndex));
+    } else {
+        // Same day - increment counter
+        dailyCycles[dayIndex]++;
+    }
+    
+    lastDayIndex = dayIndex;  // Update last day index
     saveDailyCycles();
     Serial.println("Daily cycle count for day " + String(dayIndex) + ": " + String(dailyCycles[dayIndex]));
-    Serial.println("Total cycles in dailyCycles array: " + String(dailyCycles[dayIndex]));
 }
 
 // Get cycle count for specific day

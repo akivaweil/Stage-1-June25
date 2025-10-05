@@ -96,7 +96,7 @@ unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150; // Now adjustable via dashbo
 // Position and movement constants
 long LARGE_POSITION_VALUE = 10000; // Now adjustable via dashboard
 float FEED_MOTOR_RETURN_DISTANCE = 0.0;  // Now adjustable via dashboard
-float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;  // Now adjustable via dashboard
+float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.2;  // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************
@@ -105,7 +105,7 @@ float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;  // Now adjustable via dashboard
 unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000; // Now adjustable via dashboard
 unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20; // Now adjustable via dashboard
 unsigned long SENSOR_STABILIZATION_DELAY_MS = 30; // Now adjustable via dashboard
-float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2; // Now adjustable via dashboard
+float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 2.0; // Now adjustable via dashboard
 
 //* ************************************************************************
 //* ******************** PRE-CALCULATED STEP VALUES ***********************

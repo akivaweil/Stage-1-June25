@@ -1041,7 +1041,7 @@ void setupWebSocketDashboard() {
     
     // Setup web server to serve the dashboard
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", dashboardHTML);
+        AsyncWebServerResponse *response = request->beginResponse(200, "text/html", dashboardHTML);
         response->addHeader("Connection", "close");
         request->send(response);
     });
@@ -1149,6 +1149,16 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (0.1-10.0)";
                             }
+                        } else if (configKey == "feed_motor_offset_from_sensor") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.1 && newValue <= 2.0) {
+                                FEED_MOTOR_OFFSET_FROM_SENSOR = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: FEED_MOTOR_OFFSET_FROM_SENSOR = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (0.1-2.0)";
+                            }
                         } else if (configKey == "cut_travel_distance") {
                             float newValue = doc["value"];
                             if (newValue >= 1.0 && newValue <= 20.0) {
@@ -1226,6 +1236,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         // Return current values for all configuration settings
                         if (configKey == "feed_travel_distance") {
                             response["value"] = FEED_TRAVEL_DISTANCE;
+                        } else if (configKey == "feed_motor_offset_from_sensor") {
+                            response["value"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                         } else if (configKey == "cut_travel_distance") {
                             response["value"] = CUT_TRAVEL_DISTANCE;
                         } else if (configKey == "cut_motor_normal_speed") {
@@ -1251,6 +1263,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         JsonDocument response;
                         response["type"] = "all_config";
                         response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
+                        response["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                         response["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
                         response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
                         response["cut_motor_return_speed"] = CUT_MOTOR_RETURN_SPEED;

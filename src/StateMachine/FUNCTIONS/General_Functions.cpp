@@ -386,12 +386,12 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     }
     
     //serial.println("FEED HOME SENSOR DETECTED! Stopping motor...");
-    feedMotor->forceStopAndNewPosition(0);
-    //serial.println("Feed motor hit home sensor - staying at exact sensor position.");
+    feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+    //serial.println("Feed motor hit home sensor.");
     
-    // Set this position (at home sensor) as zero - no movement away from sensor
-    feedMotor->setCurrentPosition(0);
-    //serial.println("Feed motor homed: staying at exact home sensor position as zero.");
+    // Set this position (at home sensor) as FEED_TRAVEL_DISTANCE - no movement away from sensor
+    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+    //serial.println("Feed motor homed: staying at exact home sensor position as FEED_TRAVEL_DISTANCE.");
     
     configureFeedMotorForNormalOperation();
     //serial.println("Feed motor homed successfully.");

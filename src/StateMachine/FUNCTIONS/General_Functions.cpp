@@ -6,6 +6,7 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
 #include "StateMachine/StateManager.h"
+#include "WebSocketDashboard/websocket_dashboard.h"
 
 // External motor object references from main.cpp
 extern FastAccelStepper* cutMotor;
@@ -241,7 +242,7 @@ static uint32_t currentCutMotorSpeed = 0;
 
 void moveCutMotorToCut() {
     if (cutMotor) {
-        // Start with faster speed (start/end speed)
+        // Start with the initial speed for the acceleration curve (2000 Hz)
         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_START_END_SPEED);
         cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
         
@@ -251,37 +252,53 @@ void moveCutMotorToCut() {
 }
 
 void handleCutMotorReverseAccelerationCurve() {
-    if (!cutMotor) return;
+    if (!cutMotor) {
+        addEventToLog("DEBUG: cutMotor is null!");
+        return;
+    }
     
     long currentPosition = cutMotor->getCurrentPosition();
     long totalSteps = CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH;
     
-    // Calculate trapezoidal profile zones (25% for each transition, 50% for middle)
-    long transitionZoneSteps = totalSteps * 0.25; // 25% of total distance for each transition
-    long decelStart = transitionZoneSteps; // Start decelerating at 25%
-    long accelStart = totalSteps - transitionZoneSteps; // Start accelerating at 75%
+    // Calculate 50% zones: first 50% decelerate, last 50% accelerate
+    long halfwayPoint = totalSteps * 0.5; // 50% of total distance
     
     uint32_t targetSpeed;
     
-    if (currentPosition <= decelStart) {
-        // First 25%: Decelerate from 900 to 300 Hz
-        float progress = (float)currentPosition / decelStart; // 0.0 to 1.0
-        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 600 Hz
+    if (currentPosition <= halfwayPoint) {
+        // First 50%: Decelerate from 2000 to 200 Hz
+        float progress = (float)currentPosition / halfwayPoint; // 0.0 to 1.0
+        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 1800 Hz
         targetSpeed = CUT_MOTOR_START_END_SPEED - (speedRange * progress);
-    } else if (currentPosition >= accelStart) {
-        // Last 25%: Accelerate from 300 to 900 Hz
-        float progress = (float)(currentPosition - accelStart) / transitionZoneSteps; // 0.0 to 1.0
-        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 600 Hz
-        targetSpeed = CUT_MOTOR_MIDDLE_SPEED + (speedRange * progress);
     } else {
-        // Middle 50%: Constant 300 Hz
-        targetSpeed = CUT_MOTOR_MIDDLE_SPEED;
+        // Last 50%: Accelerate from 200 to 2000 Hz
+        float progress = (float)(currentPosition - halfwayPoint) / halfwayPoint; // 0.0 to 1.0
+        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 1800 Hz
+        targetSpeed = CUT_MOTOR_MIDDLE_SPEED + (speedRange * progress);
+    }
+    
+    // Debug: Show function is being called and current phase
+    static unsigned long lastDebugTime = 0;
+    if (millis() - lastDebugTime >= 500) { // Every 0.5 seconds for more detail
+        float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
+        String phase = (currentPosition <= halfwayPoint) ? "DECEL" : "ACCEL";
+        
+        String debugMsg = "DEBUG: " + phase + " phase at " + String(currentPositionInches, 2) + 
+                         " inches, target: " + String(targetSpeed) + " Hz";
+        addEventToLog(debugMsg);
+        lastDebugTime = millis();
     }
     
     // Only update speed if it has changed significantly (avoid constant updates)
     if (abs((int)currentCutMotorSpeed - (int)targetSpeed) > 5) {
         cutMotor->setSpeedInHz(targetSpeed);
         currentCutMotorSpeed = targetSpeed;
+        
+        // Debug output to verify speed changes
+        float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
+        String speedMsg = "Speed change at " + String(currentPositionInches, 2) + 
+                         " inches: " + String(targetSpeed) + " Hz";
+        addEventToLog(speedMsg);
     }
 }
 

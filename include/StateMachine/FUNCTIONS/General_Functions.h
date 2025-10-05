@@ -110,6 +110,7 @@ void configureFeedMotorForReturn();
 void configureFeedMotorForSlowOperation(float speedMultiplier);
 void moveCutMotorToCut();
 void moveCutMotorToHome();
+void handleCutMotorReverseAccelerationCurve();
 void moveFeedMotorToTravel();
 void moveFeedMotorToHome();
 void moveFeedMotorToPosition(float targetPositionInches);

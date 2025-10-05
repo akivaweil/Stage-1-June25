@@ -236,9 +236,45 @@ void configureFeedMotorForSlowOperation(float speedMultiplier) {
     }
 }
 
+// Static variable to track current cut motor speed for reverse acceleration curve
+static uint32_t currentCutMotorSpeed = 0;
+
 void moveCutMotorToCut() {
     if (cutMotor) {
+        // Start with faster speed (start/end speed)
+        cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_START_END_SPEED);
         cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
+        
+        // Initialize speed tracking for reverse acceleration curve
+        currentCutMotorSpeed = (uint32_t)CUT_MOTOR_START_END_SPEED;
+    }
+}
+
+void handleCutMotorReverseAccelerationCurve() {
+    if (!cutMotor) return;
+    
+    long currentPosition = cutMotor->getCurrentPosition();
+    long totalSteps = CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH;
+    long halfDistanceSteps = totalSteps / 2;
+    
+    // Calculate transition zones (10% of total distance for smooth transitions)
+    long transitionZoneSteps = totalSteps * 0.1;
+    long slowZoneStart = halfDistanceSteps - transitionZoneSteps;
+    long slowZoneEnd = halfDistanceSteps + transitionZoneSteps;
+    
+    // Determine current speed based on position
+    if (currentPosition >= slowZoneStart && currentPosition <= slowZoneEnd) {
+        // In slow zone (middle) - use middle speed
+        if (currentCutMotorSpeed != (uint32_t)CUT_MOTOR_MIDDLE_SPEED) {
+            cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_MIDDLE_SPEED);
+            currentCutMotorSpeed = (uint32_t)CUT_MOTOR_MIDDLE_SPEED;
+        }
+    } else {
+        // In fast zones (start/end) - use start/end speed
+        if (currentCutMotorSpeed != (uint32_t)CUT_MOTOR_START_END_SPEED) {
+            cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_START_END_SPEED);
+            currentCutMotorSpeed = (uint32_t)CUT_MOTOR_START_END_SPEED;
+        }
     }
 }
 

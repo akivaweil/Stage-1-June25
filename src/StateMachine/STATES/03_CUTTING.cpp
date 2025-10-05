@@ -87,6 +87,11 @@ void handleCuttingStep1() {
     //! ************************************************************************
     checkWoodPresentSensor();
 
+    //! ************************************************************************
+    //! REVERSE ACCELERATION CURVE: Handle speed transitions during cut
+    //! ************************************************************************
+    handleCutMotorReverseAccelerationCurve();
+
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && cutMotor->getCurrentPosition() >= SUCTION_SENSOR_CHECK_DISTANCE_STEPS) {
         Bounce* suctionSensor = getSuctionSensorBounce();
@@ -124,6 +129,11 @@ void handleCuttingStep2() {
     //! WOOD SENSOR CHECKING: Monitor wood present sensor every 100ms
     //! ************************************************************************
     checkWoodPresentSensor();
+    
+    //! ************************************************************************
+    //! REVERSE ACCELERATION CURVE: Handle speed transitions during cut
+    //! ************************************************************************
+    handleCutMotorReverseAccelerationCurve();
     
     static unsigned long lastDebugTime = 0;
     if (millis() - lastDebugTime >= 1000) {

@@ -25,6 +25,10 @@ extern float CUT_MOTOR_NORMAL_ACCELERATION;
 extern float CUT_MOTOR_RETURN_SPEED;
 extern float CUT_MOTOR_HOMING_SPEED;
 
+// Reverse Acceleration Curve Speeds
+extern float CUT_MOTOR_START_END_SPEED;
+extern float CUT_MOTOR_MIDDLE_SPEED;
+
 // Feed Motor Speed Settings
 extern float FEED_MOTOR_NORMAL_SPEED;
 extern float FEED_MOTOR_NORMAL_ACCELERATION;

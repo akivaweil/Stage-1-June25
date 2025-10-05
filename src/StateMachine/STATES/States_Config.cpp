@@ -35,6 +35,10 @@ const int FEED_HOMING_DIRECTION = 1;
 float CUT_MOTOR_NORMAL_SPEED = 640;  // Now adjustable via dashboard
 float CUT_MOTOR_NORMAL_ACCELERATION = 17000;  // Now adjustable via dashboard
 
+// Reverse Acceleration Curve Speeds
+float CUT_MOTOR_START_END_SPEED = 900;  // Now adjustable via dashboard
+float CUT_MOTOR_MIDDLE_SPEED = 300;  // Now adjustable via dashboard
+
 // Return Stroke (Returning State / End of Cutting State)
 float CUT_MOTOR_RETURN_SPEED = 25000;  // Now adjustable via dashboard
 

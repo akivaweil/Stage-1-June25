@@ -242,13 +242,19 @@ static uint32_t currentCutMotorSpeed = 0;
 
 void moveCutMotorToCut() {
     if (cutMotor) {
-        // Configure motor for acceleration curve: low acceleration to allow speed changes to take effect
-        cutMotor->setAcceleration(1000); // Low acceleration for smooth speed transitions
+        // Configure motor for acceleration curve: very low acceleration for smooth speed transitions
+        cutMotor->setAcceleration(500); // Very low acceleration for smooth speed transitions
         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_START_END_SPEED);
         cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
         
         // Initialize speed tracking for reverse acceleration curve
         currentCutMotorSpeed = (uint32_t)CUT_MOTOR_START_END_SPEED;
+        
+        // Debug: Show initial setup
+        String initMsg = "CUT MOTOR INIT: Start speed=" + String(CUT_MOTOR_START_END_SPEED) + 
+                        " Hz, Middle speed=" + String(CUT_MOTOR_MIDDLE_SPEED) + 
+                        " Hz, Total distance=" + String(CUT_TRAVEL_DISTANCE) + " inches";
+        addEventToLog(initMsg);
     }
 }
 
@@ -261,44 +267,44 @@ void handleCutMotorReverseAccelerationCurve() {
     long currentPosition = cutMotor->getCurrentPosition();
     long totalSteps = CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH;
     
-    // Calculate 50% zones: first 50% decelerate, last 50% accelerate
-    long halfwayPoint = totalSteps * 0.5; // 50% of total distance
+    // Calculate progress through the cut (0.0 to 1.0)
+    float progress = (float)currentPosition / totalSteps;
     
     uint32_t targetSpeed;
+    String phase;
     
-    if (currentPosition <= halfwayPoint) {
+    if (progress <= 0.5) {
         // First 50%: Decelerate from 2000 to 200 Hz
-        float progress = (float)currentPosition / halfwayPoint; // 0.0 to 1.0
-        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 1800 Hz
-        targetSpeed = CUT_MOTOR_START_END_SPEED - (speedRange * progress);
+        phase = "DECEL";
+        float phaseProgress = progress / 0.5; // 0.0 to 1.0 within first half
+        targetSpeed = CUT_MOTOR_START_END_SPEED - ((CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED) * phaseProgress);
     } else {
         // Last 50%: Accelerate from 200 to 2000 Hz
-        float progress = (float)(currentPosition - halfwayPoint) / halfwayPoint; // 0.0 to 1.0
-        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 1800 Hz
-        targetSpeed = CUT_MOTOR_MIDDLE_SPEED + (speedRange * progress);
+        phase = "ACCEL";
+        float phaseProgress = (progress - 0.5) / 0.5; // 0.0 to 1.0 within second half
+        targetSpeed = CUT_MOTOR_MIDDLE_SPEED + ((CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED) * phaseProgress);
     }
     
     // Debug: Show function is being called and current phase
     static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 500) { // Every 0.5 seconds for more detail
+    if (millis() - lastDebugTime >= 1000) { // Every 1 second for cleaner output
         float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
-        String phase = (currentPosition <= halfwayPoint) ? "DECEL" : "ACCEL";
+        float phaseProgress = (progress <= 0.5) ? (progress / 0.5) : ((progress - 0.5) / 0.5);
         
-        String debugMsg = "DEBUG: " + phase + " phase at " + String(currentPositionInches, 2) + 
-                         " inches, target: " + String(targetSpeed) + " Hz";
+        String debugMsg = "CURVE: " + phase + " at " + String(currentPositionInches, 2) + 
+                         " inches (" + String(progress * 100, 1) + "% total, " + String(phaseProgress * 100, 1) + "% phase), target: " + String(targetSpeed) + " Hz";
         addEventToLog(debugMsg);
         lastDebugTime = millis();
     }
     
-    // Only update speed if it has changed significantly (avoid constant updates)
-    if (abs((int)currentCutMotorSpeed - (int)targetSpeed) > 5) {
+    // Update speed more aggressively for better response
+    if (abs((int)currentCutMotorSpeed - (int)targetSpeed) > 2) {
         cutMotor->setSpeedInHz(targetSpeed);
         currentCutMotorSpeed = targetSpeed;
         
         // Debug output to verify speed changes
         float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
-        String speedMsg = "Speed change at " + String(currentPositionInches, 2) + 
-                         " inches: " + String(targetSpeed) + " Hz";
+        String speedMsg = "SPEED: " + String(currentPositionInches, 2) + " inches -> " + String(targetSpeed) + " Hz";
         addEventToLog(speedMsg);
     }
 }

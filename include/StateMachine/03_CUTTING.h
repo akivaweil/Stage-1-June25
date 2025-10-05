@@ -6,18 +6,33 @@
 //* ************************************************************************
 //* ************************** CUTTING STATE *******************************
 //* ************************************************************************
-// Handles the wood cutting operation with a clean 3-step process:
-// Step 0: Initialize cutting sequence - extend clamps and configure motors
-// Step 1: Check suction sensor and handle cut motor movement
-// Step 2: Monitor cut motor position, activate rotation components, and complete cut
+// Completely refactored cutting state with clean, organized structure
+// Handles wood cutting with acceleration curve, safety checks, and component activation
 
+// State Management
 void executeCuttingState();
 void onEnterCuttingState();
 void onExitCuttingState();
+void resetCuttingState();
+
+// Cutting Steps
+void handleCuttingInitialization();
+void handleCuttingExecution();
+void handleCuttingCompletion();
+
+// Monitoring Functions
+void monitorWoodSensor();
+void handleAccelerationCurve();
+void checkSuctionSensor();
+void activateComponentsAtPositions();
+
+// Error Handling
+void handleHomePositionError();
+
+// Legacy functions (for compatibility)
 void handleCuttingStep0();
 void handleCuttingStep1();
 void handleCuttingStep2();
-void handleHomePositionError();
 void resetCuttingSteps();
 void checkWoodPresentSensor();
 

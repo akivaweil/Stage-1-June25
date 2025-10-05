@@ -54,6 +54,7 @@ void saveDailyCycles();
 void incrementDailyCycleCount();
 unsigned long getDailyCycleCount(int dayIndex);
 void getAllDailyCycles(unsigned long* cycles, int maxDays);
+void clearAllDailyCycles();
 void broadcastCalendarData();
 
 // Configuration management functions

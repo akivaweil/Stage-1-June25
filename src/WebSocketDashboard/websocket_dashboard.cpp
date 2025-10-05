@@ -161,24 +161,9 @@ bool hasEventLogChanged() {
 void initializeDailyCycles() {
     EEPROM.begin(EEPROM_SIZE);
     
-    // Load daily cycle data from EEPROM
-    bool needsSaving = false;
-    for (int i = 0; i < MAX_DAYS; i++) {
-        EEPROM.get(DAILY_CYCLES_OFFSET + (i * sizeof(unsigned long)), dailyCycles[i]);
-        
-        // Check if EEPROM data is uninitialized (0xFFFFFFFF)
-        // If so, initialize to 0
-        if (dailyCycles[i] == 0xFFFFFFFF) {
-            dailyCycles[i] = 0;
-            needsSaving = true;
-        }
-    }
-    
-    // Save corrected data back to EEPROM if needed
-    if (needsSaving) {
-        saveDailyCycles();
-        Serial.println("EEPROM data corrected - uninitialized values set to 0");
-    }
+    // Clear all daily cycle data to fix corrupted EEPROM values
+    clearAllDailyCycles();
+    Serial.println("Daily cycle data cleared - starting fresh");
     
     // Get current date
     currentDate = getCurrentDate();
@@ -254,6 +239,15 @@ void getAllDailyCycles(unsigned long* cycles, int maxDays) {
     for (int i = 0; i < daysToCopy; i++) {
         cycles[i] = dailyCycles[i];
     }
+}
+
+// Clear all daily cycle data (reset EEPROM)
+void clearAllDailyCycles() {
+    for (int i = 0; i < MAX_DAYS; i++) {
+        dailyCycles[i] = 0;
+    }
+    saveDailyCycles();
+    Serial.println("All daily cycle data cleared from EEPROM");
 }
 
 // Configuration structure for all settings

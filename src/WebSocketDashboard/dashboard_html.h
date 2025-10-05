@@ -163,30 +163,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             border: 1px solid rgba(107, 114, 128, 0.25);
         }
         
-        /* LED-specific colors */
-        .status-item.led-red.active {
-            background: rgba(220, 38, 38, 0.6);
-            border: 2px solid rgba(220, 38, 38, 0.8);
-            box-shadow: 0 0 15px rgba(220, 38, 38, 0.5);
-        }
-        
-        .status-item.led-yellow.active {
-            background: rgba(255, 165, 0, 0.6);
-            border: 2px solid rgba(255, 165, 0, 0.8);
-            box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
-        }
-        
-        .status-item.led-green.active {
-            background: rgba(21, 128, 61, 0.6);
-            border: 2px solid rgba(21, 128, 61, 0.8);
-            box-shadow: 0 0 15px rgba(21, 128, 61, 0.5);
-        }
-        
-        .status-item.led-blue.active {
-            background: rgba(29, 78, 216, 0.6);
-            border: 2px solid rgba(29, 78, 216, 0.8);
-            box-shadow: 0 0 15px rgba(29, 78, 216, 0.5);
-        }
         
         .status-label {
             color: rgba(255, 255, 255, 0.8);
@@ -540,33 +516,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 </div>
                 <div class="status-item" id="sensor_reload">
                     <div class="status-label">Reload</div>
-                    <div class="status-value">-</div>
-                </div>
-            </div>
-        </div>
-        
-        
-        <!-- LED Status Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-icon">💡</div>
-                <div class="card-title">Status LEDs</div>
-            </div>
-            <div class="status-grid">
-                <div class="status-item" id="led_red">
-                    <div class="status-label">Red</div>
-                    <div class="status-value">-</div>
-                </div>
-                <div class="status-item" id="led_yellow">
-                    <div class="status-label">Yellow</div>
-                    <div class="status-value">-</div>
-                </div>
-                <div class="status-item" id="led_green">
-                    <div class="status-label">Green</div>
-                    <div class="status-value">-</div>
-                </div>
-                <div class="status-item" id="led_blue">
-                    <div class="status-label">Blue</div>
                     <div class="status-value">-</div>
                 </div>
             </div>
@@ -1051,9 +1000,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                             updateSensorStatus(data);
                         }
                         
-                        if (data.type === 'led_status') {
-                            updateLEDStatus(data);
-                        }
                         
                         if (data.type === 'performance_metrics') {
                             document.getElementById('totalCycles').textContent = data.totalCycles || 0;
@@ -1151,12 +1097,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         }
         
         
-        function updateLEDStatus(data) {
-            updateLEDItem('led_red', data.red, 'led-red');
-            updateLEDItem('led_yellow', data.yellow, 'led-yellow');
-            updateLEDItem('led_green', data.green, 'led-green');
-            updateLEDItem('led_blue', data.blue, 'led-blue');
-        }
         
         function updateStatusItem(elementId, isActive) {
             const element = document.getElementById(elementId);
@@ -1166,13 +1106,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             valueElement.textContent = isActive ? 'ON' : 'OFF';
         }
         
-        function updateLEDItem(elementId, isActive, ledClass) {
-            const element = document.getElementById(elementId);
-            const valueElement = element.querySelector('.status-value');
-            
-            element.className = `status-item ${ledClass} ${isActive ? 'active' : 'inactive'}`;
-            valueElement.textContent = ''; // Remove ON/OFF text, just show color
-        }
         
         // Cycle timing functions removed - now shows time since last cycle completion
         

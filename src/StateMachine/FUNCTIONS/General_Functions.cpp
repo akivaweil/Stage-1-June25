@@ -335,8 +335,13 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     }
     
     //serial.println("Starting feed motor homing sequence...");
+    
+    // Check if home switch is already triggered at startup
+    homingSwitch.update();
+    bool homeSwitchAlreadyTriggered = (homingSwitch.read() == LOW);
+    
     //serial.print("Initial feed sensor state: ");
-    //serial.println(homingSwitch.read() == LOW ? "ACTIVE" : "INACTIVE");
+    //serial.println(homeSwitchAlreadyTriggered ? "ACTIVE (already triggered)" : "INACTIVE (need to move)");
     
     // Debug motor setup
     //serial.print("FEED_MOTOR_STEPS_PER_INCH value: ");
@@ -344,64 +349,69 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     //serial.print("FEED_MOTOR_HOMING_SPEED value: ");
     //serial.println(FEED_MOTOR_HOMING_SPEED);
     
-    // Step 1: Move toward home sensor until it triggers
-    feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-    
-    // Try using runForward() instead of moveTo() for more reliable operation
-    //serial.println("Starting feed motor forward run...");
-    feedMotor->runForward();
-    
-    // Verify motor started
-    delay(100); // Small delay to let motor start
-    //serial.print("Motor started - Running: ");
-    //serial.print(feedMotor->isRunning() ? "YES" : "NO");
-    //serial.print(", Position: ");
-    //serial.println(feedMotor->getCurrentPosition());
-
-    // Add timeout for feed motor homing
-    unsigned long startTime = millis();
-    const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
-
-    while (homingSwitch.read() != LOW) {
-        homingSwitch.update();
+    if (!homeSwitchAlreadyTriggered) {
+        // Step 1: Move toward home sensor until it triggers
+        feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
         
-        // Periodic status updates removed to reduce serial output
+        // Try using runForward() instead of moveTo() for more reliable operation
+        //serial.println("Starting feed motor forward run...");
+        feedMotor->runForward();
         
-        // If motor stopped running unexpectedly, restart it
-        static unsigned long lastRestartCheck = 0;
-        if (millis() - lastRestartCheck >= 1000) {
-            if (!feedMotor->isRunning()) {
-                //serial.println("Motor stopped unexpectedly! Restarting...");
-                feedMotor->runForward();
+        // Verify motor started
+        delay(100); // Small delay to let motor start
+        //serial.print("Motor started - Running: ");
+        //serial.print(feedMotor->isRunning() ? "YES" : "NO");
+        //serial.print(", Position: ");
+        //serial.println(feedMotor->getCurrentPosition());
+
+        // Add timeout for feed motor homing
+        unsigned long startTime = millis();
+        const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
+
+        while (homingSwitch.read() != LOW) {
+            homingSwitch.update();
+            
+            // Periodic status updates removed to reduce serial output
+            
+            // If motor stopped running unexpectedly, restart it
+            static unsigned long lastRestartCheck = 0;
+            if (millis() - lastRestartCheck >= 1000) {
+                if (!feedMotor->isRunning()) {
+                    //serial.println("Motor stopped unexpectedly! Restarting...");
+                    feedMotor->runForward();
+                }
+                lastRestartCheck = millis();
             }
-            lastRestartCheck = millis();
+            
+            // Check for timeout
+            if (millis() - startTime > FEED_HOME_TIMEOUT) {
+                //serial.println("Feed motor homing timeout!");
+                feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
+                return;
+            }
         }
         
-        // Check for timeout
-        if (millis() - startTime > FEED_HOME_TIMEOUT) {
-            //serial.println("Feed motor homing timeout!");
-            feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
-            return;
+        //serial.println("FEED HOME SENSOR DETECTED! Continuing 0.2 inches...");
+        
+        // Continue moving 0.2 inches after home sensor trigger
+        float continueDistanceInches = 0.2;
+        long continueSteps = continueDistanceInches * FEED_MOTOR_STEPS_PER_INCH;
+        
+        // Move forward 0.2 inches from current position
+        feedMotor->move(continueSteps);
+        
+        // Wait for movement to complete
+        while (feedMotor->isRunning()) {
+            // Wait for motor to finish the 0.2 inch movement
         }
+        
+        //serial.println("Feed motor homed: moved 0.2 inches past home sensor position as FEED_TRAVEL_DISTANCE.");
+    } else {
+        //serial.println("Home switch already triggered at startup - skipping movement and setting position directly.");
     }
     
-    //serial.println("FEED HOME SENSOR DETECTED! Continuing 0.3 inches...");
-    
-    // Continue moving 0.3 inches after home sensor trigger
-    float continueDistanceInches = 0.3;
-    long continueSteps = continueDistanceInches * FEED_MOTOR_STEPS_PER_INCH;
-    
-    // Move forward 0.3 inches from current position
-    feedMotor->move(continueSteps);
-    
-    // Wait for movement to complete
-    while (feedMotor->isRunning()) {
-        // Wait for motor to finish the 0.3 inch movement
-    }
-    
-    // Set the final position (0.3 inches past home sensor) as FEED_TRAVEL_DISTANCE
+    // Set the final position as FEED_TRAVEL_DISTANCE (either 0.2 inches past sensor or at sensor if already triggered)
     feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    //serial.println("Feed motor homed: moved 0.3 inches past home sensor position as FEED_TRAVEL_DISTANCE.");
     
     configureFeedMotorForNormalOperation();
     //serial.println("Feed motor homed successfully.");

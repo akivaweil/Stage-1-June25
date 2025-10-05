@@ -252,7 +252,8 @@ void moveCutMotorToHome() {
 
 void moveFeedMotorToTravel() {
     if (feedMotor) {
-        feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+        // Move to travel distance minus the offset from sensor to maintain proper positioning
+        feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
     }
 }
 

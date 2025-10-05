@@ -20,29 +20,28 @@
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 4: MOVE FEED MOTOR TO FEED_TRAVEL_DISTANCE - RE-EXTEND FEED CLAMP
+//! STEP 4: RE-EXTEND FEED CLAMP (FEED MOTOR STAYS AT HOME POSITION)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: SET ISHOMED FLAG TO TRUE WHEN ALL HOMING COMPLETE
+//! STEP 4: SET ISHOMED FLAG TO TRUE WHEN ALL HOMING COMPLETE
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 6: TURN OFF BLUE LED, TURN ON GREEN LED
+//! STEP 5: TURN OFF BLUE LED, TURN ON GREEN LED
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 7: ENSURE SERVO IS AT 2 DEGREES
+//! STEP 6: ENSURE SERVO IS AT 2 DEGREES
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: TRANSITION TO IDLE STATE
+//! STEP 7: TRANSITION TO IDLE STATE
 //! ************************************************************************
 
 // Static variables for homing state tracking
 static bool cutMotorHomed = false;
 static bool feedMotorHomed = false;
-static bool feedMotorMoved = false;
 static bool feedHomingPhaseInitiated = false;
 static unsigned long blinkTimer = 0;
 
@@ -50,7 +49,6 @@ void onEnterHomingState() {
     // Reset homing state variables when entering
     cutMotorHomed = false;
     feedMotorHomed = false;
-    feedMotorMoved = false;
     feedHomingPhaseInitiated = false;
     blinkTimer = 0;
 }
@@ -72,10 +70,8 @@ void executeHomingState() {
         Serial.print(cutMotorHomed);
         Serial.print(", feedMotorHomed: ");
         Serial.print(feedMotorHomed);
-        Serial.print(", feedMotorMoved: ");
-        Serial.print(feedMotorMoved);
         Serial.print(", feedHomingPhaseInitiated: ");
-        //serial.println(feedHomingPhaseInitiated);
+        Serial.println(feedHomingPhaseInitiated);
         lastDebugTime = millis();
     }
 
@@ -98,24 +94,15 @@ void executeHomingState() {
         }
         //serial.println("Calling homeFeedMotorBlocking...");
         homeFeedMotorBlocking(*getFeedHomingSwitch());
+        extendFeedClamp();
+        //serial.println("Feed clamp re-extended.");
         feedMotorHomed = true; 
         feedHomingPhaseInitiated = false; // Reset for next potential homing cycle
         //serial.println("Feed motor homing marked as successful.");
-    } else if (!feedMotorMoved) {
-        //serial.println("Moving feed motor to travel distance...");
-        extendFeedClamp();
-        //serial.println("Feed clamp re-extended.");
-        moveFeedMotorToTravel();
-        while(getFeedMotor()->isRunning()){
-            // Wait for feed motor to reach FEED_TRAVEL_DISTANCE
-        }
-        feedMotorMoved = true;
-        //serial.println("Feed motor moved to FEED_TRAVEL_DISTANCE (blocking complete).");
     } else {
         //serial.println("All homing steps complete! Transitioning to IDLE..."); 
         cutMotorHomed = false; 
         feedMotorHomed = false;
-        feedMotorMoved = false;
         
         extern bool isHomed; // This is in main.cpp
         isHomed = true; 

@@ -77,7 +77,7 @@ unsigned long TA_SIGNAL_DURATION = 500;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 
 // Rotation servo early activation offset
-float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.05;
+float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
 
 // Transfer Arm signal early activation offset
 float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
@@ -96,7 +96,7 @@ unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
 // Position and movement constants
 long LARGE_POSITION_VALUE = 10000;
 float FEED_MOTOR_RETURN_DISTANCE = 0.0;
-float FEED_MOTOR_OFFSET_FROM_SENSOR = 1.0;
+float FEED_MOTOR_OFFSET_FROM_SENSOR = 2.0;
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************

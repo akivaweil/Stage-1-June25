@@ -386,12 +386,12 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     }
     
     //serial.println("FEED HOME SENSOR DETECTED! Stopping motor...");
-    feedMotor->forceStopAndNewPosition(0);
+    feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
     //serial.println("Feed motor hit home sensor.");
     
-    // Move the offset distance in the negative direction from the sensor
-    //serial.println("Moving feed motor offset distance from home sensor...");
-    feedMotor->moveTo(-FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
+    // Step 2: Move to -0.3 inch from home sensor to establish working zero
+    //serial.println("Moving feed motor to -0.3 inch from home sensor...");
+    feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
     
     // Wait for move to complete with timeout
     unsigned long moveStartTime = millis();
@@ -403,7 +403,9 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         }
     }
     
-    //serial.println("Feed motor homed: offset distance from sensor set as working zero.");
+    // Step 3: Set this position (-0.3 inch from sensor) as the new zero
+    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+    //serial.println("Feed motor homed: 0.3 inch from sensor set as working zero.");
     
     configureFeedMotorForNormalOperation();
     //serial.println("Feed motor homed successfully.");

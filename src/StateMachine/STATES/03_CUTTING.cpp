@@ -68,7 +68,7 @@ void handleCuttingStep0() {
         Serial.println("WARNING: Wood not properly grabbed by transfer arm - rotation servo NOT homed for safety");
     }
 
-    configureCutMotorForCutting();
+    // Start cut motor with acceleration curve (configureCutMotorForCutting() not needed - handled in moveCutMotorToCut())
     moveCutMotorToCut();
     
     rotationClampActivatedThisCycle = false;

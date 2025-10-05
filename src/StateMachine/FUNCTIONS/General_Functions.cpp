@@ -242,7 +242,8 @@ static uint32_t currentCutMotorSpeed = 0;
 
 void moveCutMotorToCut() {
     if (cutMotor) {
-        // Start with the initial speed for the acceleration curve (2000 Hz)
+        // Configure motor for acceleration curve: low acceleration to allow speed changes to take effect
+        cutMotor->setAcceleration(1000); // Low acceleration for smooth speed transitions
         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_START_END_SPEED);
         cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
         

@@ -385,13 +385,23 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         }
     }
     
-    //serial.println("FEED HOME SENSOR DETECTED! Stopping motor...");
-    feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    //serial.println("Feed motor hit home sensor.");
+    //serial.println("FEED HOME SENSOR DETECTED! Continuing 0.3 inches...");
     
-    // Set this position (at home sensor) as FEED_TRAVEL_DISTANCE - no movement away from sensor
+    // Continue moving 0.3 inches after home sensor trigger
+    float continueDistanceInches = 0.3;
+    long continueSteps = continueDistanceInches * FEED_MOTOR_STEPS_PER_INCH;
+    
+    // Move forward 0.3 inches from current position
+    feedMotor->move(continueSteps);
+    
+    // Wait for movement to complete
+    while (feedMotor->isRunning()) {
+        // Wait for motor to finish the 0.3 inch movement
+    }
+    
+    // Set the final position (0.3 inches past home sensor) as FEED_TRAVEL_DISTANCE
     feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    //serial.println("Feed motor homed: staying at exact home sensor position as FEED_TRAVEL_DISTANCE.");
+    //serial.println("Feed motor homed: moved 0.3 inches past home sensor position as FEED_TRAVEL_DISTANCE.");
     
     configureFeedMotorForNormalOperation();
     //serial.println("Feed motor homed successfully.");

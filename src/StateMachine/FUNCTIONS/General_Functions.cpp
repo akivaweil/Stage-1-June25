@@ -255,26 +255,33 @@ void handleCutMotorReverseAccelerationCurve() {
     
     long currentPosition = cutMotor->getCurrentPosition();
     long totalSteps = CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH;
-    long halfDistanceSteps = totalSteps / 2;
     
-    // Calculate transition zones (10% of total distance for smooth transitions)
-    long transitionZoneSteps = totalSteps * 0.1;
-    long slowZoneStart = halfDistanceSteps - transitionZoneSteps;
-    long slowZoneEnd = halfDistanceSteps + transitionZoneSteps;
+    // Calculate trapezoidal profile zones (25% for each transition, 50% for middle)
+    long transitionZoneSteps = totalSteps * 0.25; // 25% of total distance for each transition
+    long decelStart = transitionZoneSteps; // Start decelerating at 25%
+    long accelStart = totalSteps - transitionZoneSteps; // Start accelerating at 75%
     
-    // Determine current speed based on position
-    if (currentPosition >= slowZoneStart && currentPosition <= slowZoneEnd) {
-        // In slow zone (middle) - use middle speed
-        if (currentCutMotorSpeed != (uint32_t)CUT_MOTOR_MIDDLE_SPEED) {
-            cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_MIDDLE_SPEED);
-            currentCutMotorSpeed = (uint32_t)CUT_MOTOR_MIDDLE_SPEED;
-        }
+    uint32_t targetSpeed;
+    
+    if (currentPosition <= decelStart) {
+        // First 25%: Decelerate from 900 to 300 Hz
+        float progress = (float)currentPosition / decelStart; // 0.0 to 1.0
+        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 600 Hz
+        targetSpeed = CUT_MOTOR_START_END_SPEED - (speedRange * progress);
+    } else if (currentPosition >= accelStart) {
+        // Last 25%: Accelerate from 300 to 900 Hz
+        float progress = (float)(currentPosition - accelStart) / transitionZoneSteps; // 0.0 to 1.0
+        float speedRange = CUT_MOTOR_START_END_SPEED - CUT_MOTOR_MIDDLE_SPEED; // 600 Hz
+        targetSpeed = CUT_MOTOR_MIDDLE_SPEED + (speedRange * progress);
     } else {
-        // In fast zones (start/end) - use start/end speed
-        if (currentCutMotorSpeed != (uint32_t)CUT_MOTOR_START_END_SPEED) {
-            cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_START_END_SPEED);
-            currentCutMotorSpeed = (uint32_t)CUT_MOTOR_START_END_SPEED;
-        }
+        // Middle 50%: Constant 300 Hz
+        targetSpeed = CUT_MOTOR_MIDDLE_SPEED;
+    }
+    
+    // Only update speed if it has changed significantly (avoid constant updates)
+    if (abs((int)currentCutMotorSpeed - (int)targetSpeed) > 5) {
+        cutMotor->setSpeedInHz(targetSpeed);
+        currentCutMotorSpeed = targetSpeed;
     }
 }
 

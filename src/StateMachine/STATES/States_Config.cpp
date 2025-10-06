@@ -96,7 +96,7 @@ unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
 // Position and movement constants
 long LARGE_POSITION_VALUE = 10000;
 float FEED_MOTOR_RETURN_DISTANCE = 0.0;
-float FEED_MOTOR_OFFSET_FROM_SENSOR = 2.0;
+const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;  // Hardcoded offset - not adjustable via dashboard
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************

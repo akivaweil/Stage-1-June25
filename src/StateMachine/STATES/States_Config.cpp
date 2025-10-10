@@ -10,8 +10,8 @@
 //* ************************ SERVO CONFIGURATION **************************
 //* ************************************************************************
 // Rotation servo position settings
-int ROTATION_SERVO_HOME_POSITION = 12;  // Now adjustable via dashboard
-int ROTATION_SERVO_ACTIVE_POSITION = 105;  // Now adjustable via dashboard
+const int ROTATION_SERVO_HOME_POSITION = 5;
+const int ROTATION_SERVO_ACTIVE_POSITION = 100;
 
 //* ************************************************************************
 //* ************************ MOTOR CONFIGURATION **************************

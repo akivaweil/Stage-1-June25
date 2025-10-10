@@ -617,33 +617,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                             <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 1000 - 50000</div>
                         </div>
                     </div>
-                    
-                    <!-- Servo Configuration Section -->
-                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Servo Configuration</h3>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Rotation Servo Home Position</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="rotationServoHomePosition" step="1" min="0" max="180" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="12">
-                                <button onclick="updateConfig('rotation_servo_home_position')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0 - 180 degrees</div>
-                        </div>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Rotation Servo Active Position</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="rotationServoActivePosition" step="1" min="0" max="180" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="105">
-                                <button onclick="updateConfig('rotation_servo_active_position')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0 - 180 degrees</div>
-                        </div>
-                    </div>
                 </div>
                 
                 <div id="configStatus" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; display: none; margin-top: 16px;"></div>
@@ -1060,8 +1033,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                             updateConfigField('cut_motor_normal_speed', data.cut_motor_normal_speed);
                             updateConfigField('cut_motor_return_speed', data.cut_motor_return_speed);
                             updateConfigField('feed_motor_normal_speed', data.feed_motor_normal_speed);
-                            updateConfigField('rotation_servo_home_position', data.rotation_servo_home_position);
-                            updateConfigField('rotation_servo_active_position', data.rotation_servo_active_position);
                         }
                     } catch (error) {
                         console.error('Error parsing WebSocket message:', error);
@@ -1253,9 +1224,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             'cut_travel_distance': 'cutTravelDistance',
             'cut_motor_normal_speed': 'cutMotorNormalSpeed',
             'cut_motor_return_speed': 'cutMotorReturnSpeed',
-            'feed_motor_normal_speed': 'feedMotorNormalSpeed',
-            'rotation_servo_home_position': 'rotationServoHomePosition',
-            'rotation_servo_active_position': 'rotationServoActivePosition'
+            'feed_motor_normal_speed': 'feedMotorNormalSpeed'
         };
         
         function updateConfigField(key, value) {
@@ -1312,11 +1281,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 case 'feed_motor_normal_speed':
                     isValid = value >= 1000 && value <= 50000;
                     errorMsg = 'Range: 1000 - 50000';
-                    break;
-                case 'rotation_servo_home_position':
-                case 'rotation_servo_active_position':
-                    isValid = value >= 0 && value <= 180;
-                    errorMsg = 'Range: 0 - 180 degrees';
                     break;
             }
             

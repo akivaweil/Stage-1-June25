@@ -6,8 +6,8 @@
 //* ************************************************************************
 
 // Servo Configuration
-extern int ROTATION_SERVO_HOME_POSITION;
-extern int ROTATION_SERVO_ACTIVE_POSITION;
+extern const int ROTATION_SERVO_HOME_POSITION;
+extern const int ROTATION_SERVO_ACTIVE_POSITION;
 
 // Motor Configuration
 extern float CUT_MOTOR_STEPS_PER_INCH;

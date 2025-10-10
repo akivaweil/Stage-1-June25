@@ -270,10 +270,6 @@ void clearAllDailyCycles() {
 
 // Configuration structure for all settings
 struct ConfigurationData {
-    // Servo Configuration
-    int ROTATION_SERVO_HOME_POSITION;
-    int ROTATION_SERVO_ACTIVE_POSITION;
-    
     // Motor Configuration
     float CUT_MOTOR_STEPS_PER_INCH;
     float FEED_MOTOR_STEPS_PER_INCH;
@@ -331,10 +327,6 @@ struct ConfigurationData {
 ConfigurationData getDefaultConfiguration() {
     ConfigurationData config;
     
-    // Servo Configuration
-    config.ROTATION_SERVO_HOME_POSITION = 12;
-    config.ROTATION_SERVO_ACTIVE_POSITION = 105;
-    
     // Motor Configuration
     config.CUT_MOTOR_STEPS_PER_INCH = 500.0;
     config.FEED_MOTOR_STEPS_PER_INCH = 1000.0;
@@ -391,10 +383,6 @@ ConfigurationData getDefaultConfiguration() {
 
 // Apply configuration to global variables
 void applyConfiguration(const ConfigurationData& config) {
-    // Servo Configuration
-    ROTATION_SERVO_HOME_POSITION = config.ROTATION_SERVO_HOME_POSITION;
-    ROTATION_SERVO_ACTIVE_POSITION = config.ROTATION_SERVO_ACTIVE_POSITION;
-    
     // Motor Configuration
     CUT_MOTOR_STEPS_PER_INCH = config.CUT_MOTOR_STEPS_PER_INCH;
     FEED_MOTOR_STEPS_PER_INCH = config.FEED_MOTOR_STEPS_PER_INCH;
@@ -501,8 +489,6 @@ void saveConfiguration() {
     ConfigurationData config;
     
     // Get current values
-    config.ROTATION_SERVO_HOME_POSITION = ROTATION_SERVO_HOME_POSITION;
-    config.ROTATION_SERVO_ACTIVE_POSITION = ROTATION_SERVO_ACTIVE_POSITION;
     config.CUT_MOTOR_STEPS_PER_INCH = CUT_MOTOR_STEPS_PER_INCH;
     config.FEED_MOTOR_STEPS_PER_INCH = FEED_MOTOR_STEPS_PER_INCH;
     config.CUT_TRAVEL_DISTANCE = CUT_TRAVEL_DISTANCE;
@@ -1189,26 +1175,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (1000-50000)";
                             }
-                        } else if (configKey == "rotation_servo_home_position") {
-                            int newValue = doc["value"];
-                            if (newValue >= 0 && newValue <= 180) {
-                                ROTATION_SERVO_HOME_POSITION = newValue;
-                                saveConfiguration();
-                                response["value"] = newValue;
-                                addEventToLog("Configuration updated: ROTATION_SERVO_HOME_POSITION = " + String(newValue));
-                            } else {
-                                response["error"] = "Value out of range (0-180)";
-                            }
-                        } else if (configKey == "rotation_servo_active_position") {
-                            int newValue = doc["value"];
-                            if (newValue >= 0 && newValue <= 180) {
-                                ROTATION_SERVO_ACTIVE_POSITION = newValue;
-                                saveConfiguration();
-                                response["value"] = newValue;
-                                addEventToLog("Configuration updated: ROTATION_SERVO_ACTIVE_POSITION = " + String(newValue));
-                            } else {
-                                response["error"] = "Value out of range (0-180)";
-                            }
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1234,10 +1200,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             response["value"] = CUT_MOTOR_RETURN_SPEED;
                         } else if (configKey == "feed_motor_normal_speed") {
                             response["value"] = FEED_MOTOR_NORMAL_SPEED;
-                        } else if (configKey == "rotation_servo_home_position") {
-                            response["value"] = ROTATION_SERVO_HOME_POSITION;
-                        } else if (configKey == "rotation_servo_active_position") {
-                            response["value"] = ROTATION_SERVO_ACTIVE_POSITION;
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1255,8 +1217,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
                         response["cut_motor_return_speed"] = CUT_MOTOR_RETURN_SPEED;
                         response["feed_motor_normal_speed"] = FEED_MOTOR_NORMAL_SPEED;
-                        response["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
-                        response["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
                         
                         String message;
                         serializeJson(response, message);

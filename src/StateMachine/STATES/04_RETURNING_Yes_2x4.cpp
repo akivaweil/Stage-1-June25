@@ -100,7 +100,7 @@ void handleReturningYes2x4Sequence() {
                 
                 // Execute homing verification sequence - 3-attempt verification
                 for (int i = 0; i < 3; i++) {
-                    delay(30);
+                    delay(5);
                     getCutHomingSwitch()->update();
                     bool sensorReading = getCutHomingSwitch()->read();
                     

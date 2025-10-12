@@ -259,7 +259,7 @@ void checkWoodPresentSensor() {
     if (millis() - lastWoodSensorCheckTime >= 100) {
         // Read sensor multiple times for stability
         int sensorValue1 = digitalRead(_2x4_PRESENT_SENSOR);
-        delay(5); // Small delay between readings
+        delay(5);
         int sensorValue2 = digitalRead(_2x4_PRESENT_SENSOR);
         delay(5);
         int sensorValue3 = digitalRead(_2x4_PRESENT_SENSOR);

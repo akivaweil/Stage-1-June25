@@ -1357,8 +1357,14 @@ void onStateChange(SystemState newState) {
     systemStatus.systemHealth = getSystemHealth();
     systemStatus.lastStateChange = lastStateChangeTime;
     
-    // Broadcast updated status
-    broadcastSystemStatus();
+    // Skip immediate broadcast during critical motor transitions to avoid blocking
+    // The periodic update will catch it within 1 second
+    bool isCriticalTransition = (oldState == CUTTING && 
+                                 (newState == RETURNING_YES_2x4 || newState == RETURNING_NO_2x4));
+    
+    if (!isCriticalTransition) {
+        broadcastSystemStatus();
+    }
 }
 
 // Function to be called when errors occur

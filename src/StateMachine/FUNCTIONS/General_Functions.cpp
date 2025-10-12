@@ -207,6 +207,13 @@ void configureCutMotorForCutting() {
     }
 }
 
+void configureCutMotorForCuttingSlow() {
+    if (cutMotor) {
+        cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_NO_WOOD_SPEED);
+        cutMotor->setAcceleration((uint32_t)CUT_MOTOR_NORMAL_ACCELERATION);
+    }
+}
+
 void configureCutMotorForReturn() {
     if (cutMotor) {
         cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_RETURN_SPEED);

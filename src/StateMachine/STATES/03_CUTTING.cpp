@@ -68,7 +68,27 @@ void handleCuttingStep0() {
         Serial.println("WARNING: Wood not properly grabbed by transfer arm - rotation servo NOT homed for safety");
     }
 
-    configureCutMotorForCutting();
+    // Check wood sensor and configure speed accordingly
+    extern const int _2x4_PRESENT_SENSOR;
+    int sensorValue1 = digitalRead(_2x4_PRESENT_SENSOR);
+    delay(5);
+    int sensorValue2 = digitalRead(_2x4_PRESENT_SENSOR);
+    delay(5);
+    int sensorValue3 = digitalRead(_2x4_PRESENT_SENSOR);
+
+    int lowCount = 0;
+    if (sensorValue1 == LOW) lowCount++;
+    if (sensorValue2 == LOW) lowCount++;
+    if (sensorValue3 == LOW) lowCount++;
+
+    bool woodPresent = (lowCount >= 2);
+
+    if (!woodPresent) {
+        configureCutMotorForCuttingSlow();
+        Serial.println("No wood detected - cutting at 60% speed");
+    } else {
+        configureCutMotorForCutting();
+    }
     moveCutMotorToCut();
     
     rotationClampActivatedThisCycle = false;

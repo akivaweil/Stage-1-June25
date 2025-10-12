@@ -22,6 +22,7 @@ extern const int FEED_HOMING_DIRECTION;
 // Cut Motor Speed Settings
 extern float CUT_MOTOR_NORMAL_SPEED;
 extern float CUT_MOTOR_NORMAL_ACCELERATION;
+extern float CUT_MOTOR_NO_WOOD_SPEED;
 extern float CUT_MOTOR_RETURN_SPEED;
 extern float CUT_MOTOR_HOMING_SPEED;
 

@@ -104,6 +104,7 @@ void handleHomingLedBlink();
 //* *********************** MOTOR CONTROL FUNCTIONS ************************
 //* ************************************************************************
 void configureCutMotorForCutting();
+void configureCutMotorForCuttingSlow();
 void configureCutMotorForReturn();
 void configureFeedMotorForNormalOperation();
 void configureFeedMotorForReturn();

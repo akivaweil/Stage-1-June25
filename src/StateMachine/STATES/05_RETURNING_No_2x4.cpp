@@ -14,7 +14,7 @@ const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 ret
 
 // Feed motor position constants
 const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
-const float FEED_MOTOR_HOME_POSITION = 2.0; // Home position
+const float FEED_MOTOR_HOME_POSITION = 1.0; // Home position
 const float FEED_MOTOR_FINAL_POSITION = -1.2; // Final position
 
 // Step enumeration for better readability

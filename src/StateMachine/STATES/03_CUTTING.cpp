@@ -175,8 +175,30 @@ void handleCuttingStep2() {
         configureCutMotorForReturn();
         transferArmSignalSentThisCycle = false;
 
-        int sensorValue = digitalRead(_2x4_PRESENT_SENSOR);
-        bool no2x4Detected = (sensorValue == HIGH);
+        // Use stable sensor reading with multiple samples (same as checkWoodPresentSensor)
+        int sensorValue1 = digitalRead(_2x4_PRESENT_SENSOR);
+        delay(5);
+        int sensorValue2 = digitalRead(_2x4_PRESENT_SENSOR);
+        delay(5);
+        int sensorValue3 = digitalRead(_2x4_PRESENT_SENSOR);
+        
+        // Majority vote: wood present if 2 or more readings are LOW
+        int lowCount = 0;
+        if (sensorValue1 == LOW) lowCount++;
+        if (sensorValue2 == LOW) lowCount++;
+        if (sensorValue3 == LOW) lowCount++;
+        
+        bool woodPresent = (lowCount >= 2);
+        bool no2x4Detected = !woodPresent;
+        
+        // Update LED before state transition for visual feedback
+        if (no2x4Detected) {
+            turnBlueLedOn();
+            turnYellowLedOff();
+        } else {
+            turnYellowLedOn();
+            turnBlueLedOff();
+        }
         
         if (no2x4Detected) {
             changeState(RETURNING_NO_2x4);

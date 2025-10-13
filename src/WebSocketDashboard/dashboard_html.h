@@ -460,27 +460,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
         </div>
         
-        <!-- Daily Cycles Calendar Card -->
-        <div class="card full-width">
-            <div class="card-header">
-                <div class="card-icon">📅</div>
-                <div class="card-title">Daily Cutting Cycles</div>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <button id="prevMonth" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">← Previous</button>
-                    <h3 id="currentMonth" style="color: white; font-size: 1.2rem; font-weight: 600; margin: 0;">January 2024</h3>
-                    <button id="nextMonth" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">Next →</button>
-                </div>
-                <div id="calendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: rgba(0, 0, 0, 0.2); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <!-- Calendar will be populated by JavaScript -->
-                </div>
-                <div id="selectedDayInfo" style="margin-top: 16px; padding: 16px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); display: none;">
-                    <div style="color: white; font-size: 1.1rem; font-weight: 600;" id="selectedDayText">Selected Day</div>
-                    <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-top: 4px;" id="selectedDayCycles">Cycles: 0</div>
-                </div>
-            </div>
-        </div>
         
         <!-- Sensor Status Card -->
         <div class="card">
@@ -655,12 +634,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         const heartbeatIntervalMs = 500; // Send ping every 0.5 seconds (more aggressive)
         const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
         
-        // Calendar variables
-        let dailyCycles = [];
-        let currentMonth = new Date().getMonth(); // Start with current month
-        let currentYear = new Date().getFullYear(); // Start with current year
-        let selectedDay = null;
-        let currentDayIndex = 0; // Current day index from ESP32
         
         // Cycle timing variables (removed smooth ticking - now shows time since last cycle)
         
@@ -756,153 +729,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             }, delay);
         }
         
-        // Calendar functions
-        function updateCalendar() {
-            const calendar = document.getElementById('calendar');
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                              'July', 'August', 'September', 'October', 'November', 'December'];
-            
-            // Update month header
-            document.getElementById('currentMonth').textContent = monthNames[currentMonth] + ' ' + currentYear;
-            
-            // Clear calendar
-            calendar.innerHTML = '';
-            
-            // Add day headers
-            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            dayHeaders.forEach(day => {
-                const dayHeader = document.createElement('div');
-                dayHeader.style.cssText = 'text-align: center; padding: 8px; color: rgba(255, 255, 255, 0.7); font-weight: 600; font-size: 0.9rem;';
-                dayHeader.textContent = day;
-                calendar.appendChild(dayHeader);
-            });
-            
-            // Get first day of month and days in month
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            
-            // Add empty cells for days before month starts
-            for (let i = 0; i < firstDay; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.style.cssText = 'height: 40px; background: transparent;';
-                calendar.appendChild(emptyDay);
-            }
-            
-            // Add days of month
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayElement = document.createElement('div');
-                dayElement.style.cssText = 'height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 1px solid rgba(255, 255, 255, 0.1);';
-                
-                // Calculate ESP32 day index for this calendar day
-                // ESP32 uses a rolling 255-day buffer (0-254) based on system uptime
-                // Map calendar days to ESP32 day indices by calculating days since a reference point
-                const today = new Date();
-                const currentDate = new Date(currentYear, currentMonth, day);
-                const daysDiff = Math.floor((today - currentDate) / (1000 * 60 * 60 * 24));
-                const dayIndex = (currentDayIndex - daysDiff + 255) % 255;
-                const cycles = dailyCycles[dayIndex] || 0;
-                
-                // Day number
-                const dayNumber = document.createElement('div');
-                dayNumber.style.cssText = 'color: white; font-weight: 600; font-size: 0.9rem;';
-                dayNumber.textContent = day;
-                
-                dayElement.appendChild(dayNumber);
-                
-                // Cycle count - only show if cycles > 0, with distinct styling
-                if (cycles > 0) {
-                    const cycleCount = document.createElement('div');
-                    cycleCount.style.cssText = 'color: rgba(34, 197, 94, 0.9); font-size: 0.7rem; margin-top: 2px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);';
-                    cycleCount.textContent = cycles;
-                    dayElement.appendChild(cycleCount);
-                    
-                    // Also highlight the day background slightly for days with activity
-                    dayElement.style.background = 'rgba(34, 197, 94, 0.15)';
-                    dayElement.style.border = '1px solid rgba(34, 197, 94, 0.3)';
-                }
-                
-                // Add hover effects
-                dayElement.addEventListener('mouseenter', function() {
-                    this.style.background = 'rgba(255, 255, 255, 0.2)';
-                    this.style.transform = 'scale(1.05)';
-                });
-                
-                dayElement.addEventListener('mouseleave', function() {
-                    this.style.background = 'rgba(255, 255, 255, 0.1)';
-                    this.style.transform = 'scale(1)';
-                });
-                
-                // Add click handler
-                dayElement.addEventListener('click', function() {
-                    selectDay(dayIndex, day, cycles);
-                });
-                
-                // Highlight current day (today)
-                if (day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear()) {
-                    dayElement.style.background = 'rgba(34, 197, 94, 0.3)';
-                    dayElement.style.border = '2px solid rgba(34, 197, 94, 0.6)';
-                }
-                
-                // Highlight ESP32 current day (where new cycles are being recorded)
-                const esp32CurrentDate = new Date(currentYear, currentMonth, day);
-                const esp32DaysDiff = Math.floor((today - esp32CurrentDate) / (1000 * 60 * 60 * 24));
-                const esp32DayIndex = (currentDayIndex - esp32DaysDiff + 255) % 255;
-                if (esp32DayIndex === currentDayIndex) {
-                    dayElement.style.background = 'rgba(59, 130, 246, 0.4)';
-                    dayElement.style.border = '2px solid rgba(59, 130, 246, 0.7)';
-                    // Add a small indicator
-                    const indicator = document.createElement('div');
-                    indicator.style.cssText = 'position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; background: rgba(59, 130, 246, 0.8); border-radius: 50%;';
-                    dayElement.style.position = 'relative';
-                    dayElement.appendChild(indicator);
-                }
-                
-                calendar.appendChild(dayElement);
-            }
-        }
-        
-        function selectDay(dayIndex, day, cycles) {
-            selectedDay = { dayIndex, day, cycles };
-            
-            // Update selected day info
-            const selectedDayInfo = document.getElementById('selectedDayInfo');
-            const selectedDayText = document.getElementById('selectedDayText');
-            const selectedDayCycles = document.getElementById('selectedDayCycles');
-            
-            selectedDayText.textContent = `Day ${day} (Index: ${dayIndex})`;
-            selectedDayCycles.textContent = `Cycles: ${cycles}`;
-            selectedDayInfo.style.display = 'block';
-            
-            // Request detailed data for this day
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({type: 'request_daily_cycles', dayIndex: dayIndex}));
-            }
-        }
-        
-        function updateSelectedDayInfo(dayIndex, cycles) {
-            if (selectedDay && selectedDay.dayIndex === dayIndex) {
-                selectedDay.cycles = cycles;
-                document.getElementById('selectedDayCycles').textContent = `Cycles: ${cycles}`;
-            }
-        }
-        
-        function changeMonth(direction) {
-            currentMonth += direction;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            } else if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
-            updateCalendar();
-        }
-        
-        function requestCalendarData() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({type: 'request_calendar_data'}));
-            }
-        }
 
         function connect() {
             if (reconnectTimeout) {
@@ -934,8 +760,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                     startHeartbeat();
                     console.log('WebSocket connected successfully');
                     
-                    // Request calendar data when connected
-                    requestCalendarData();
                     
                     // Request all configuration values
                     requestAllConfig();
@@ -995,15 +819,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                             updateEventLog(data.events);
                         }
                         
-                        if (data.type === 'calendar_data') {
-                            dailyCycles = data.dailyCycles || [];
-                            currentDayIndex = data.currentDayIndex || 0;
-                            updateCalendar();
-                        }
-                        
-                        if (data.type === 'daily_cycles') {
-                            updateSelectedDayInfo(data.dayIndex, data.cycles);
-                        }
                         
                         if (data.type === 'config_value') {
                             updateConfigField(data.key, data.value);
@@ -1304,18 +1119,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         console.log('Body background:', window.getComputedStyle(document.body).background);
         connect();
         
-        // Initialize calendar
-        updateCalendar();
         console.log('Dashboard initialized successfully');
-        
-        // Calendar event listeners
-        document.getElementById('prevMonth').addEventListener('click', function() {
-            changeMonth(-1);
-        });
-        
-        document.getElementById('nextMonth').addEventListener('click', function() {
-            changeMonth(1);
-        });
         
         // Configuration event listeners - using onclick handlers in HTML instead
         

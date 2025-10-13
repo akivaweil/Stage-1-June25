@@ -24,16 +24,10 @@ unsigned long reloadTimeStart = 0;
 float reloadTimeSeconds = 0.0;
 bool reloadTimeActive = false;
 
-// Daily cycle tracking
-const int EEPROM_SIZE = 1024;
-const int DAILY_CYCLES_OFFSET = 0;
-const int MAX_DAYS = 255; // Fits in 1KB EEPROM (255 × 4 = 1,020 bytes)
 
 // Configuration storage - Need more space for all settings
 const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
 const int CONFIG_OFFSET = 0; // Configuration starts at beginning of extended EEPROM
-unsigned long dailyCycles[MAX_DAYS] = {0};
-String currentDate = "";
 
 // Enhanced dashboard data structures
 SystemStatus systemStatus;
@@ -156,101 +150,6 @@ bool hasEventLogChanged() {
 }
 
 
-// Initialize EEPROM and load daily cycle data
-void initializeDailyCycles() {
-    EEPROM.begin(EEPROM_SIZE);
-    
-    // Load existing daily cycle data from EEPROM
-    for (int i = 0; i < MAX_DAYS; i++) {
-        EEPROM.get(DAILY_CYCLES_OFFSET + (i * sizeof(unsigned long)), dailyCycles[i]);
-    }
-    Serial.println("Daily cycle data loaded from EEPROM");
-    
-    
-    // Get current date
-    currentDate = getCurrentDate();
-    Serial.println("Daily cycles initialized. Current date: " + currentDate);
-}
-
-// Get current date as YYYY-MM-DD string
-String getCurrentDate() {
-    // For now, use a simple day counter based on system uptime
-    // In a real implementation, you'd use an RTC or NTP time
-    unsigned long daysSinceStart = (millis() - systemStartTime) / (24UL * 60 * 60 * 1000);
-    return "2024-01-" + String((daysSinceStart % 30) + 1);
-}
-
-// Get day index for current date (0-254)
-int getCurrentDayIndex() {
-    // Simple implementation - in real use, parse actual date
-    // Use a more stable calculation to ensure consistent day indexing
-    unsigned long daysSinceStart = (millis() - systemStartTime) / (24UL * 60 * 60 * 1000);
-    int dayIndex = daysSinceStart % MAX_DAYS;
-    
-    // Only log day index changes occasionally to avoid spam
-    static int lastDayIndex = -1;
-    static unsigned long lastLogTime = 0;
-    if (dayIndex != lastDayIndex && (millis() - lastLogTime) > 60000) { // Log max once per minute
-        Serial.println("Day index changed to: " + String(dayIndex) + " (days since start: " + String(daysSinceStart) + ")");
-        lastDayIndex = dayIndex;
-        lastLogTime = millis();
-    }
-    
-    return dayIndex;
-}
-
-// Save daily cycles to EEPROM
-void saveDailyCycles() {
-    for (int i = 0; i < MAX_DAYS; i++) {
-        EEPROM.put(DAILY_CYCLES_OFFSET + (i * sizeof(unsigned long)), dailyCycles[i]);
-    }
-    EEPROM.commit();
-}
-
-// Increment daily cycle count
-void incrementDailyCycleCount() {
-    static int lastDayIndex = -1;  // Track the last day we incremented
-    int dayIndex = getCurrentDayIndex();
-    
-    // Check if we've moved to a new day
-    if (lastDayIndex != -1 && dayIndex != lastDayIndex) {
-        // New day detected - reset counter for this day
-        dailyCycles[dayIndex] = 1;
-        Serial.println("New day detected! Day index changed from " + String(lastDayIndex) + " to " + String(dayIndex));
-    } else {
-        // Same day - increment counter
-        dailyCycles[dayIndex]++;
-    }
-    
-    lastDayIndex = dayIndex;  // Update last day index
-    saveDailyCycles();
-    Serial.println("Daily cycle count for day " + String(dayIndex) + ": " + String(dailyCycles[dayIndex]));
-}
-
-// Get cycle count for specific day
-unsigned long getDailyCycleCount(int dayIndex) {
-    if (dayIndex >= 0 && dayIndex < MAX_DAYS) {
-        return dailyCycles[dayIndex];
-    }
-    return 0;
-}
-
-// Get all daily cycle data
-void getAllDailyCycles(unsigned long* cycles, int maxDays) {
-    int daysToCopy = min(maxDays, MAX_DAYS);
-    for (int i = 0; i < daysToCopy; i++) {
-        cycles[i] = dailyCycles[i];
-    }
-}
-
-// Clear all daily cycle data (reset EEPROM)
-void clearAllDailyCycles() {
-    for (int i = 0; i < MAX_DAYS; i++) {
-        dailyCycles[i] = 0;
-    }
-    saveDailyCycles();
-    Serial.println("All daily cycle data cleared from EEPROM");
-}
 
 // Configuration structure for all settings
 struct ConfigurationData {
@@ -531,8 +430,6 @@ void initializeDashboardData() {
     systemStartTime = millis();
     lastStateChangeTime = millis();
     
-    // Initialize daily cycles
-    initializeDailyCycles();
     
     // Load configuration
     loadConfiguration();
@@ -1075,21 +972,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         broadcastErrorStatus();
                         broadcastNetworkInfo();
                         broadcastEventLog();
-                    } else if (type == "request_calendar_data") {
-                        // Send daily cycle data for calendar
-                        broadcastCalendarData();
-                    } else if (type == "request_daily_cycles") {
-                        int dayIndex = doc["dayIndex"];
-                        unsigned long cycles = getDailyCycleCount(dayIndex);
-                        
-                        JsonDocument response;
-                        response["type"] = "daily_cycles";
-                        response["dayIndex"] = dayIndex;
-                        response["cycles"] = cycles;
-                        
-                        String message;
-                        serializeJson(response, message);
-                        client->text(message);
                     } else if (type == "update_config") {
                         String configKey = doc["key"];
                         JsonDocument response;
@@ -1233,8 +1115,6 @@ void incrementCuttingCycleCounter() {
     unsigned long cycleTime = millis() - lastCycleStartTime;
     lastCycleCompletionTime = millis(); // Record when this cycle completed
     
-    // Increment daily cycle count
-    incrementDailyCycleCount();
     
     Serial.println("Cutting cycle completed.");
     
@@ -1246,7 +1126,6 @@ void incrementCuttingCycleCounter() {
     
     // Broadcast the updated performance metrics
     broadcastPerformanceMetrics();
-    broadcastCalendarData(); // Also broadcast updated calendar data
 }
 
 // Start reload time timer when exiting RETURNING_NO_2x4 state
@@ -1277,25 +1156,6 @@ float getReloadTime() {
 }
 
 
-// Broadcast calendar data
-void broadcastCalendarData() {
-    if (ws.getClients().size() > 0) {
-        JsonDocument doc;
-        doc["type"] = "calendar_data";
-        
-        JsonArray cycles = doc["dailyCycles"].to<JsonArray>();
-        for (int i = 0; i < MAX_DAYS; i++) {
-            cycles.add(dailyCycles[i]);
-        }
-        
-        doc["currentDate"] = currentDate;
-        doc["currentDayIndex"] = getCurrentDayIndex();
-        
-        String message;
-        serializeJson(doc, message);
-        ws.textAll(message);
-    }
-}
 
 // Function to be called from state machine when state changes
 void onStateChange(SystemState newState) {

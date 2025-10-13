@@ -140,7 +140,6 @@ bool getRotationServoSafetyDelayActive();
 void setRotationServoSafetyDelayActive(bool value);
 void handleRotationServoReturn();
 void handleTASignalTiming();
-void handleRotationClampRetract();
 void moveFeedMotorToPostCutHome();
 
 //* ************************************************************************

@@ -61,7 +61,6 @@ extern const float FEED_MOTOR_HOMING_SPEED;     // Speed for homing the feed mot
 //* ************************************************************************
 // Servo timing configuration
 extern const unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS; // Time servo stays active
-extern const unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS; // Time clamp stays extended
 
 // Cut motor homing timeout
 extern const unsigned long CUT_HOME_TIMEOUT; // 5 seconds timeout

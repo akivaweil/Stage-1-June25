@@ -34,7 +34,7 @@ const int FEED_HOMING_DIRECTION = 1;
 // Normal Cutting Operation (Cutting State)
 float CUT_MOTOR_NORMAL_SPEED = 640;  // Now adjustable via dashboard
 float CUT_MOTOR_NORMAL_ACCELERATION = 17000;
-float CUT_MOTOR_NO_WOOD_SPEED = 384;  // 60% of normal speed for no-wood cuts
+float CUT_MOTOR_NO_WOOD_SPEED = CUT_MOTOR_NORMAL_SPEED * 0.6;  // 60% of normal speed for no-wood cuts
 
 // Return Stroke (Returning State / End of Cutting State)
 float CUT_MOTOR_RETURN_SPEED = 25000;  // Now adjustable via dashboard

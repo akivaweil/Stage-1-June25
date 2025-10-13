@@ -574,12 +574,6 @@ void handleTASignalTiming() {
   }
 }
 
-void handleRotationClampRetract() {
-    if (rotationClampIsExtended && (millis() - rotationClampExtendTime >= ROTATION_CLAMP_EXTEND_DURATION_MS)) {
-        retractRotationClamp();
-        //serial.println("Rotation Clamp retracted after 1 second.");
-    }
-}
 
 void moveFeedMotorToPostCutHome() {
     if (feedMotor) {

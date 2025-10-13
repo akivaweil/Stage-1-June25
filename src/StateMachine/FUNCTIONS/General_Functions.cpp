@@ -24,25 +24,8 @@ void sendSignalToTA() {
   signalTAActive = true;
   //serial.println("TA Signal activated (HIGH).");
 
-  // Only activate servo if it hasn't been activated early
-  if (!rotationServoIsActiveAndTiming) {
-    Servo* servo = getRotationServo();
-    if (servo) {
-      // Force servo write with robust control - no attach checks, just send the command
-      servo->write(ROTATION_SERVO_ACTIVE_POSITION);
-      //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_ACTIVE_POSITION);
-    }
-    
-    rotationServoActiveStartTime = millis();
-    rotationServoIsActiveAndTiming = true;
-    // Reset the return completed flag for new activation cycle
-    rotationServoReturnCompleted = false;
-    //Serial.print("Rotation servo moved to ");
-    //Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
-    //Serial.println(" degrees with TA signal.");
-  } else {
-    //Serial.println("Rotation servo already activated early - skipping normal activation.");
-  }
+  // Note: Servo activation is now handled in cutting step 2, not here
+  // This function only sends the TA signal
 }
 
 //* ************************************************************************

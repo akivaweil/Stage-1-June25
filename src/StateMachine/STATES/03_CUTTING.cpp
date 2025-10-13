@@ -59,13 +59,13 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Only home rotation servo if wood is properly grabbed (safety check)
+    // Ensure rotation servo is in home position for cut cycle (safety check)
     Bounce* suctionSensor = getSuctionSensorBounce();
     if (suctionSensor && suctionSensor->read() == HIGH) {
         handleRotationServoReturn();
-        Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
+        Serial.println("Rotation servo positioned to home for cut cycle - wood properly grabbed by transfer arm");
     } else {
-        Serial.println("WARNING: Wood not properly grabbed by transfer arm - rotation servo NOT homed for safety");
+        Serial.println("WARNING: Wood not properly grabbed by transfer arm - rotation servo NOT positioned for safety");
     }
 
     // Check wood sensor and configure speed accordingly

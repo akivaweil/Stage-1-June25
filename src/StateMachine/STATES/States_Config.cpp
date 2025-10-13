@@ -63,7 +63,7 @@ float FEED_MOTOR_HOMING_SPEED = 2000;
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
 
 // Rotation clamp timing
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2300;
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 4800;
 
 // Cut motor homing timeout
 unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds
@@ -78,7 +78,7 @@ unsigned long TA_SIGNAL_DURATION = 500;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 
 // Rotation servo early activation offset
-float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
+float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 2.5;
 
 // Transfer Arm signal early activation offset
 float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;

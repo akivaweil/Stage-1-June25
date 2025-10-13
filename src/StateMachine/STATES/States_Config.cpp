@@ -78,7 +78,7 @@ unsigned long TA_SIGNAL_DURATION = 500;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 
 // Rotation servo early activation offset
-float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 2.5;
+float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
 
 // Transfer Arm signal early activation offset
 float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;

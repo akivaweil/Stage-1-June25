@@ -23,9 +23,6 @@ void sendSignalToTA() {
   signalTAStartTime = millis();
   signalTAActive = true;
   //serial.println("TA Signal activated (HIGH).");
-
-  // Note: Servo activation is now handled in cutting step 2, not here
-  // This function only sends the TA signal
 }
 
 //* ************************************************************************

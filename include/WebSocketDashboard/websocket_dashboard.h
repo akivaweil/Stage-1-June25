@@ -22,8 +22,6 @@ void setupWebSocketDashboard();
 void startCuttingCycleTimer();
 void updateTimeSinceLastCycle();
 void incrementCuttingCycleCounter();
-unsigned long getCuttingCycleCount();
-void broadcastCuttingCycleCount();
 void startReloadTimer();
 void stopReloadTimer();
 float getReloadTime();
@@ -57,9 +55,6 @@ void getAllDailyCycles(unsigned long* cycles, int maxDays);
 void clearAllDailyCycles();
 void broadcastCalendarData();
 
-// Cutting cycle count persistence functions
-void saveCuttingCycleCount();
-void loadCuttingCycleCount();
 
 // Configuration management functions
 void loadConfiguration();
@@ -70,7 +65,6 @@ void setFeedTravelDistance(float value);
 // Global variables
 extern AsyncWebServer server;
 extern AsyncWebSocket ws;
-extern unsigned long cuttingCycleCount;
 
 // Enhanced dashboard data structures
 struct SystemStatus {
@@ -107,7 +101,6 @@ struct LEDStatus {
 
 struct PerformanceMetrics {
     float lastCycleTime;
-    unsigned long totalCycles;
     
     // Time-based cycle tracking
     unsigned long cycles1Min;

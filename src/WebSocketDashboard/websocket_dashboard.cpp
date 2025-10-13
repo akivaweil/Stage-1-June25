@@ -16,7 +16,6 @@
 // Global variables
 AsyncWebServer server(WEB_SERVER_PORT);
 AsyncWebSocket ws("/ws");
-unsigned long cuttingCycleCount = 0;
 unsigned long systemStartTime = 0;
 unsigned long lastCycleStartTime = 0;
 unsigned long lastCycleCompletionTime = 0;
@@ -28,7 +27,6 @@ bool reloadTimeActive = false;
 // Daily cycle tracking
 const int EEPROM_SIZE = 1024;
 const int DAILY_CYCLES_OFFSET = 0;
-const int CUTTING_CYCLE_COUNT_OFFSET = 1020; // Store cuttingCycleCount at end of EEPROM
 const int MAX_DAYS = 255; // Fits in 1KB EEPROM (255 × 4 = 1,020 bytes)
 
 // Configuration storage - Need more space for all settings
@@ -122,7 +120,6 @@ bool hasLEDStatusChanged() {
 
 bool hasPerformanceMetricsChanged() {
     return (performanceMetrics.lastCycleTime != previousPerformanceMetrics.lastCycleTime ||
-            performanceMetrics.totalCycles != previousPerformanceMetrics.totalCycles ||
             performanceMetrics.cycles1Min != previousPerformanceMetrics.cycles1Min ||
             performanceMetrics.cycles3Min != previousPerformanceMetrics.cycles3Min ||
             performanceMetrics.cycles5Min != previousPerformanceMetrics.cycles5Min ||
@@ -158,16 +155,6 @@ bool hasEventLogChanged() {
             eventLog.eventIndex != previousEventLog.eventIndex);
 }
 
-// Save cutting cycle count to EEPROM
-void saveCuttingCycleCount() {
-    EEPROM.put(CUTTING_CYCLE_COUNT_OFFSET, cuttingCycleCount);
-    EEPROM.commit();
-}
-
-// Load cutting cycle count from EEPROM
-void loadCuttingCycleCount() {
-    EEPROM.get(CUTTING_CYCLE_COUNT_OFFSET, cuttingCycleCount);
-}
 
 // Initialize EEPROM and load daily cycle data
 void initializeDailyCycles() {
@@ -179,9 +166,6 @@ void initializeDailyCycles() {
     }
     Serial.println("Daily cycle data loaded from EEPROM");
     
-    // Load cutting cycle count from EEPROM
-    loadCuttingCycleCount();
-    Serial.println("Cutting cycle count loaded: " + String(cuttingCycleCount));
     
     // Get current date
     currentDate = getCurrentDate();
@@ -562,9 +546,6 @@ void initializeDashboardData() {
     
     // Initialize performance metrics
     performanceMetrics.lastCycleTime = 0;
-    // Initialize totalCycles to show current day's cycle count
-    int currentDayIndex = getCurrentDayIndex();
-    performanceMetrics.totalCycles = getDailyCycleCount(currentDayIndex);
     
     // Initialize time-based cycle tracking
     performanceMetrics.cycles1Min = 0;
@@ -754,14 +735,11 @@ void calculateTimeBasedMetrics() {
 void updatePerformanceMetrics(unsigned long cycleTime) {
     // Calculate time since last cycle completion (in seconds)
     // Show time since last cycle if we've completed at least one cycle
-    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 0) {
+    if (lastCycleCompletionTime > 0) {
         performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
     } else {
         performanceMetrics.lastCycleTime = 0; // Show 0 for no cycles completed
     }
-    // Update totalCycles to show daily cycles instead of lifetime cycles
-    int currentDayIndex = getCurrentDayIndex();
-    performanceMetrics.totalCycles = getDailyCycleCount(currentDayIndex);
     
     // Store cycle timestamp
     performanceMetrics.cycleTimestamps[performanceMetrics.cycleTimestampIndex] = millis();
@@ -910,7 +888,6 @@ void broadcastPerformanceMetrics() {
             JsonDocument doc;
             doc["type"] = "performance_metrics";
             doc["reloadTime"] = getReloadTime();
-            doc["totalCycles"] = performanceMetrics.totalCycles;
             
             // Time-based averages (cycles per minute)
             doc["avgCycles1Min"] = performanceMetrics.avgCycles1Min;
@@ -1053,11 +1030,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
             Serial.println("WebSocket connection established successfully");
             
             // Send all current data to newly connected client
-            // Use daily cycles for the counter instead of lifetime cycles
-            int currentDayIndex = getCurrentDayIndex();
-            unsigned long dailyCount = getDailyCycleCount(currentDayIndex);
-            String counterMessage = "{\"type\":\"counter\",\"count\":" + String(dailyCount) + "}";
-            client->text(counterMessage);
             
             // Send all status data
             broadcastSystemStatus();
@@ -1250,7 +1222,7 @@ void updateTimeSinceLastCycle() {
     
     // Update the time since last cycle completion
     // Show time since last cycle if we've completed at least one cycle
-    if (lastCycleCompletionTime > 0 && cuttingCycleCount > 0) {
+    if (lastCycleCompletionTime > 0) {
         performanceMetrics.lastCycleTime = (float)(millis() - lastCycleCompletionTime) / 1000.0;
     } else {
         performanceMetrics.lastCycleTime = 0; // Show 0 for no cycles completed
@@ -1258,18 +1230,13 @@ void updateTimeSinceLastCycle() {
 }
 
 void incrementCuttingCycleCounter() {
-    cuttingCycleCount++;
     unsigned long cycleTime = millis() - lastCycleStartTime;
     lastCycleCompletionTime = millis(); // Record when this cycle completed
-    
-    // Save cutting cycle count to EEPROM
-    saveCuttingCycleCount();
     
     // Increment daily cycle count
     incrementDailyCycleCount();
     
-    Serial.print("Cutting cycle completed. Total cycles: ");
-    Serial.println(cuttingCycleCount);
+    Serial.println("Cutting cycle completed.");
     
     // Update performance metrics
     updatePerformanceMetrics(cycleTime);
@@ -1277,8 +1244,7 @@ void incrementCuttingCycleCounter() {
     // Add event to log
     addEventToLog("Cutting cycle completed - " + String((float)cycleTime / 1000.0, 1) + "s");
     
-    // Broadcast the updated count to all connected clients
-    broadcastCuttingCycleCount();
+    // Broadcast the updated performance metrics
     broadcastPerformanceMetrics();
     broadcastCalendarData(); // Also broadcast updated calendar data
 }
@@ -1310,19 +1276,6 @@ float getReloadTime() {
     }
 }
 
-unsigned long getCuttingCycleCount() {
-    return cuttingCycleCount;
-}
-
-void broadcastCuttingCycleCount() {
-    if (ws.getClients().size() > 0) {
-        // Use daily cycles for the counter instead of lifetime cycles
-        int currentDayIndex = getCurrentDayIndex();
-        unsigned long dailyCount = getDailyCycleCount(currentDayIndex);
-        String message = "{\"type\":\"counter\",\"count\":" + String(dailyCount) + "}";
-        ws.textAll(message);
-    }
-}
 
 // Broadcast calendar data
 void broadcastCalendarData() {
@@ -1384,13 +1337,6 @@ void updateDashboardStatus() {
     // Update time since last cycle continuously
     updateTimeSinceLastCycle();
     
-    // Only update daily cycle count occasionally to avoid excessive EEPROM access
-    static unsigned long lastDailyCycleUpdate = 0;
-    if (millis() - lastDailyCycleUpdate > 10000) { // Update every 10 seconds
-        int currentDayIndex = getCurrentDayIndex();
-        performanceMetrics.totalCycles = getDailyCycleCount(currentDayIndex);
-        lastDailyCycleUpdate = millis();
-    }
     
     // Only broadcast when motors are not moving to avoid timing interference
     // Now each broadcast function checks for changes internally

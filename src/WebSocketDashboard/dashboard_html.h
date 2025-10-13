@@ -426,11 +426,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 <div class="card-icon">📊</div>
                 <div class="card-title">Performance Metrics</div>
             </div>
-            <!-- Unified Total Cycles Display -->
-            <div style="text-align: center; margin-bottom: 32px; padding: 24px; background: rgba(255, 255, 255, 0.1); border-radius: 16px; border: 2px solid rgba(255, 255, 255, 0.2);">
-                <div style="color: #ffffff; font-size: 4.5rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);" id="totalCycles">0</div>
-                <div style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; font-weight: 600; letter-spacing: 0.05em;">TOTAL CYCLES</div>
-            </div>
             
             <div style="text-align: center; padding: 24px; background: rgba(255, 255, 255, 0.1); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);">
                 <div style="color: #ffffff; font-size: 3rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em;" id="reloadTime">-</div>
@@ -960,9 +955,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                             return;
                         }
                         
-                        if (data.type === 'counter') {
-                            document.getElementById('totalCycles').textContent = data.count;
-                        }
                         
                         if (data.type === 'system_status') {
                             document.getElementById('currentState').textContent = data.currentState;
@@ -975,7 +967,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                         
                         
                         if (data.type === 'performance_metrics') {
-                            document.getElementById('totalCycles').textContent = data.totalCycles || 0;
                             
                             // Update reload time (shows time from no 2x4 state end to feed first cut or cutting state)
                             if (data.reloadTime !== undefined && data.reloadTime > 0) {

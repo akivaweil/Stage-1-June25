@@ -199,8 +199,6 @@ void handleReturningNo2x4Step(int step) {
                 resetReturningNo2x4Steps();
                 setCuttingCycleInProgress(false);
                 
-                // Increment cycle counter when completing a cycle
-                incrementCuttingCycleCounter();
                 
                 // When no wood is detected, require manual reset of cycle switch
                 // This prevents automatic restart when no wood is present

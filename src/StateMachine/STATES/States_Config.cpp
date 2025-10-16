@@ -107,7 +107,7 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;  // Hardcoded offset - not adju
 unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;
 unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;
 unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;
-float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.3;
+float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2;
 
 //* ************************************************************************
 //* ******************** PRE-CALCULATED STEP VALUES ***********************

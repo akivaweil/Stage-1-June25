@@ -545,14 +545,22 @@ void handleRotationServoReturn() {
     // Move rotation servo to home position
     Servo* servo = getRotationServo();
     if (servo) {
-        // Force servo write with robust control - no attach checks, just send the command
+        // Ensure servo is attached before writing
+        if (!servo->attached()) {
+            Serial.println("WARNING: Servo not attached - attaching now");
+            extern const int ROTATION_SERVO_PIN;
+            servo->attach(ROTATION_SERVO_PIN);
+        }
+        // Force servo write with robust control
         servo->write(ROTATION_SERVO_HOME_POSITION);
-        //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_HOME_POSITION);
+        Serial.printf("Servo command sent: %d degrees (home position)\n", ROTATION_SERVO_HOME_POSITION);
+    } else {
+        Serial.println("ERROR: Rotation servo pointer is NULL");
     }
     
-    //Serial.print("Rotation servo returned to home position (");
-    //Serial.print(ROTATION_SERVO_HOME_POSITION);
-    //Serial.println(" degrees).");
+    Serial.print("Rotation servo returned to home position (");
+    Serial.print(ROTATION_SERVO_HOME_POSITION);
+    Serial.println(" degrees).");
 }
 
 void handleTASignalTiming() { 

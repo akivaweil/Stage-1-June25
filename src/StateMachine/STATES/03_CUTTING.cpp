@@ -93,15 +93,13 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Home rotation servo if wood is properly grabbed (only if not already home)
-    if (woodProperlyGrabbed) {
-        extern bool rotationServoIsActiveAndTiming;
-        if (rotationServoIsActiveAndTiming) {
-            handleRotationServoReturn();
-            Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
-        } else {
-            Serial.println("Rotation servo already at home position");
-        }
+    // Home rotation servo at beginning of cutting state (only if not already home)
+    extern bool rotationServoIsActiveAndTiming;
+    if (rotationServoIsActiveAndTiming) {
+        handleRotationServoReturn();
+        Serial.println("Rotation servo homed for cut cycle");
+    } else {
+        Serial.println("Rotation servo already at home position");
     }
 
     // Check wood sensor and configure speed accordingly

@@ -10,8 +10,8 @@
 //* ************************ SERVO CONFIGURATION **************************
 //* ************************************************************************
 // Rotation servo position settings (configurable via config file, NOT dashboard)
-int ROTATION_SERVO_HOME_POSITION = 70;
-int ROTATION_SERVO_ACTIVE_POSITION = 170;
+int ROTATION_SERVO_HOME_POSITION = 27;
+int ROTATION_SERVO_ACTIVE_POSITION = 120;
 
 //* ************************************************************************
 //* ************************ MOTOR CONFIGURATION **************************
@@ -89,7 +89,8 @@ float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
 // Rotation servo safety timing
 unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000;
 unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 3000;
-unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150; 
+unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
+unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 1000; 
 
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************

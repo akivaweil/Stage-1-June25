@@ -60,12 +60,13 @@ void handleCuttingStep0() {
     Bounce* suctionSensor = getSuctionSensorBounce();
     bool woodProperlyGrabbed = (suctionSensor && suctionSensor->read() == HIGH);
     
-    extern bool rotationServoReturnCompleted;
-    
     // Only wait for servo if wood is properly grabbed (safety check)
     if (woodProperlyGrabbed) {
-        if (!rotationServoReturnCompleted && !waitingForServoHome) {
-            // Start waiting for servo to return home
+        // Check if servo is currently active (not yet returned to home)
+        extern bool rotationServoIsActiveAndTiming;
+        
+        if (rotationServoIsActiveAndTiming && !waitingForServoHome) {
+            // Servo is still active - start waiting for it to return home
             waitingForServoHome = true;
             servoHomeWaitStartTime = millis();
             Serial.println("Waiting for rotation servo to return home before starting cut...");
@@ -92,10 +93,15 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Home rotation servo if wood is properly grabbed
+    // Home rotation servo if wood is properly grabbed (only if not already home)
     if (woodProperlyGrabbed) {
-        handleRotationServoReturn();
-        Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
+        extern bool rotationServoIsActiveAndTiming;
+        if (rotationServoIsActiveAndTiming) {
+            handleRotationServoReturn();
+            Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
+        } else {
+            Serial.println("Rotation servo already at home position");
+        }
     }
 
     // Check wood sensor and configure speed accordingly

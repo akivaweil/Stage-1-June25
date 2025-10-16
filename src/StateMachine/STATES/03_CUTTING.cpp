@@ -93,13 +93,18 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Home rotation servo at beginning of cutting state (only if not already home)
-    extern bool rotationServoIsActiveAndTiming;
-    if (rotationServoIsActiveAndTiming) {
-        handleRotationServoReturn();
-        Serial.println("Rotation servo homed for cut cycle");
+    // Home rotation servo at beginning of cutting state if suction sensor is HIGH (wood not being grabbed)
+    // Only return servo if suction sensor is HIGH (not active)
+    if (suctionSensor && suctionSensor->read() == HIGH) {
+        extern bool rotationServoIsActiveAndTiming;
+        if (rotationServoIsActiveAndTiming) {
+            handleRotationServoReturn();
+            Serial.println("Rotation servo homed for cut cycle - suction sensor HIGH");
+        } else {
+            Serial.println("Rotation servo already at home position");
+        }
     } else {
-        Serial.println("Rotation servo already at home position");
+        Serial.println("Suction sensor LOW (active) - keeping rotation servo in current position");
     }
 
     // Check wood sensor and configure speed accordingly

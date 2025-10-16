@@ -30,15 +30,6 @@ void onEnterCuttingState() {
     resetCuttingSteps();
     startCuttingCycleTimer();
     stopReloadTimer(); // Stop reload time tracking when entering cutting state
-    
-    // Ensure rotation servo is attached at the start of cutting state
-    Servo* servo = getRotationServo();
-    if (servo && !servo->attached()) {
-        Serial.println("Servo not attached - attaching at start of cutting state");
-        extern const int ROTATION_SERVO_PIN;
-        servo->attach(ROTATION_SERVO_PIN);
-        Serial.println("Servo attached successfully");
-    }
 }
 
 void onExitCuttingState() {
@@ -102,18 +93,15 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Home rotation servo at beginning of cutting state if suction sensor is HIGH (wood not being grabbed)
-    // Only return servo if suction sensor is HIGH (not active)
-    if (suctionSensor && suctionSensor->read() == HIGH) {
+    // Home rotation servo if wood is properly grabbed (only if not already home)
+    if (woodProperlyGrabbed) {
         extern bool rotationServoIsActiveAndTiming;
         if (rotationServoIsActiveAndTiming) {
             handleRotationServoReturn();
-            Serial.println("Rotation servo homed for cut cycle - suction sensor HIGH");
+            Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
         } else {
             Serial.println("Rotation servo already at home position");
         }
-    } else {
-        Serial.println("Suction sensor LOW (active) - keeping rotation servo in current position");
     }
 
     // Check wood sensor and configure speed accordingly

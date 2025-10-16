@@ -49,7 +49,6 @@ extern unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS;
 extern unsigned long ROTATION_SERVO_SAFETY_DELAY_MS;
 extern unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
 extern unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS;
-extern unsigned long ROTATION_SERVO_SUCTION_HIGH_DELAY_MS;
 
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************

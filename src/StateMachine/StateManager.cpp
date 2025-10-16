@@ -422,53 +422,77 @@ void handleCommonOperations() {
         //serial.println("Cut motor hit homing sensor during RETURNING_YES_2x4 return - stopping immediately!");
         cutMotor->forceStopAndNewPosition(0);  // Stop immediately and set position to 0
     }
-    // Handle rotation servo return with suction sensor HIGH detection
+    // Handle rotation servo return with safety delay logic
     if (rotationServoIsActiveAndTiming && millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS) {
         extern const int WOOD_SUCTION_CONFIRM_SENSOR; // This is in main.cpp
-        extern bool rotationServoSuctionHighDetected; // From main.cpp
-        extern unsigned long rotationServoSuctionHighTime; // From main.cpp
-        extern bool rotationServoSafetyDelayActive; // From main.cpp
-        extern unsigned long rotationServoSafetyDelayStartTime; // From main.cpp
         
         // Check if suction sensor reads HIGH (wood is properly grabbed by transfer arm)
         // Using debounced reading with 15ms debounce time
         if (suctionSensorBounce.read() == HIGH) {
-            // Suction sensor is HIGH - detect first time it goes HIGH
-            if (!rotationServoSuctionHighDetected) {
-                rotationServoSuctionHighDetected = true;
-                rotationServoSuctionHighTime = millis();
-                //serial.println("Suction sensor detected HIGH - starting delay before returning servo to home");
-            }
-            
-            // Check if delay has elapsed since suction sensor went HIGH
-            if (millis() - rotationServoSuctionHighTime >= ROTATION_SERVO_SUCTION_HIGH_DELAY_MS && !rotationServoReturnCompleted) {
-                // Delay complete - return servo to home
-                handleRotationServoReturn();
-                //serial.println("Suction HIGH delay complete. Returning rotation servo to home position.");
-                rotationServoIsActiveAndTiming = false;
-                rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
-            }
-        } else {
-            // Suction sensor still reads LOW - check if we've been waiting too long
+            // Check if we've been waiting for more than 3 seconds due to failure to suction
             if (millis() - rotationServoActiveStartTime >= ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS) {
                 // We've been waiting for extended time due to failure to suction - apply safety delay
+                extern bool rotationServoSafetyDelayActive; // From main.cpp
+                extern unsigned long rotationServoSafetyDelayStartTime; // From main.cpp
                 if (!rotationServoSafetyDelayActive) {
                     // Start the safety delay period
                     rotationServoSafetyDelayActive = true;
                     rotationServoSafetyDelayStartTime = millis();
-                    //serial.println("Servo was waiting for extended time due to failure to suction. Starting 3-second safety delay before returning to home.");
-                } else if (millis() - rotationServoSafetyDelayStartTime >= ROTATION_SERVO_SAFETY_DELAY_MS && !rotationServoReturnCompleted) {
-                    // Safety delay complete - return servo to home
-                    handleRotationServoReturn();
-                    //serial.println("Safety delay complete. Returning rotation servo to home position.");
-                    rotationServoIsActiveAndTiming = false;
-                    rotationServoSafetyDelayActive = false; // Reset safety delay flag
-                    rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+                    //serial.println("Servo was waiting for extended time due to failure to suction. Starting 2-second safety delay before returning to home.");
+                } else if (millis() - rotationServoSafetyDelayStartTime >= ROTATION_SERVO_SAFETY_DELAY_MS) {
+                    // Safety delay complete - now start return delay
+                    extern bool rotationServoReturnDelayActive; // From main.cpp
+                    extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
+                    if (!rotationServoReturnDelayActive) {
+                        // Start the return delay period
+                        rotationServoReturnDelayActive = true;
+                        rotationServoReturnDelayStartTime = millis();
+                        //serial.println("Safety delay complete. Starting 150ms return delay before returning servo to home.");
+                    } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS && !rotationServoReturnCompleted) {
+                        // Return delay complete - now return servo to home
+                        handleRotationServoReturn();
+                        //serial.println("Return delay complete. Returning rotation servo to home position.");
+                        rotationServoIsActiveAndTiming = false;
+                        rotationServoSafetyDelayActive = false; // Reset safety delay flag
+                        rotationServoReturnDelayActive = false; // Reset return delay flag
+                        rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+                        // Reset the return delay start time to prevent repeated calls
+                        rotationServoReturnDelayStartTime = 0;
+                    }
+                } else {
+                    // Still in safety delay period
+                    static unsigned long lastSafetyMessage = 0;
+                    if (millis() - lastSafetyMessage >= 500) { // Update message every 500ms
+                        unsigned long remainingMs = ROTATION_SERVO_SAFETY_DELAY_MS - (millis() - rotationServoSafetyDelayStartTime);
+                                //Serial.print("Safety delay active. Servo will return home in ");
+        //Serial.print(remainingMs);
+        //serial.println("ms to allow operator to move hand away.");
+                        lastSafetyMessage = millis();
+                    }
                 }
             } else {
-                // Still within normal wait time - continue waiting for suction
-                //serial.println("Waiting for suction sensor to read HIGH before returning rotation servo...");
+                // Normal operation - no extended wait, but still apply 150ms return delay
+                extern bool rotationServoReturnDelayActive; // From main.cpp
+                extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
+                if (!rotationServoReturnDelayActive) {
+                    // Start the return delay period
+                    rotationServoReturnDelayActive = true;
+                    rotationServoReturnDelayStartTime = millis();
+                    //serial.println("Starting 150ms return delay before returning servo to home.");
+                } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS && !rotationServoReturnCompleted) {
+                    // Return delay complete - now return servo to home
+                    handleRotationServoReturn();
+                    //serial.println("Return delay complete. Returning rotation servo to home position.");
+                    rotationServoIsActiveAndTiming = false;
+                    rotationServoReturnDelayActive = false; // Reset return delay flag
+                    rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+                    // Reset the return delay start time to prevent repeated calls
+                    rotationServoReturnDelayStartTime = 0;
+                }
             }
+        } else {
+            // Suction sensor still reads LOW - wood not grabbed by transfer arm, continue waiting
+            //serial.println("Waiting for WAS_WOOD_SUCTIONED_SENSOR to read HIGH before returning rotation servo...");
         }
     }
 

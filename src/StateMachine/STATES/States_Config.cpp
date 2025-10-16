@@ -60,7 +60,7 @@ float FEED_MOTOR_HOMING_SPEED = 2000;
 //* ************************ TIMING CONFIGURATION *************************
 //* ************************************************************************
 // Servo timing configuration
-unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 1500;
+unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;
 
 // Rotation clamp timing
 unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2500;
@@ -90,8 +90,7 @@ float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
 unsigned long ROTATION_SERVO_EXTENDED_WAIT_THRESHOLD_MS = 3000;
 unsigned long ROTATION_SERVO_SAFETY_DELAY_MS = 3000;
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
-unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;
-unsigned long ROTATION_SERVO_SUCTION_HIGH_DELAY_MS = 50; // Delay after suction sensor goes HIGH before returning servo to home 
+unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500; 
 
 //* ************************************************************************
 //* ************************ MOTOR CONTROL CONSTANTS *********************

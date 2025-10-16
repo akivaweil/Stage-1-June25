@@ -524,15 +524,6 @@ void activateRotationServo() {
         setRotationServoSafetyDelayActive(false);
         // Reset the return completed flag for new activation cycle
         rotationServoReturnCompleted = false;
-        // Reset suction sensor tracking flags for new activation cycle
-        extern bool rotationServoSuctionHighDetected;
-        extern unsigned long rotationServoSuctionHighTime;
-        extern bool rotationServoSafetyDelayActive;
-        extern unsigned long rotationServoSafetyDelayStartTime;
-        rotationServoSuctionHighDetected = false;
-        rotationServoSuctionHighTime = 0;
-        rotationServoSafetyDelayActive = false;
-        rotationServoSafetyDelayStartTime = 0;
         //Serial.print("Rotation servo activated to ");
         //Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
         //Serial.println(" degrees.");
@@ -545,22 +536,14 @@ void handleRotationServoReturn() {
     // Move rotation servo to home position
     Servo* servo = getRotationServo();
     if (servo) {
-        // Ensure servo is attached before writing
-        if (!servo->attached()) {
-            Serial.println("WARNING: Servo not attached - attaching now");
-            extern const int ROTATION_SERVO_PIN;
-            servo->attach(ROTATION_SERVO_PIN);
-        }
-        // Force servo write with robust control
+        // Force servo write with robust control - no attach checks, just send the command
         servo->write(ROTATION_SERVO_HOME_POSITION);
-        Serial.printf("Servo command sent: %d degrees (home position)\n", ROTATION_SERVO_HOME_POSITION);
-    } else {
-        Serial.println("ERROR: Rotation servo pointer is NULL");
+        //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_HOME_POSITION);
     }
     
-    Serial.print("Rotation servo returned to home position (");
-    Serial.print(ROTATION_SERVO_HOME_POSITION);
-    Serial.println(" degrees).");
+    //Serial.print("Rotation servo returned to home position (");
+    //Serial.print(ROTATION_SERVO_HOME_POSITION);
+    //Serial.println(" degrees).");
 }
 
 void handleTASignalTiming() { 

@@ -10,7 +10,7 @@
 //* ************************ SERVO CONFIGURATION **************************
 //* ************************************************************************
 // Rotation servo position settings
-const int ROTATION_SERVO_HOME_POSITION = 5;
+const int ROTATION_SERVO_HOME_POSITION = 4;
 const int ROTATION_SERVO_ACTIVE_POSITION = 100;
 
 //* ************************************************************************
@@ -63,7 +63,7 @@ float FEED_MOTOR_HOMING_SPEED = 2000;
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
 
 // Rotation clamp timing
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 4800;
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2500;
 
 // Cut motor homing timeout
 unsigned long CUT_HOME_TIMEOUT = 5000; // 5 seconds

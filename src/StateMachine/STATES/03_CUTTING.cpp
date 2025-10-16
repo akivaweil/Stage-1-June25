@@ -30,6 +30,15 @@ void onEnterCuttingState() {
     resetCuttingSteps();
     startCuttingCycleTimer();
     stopReloadTimer(); // Stop reload time tracking when entering cutting state
+    
+    // Ensure rotation servo is attached at the start of cutting state
+    Servo* servo = getRotationServo();
+    if (servo && !servo->attached()) {
+        Serial.println("Servo not attached - attaching at start of cutting state");
+        extern const int ROTATION_SERVO_PIN;
+        servo->attach(ROTATION_SERVO_PIN);
+        Serial.println("Servo attached successfully");
+    }
 }
 
 void onExitCuttingState() {

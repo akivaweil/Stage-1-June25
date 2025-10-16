@@ -87,6 +87,10 @@ bool signalTAActive = false;      // For Transfer Arm signal
 // New flag to track cut motor return during RETURNING_YES_2x4 mode
 bool cutMotorInReturningYes2x4Return = false;
 
+// Rotation servo suction sensor tracking
+bool rotationServoSuctionHighDetected = false; // Tracks when suction sensor goes HIGH
+unsigned long rotationServoSuctionHighTime = 0; // Time when suction sensor went HIGH
+
 // Additional variables needed by states - declarations moved to above
 
 // FIX_POSITION state steps now defined in fix_position.cpp

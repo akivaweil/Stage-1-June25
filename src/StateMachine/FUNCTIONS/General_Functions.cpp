@@ -524,6 +524,11 @@ void activateRotationServo() {
         setRotationServoSafetyDelayActive(false);
         // Reset the return completed flag for new activation cycle
         rotationServoReturnCompleted = false;
+        // Reset suction sensor tracking flags for new activation cycle
+        extern bool rotationServoSuctionHighDetected;
+        extern unsigned long rotationServoSuctionHighTime;
+        rotationServoSuctionHighDetected = false;
+        rotationServoSuctionHighTime = 0;
         //Serial.print("Rotation servo activated to ");
         //Serial.print(ROTATION_SERVO_ACTIVE_POSITION);
         //Serial.println(" degrees.");

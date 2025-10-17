@@ -417,26 +417,13 @@ void handleCommonOperations() {
         // Sensor only works when servo is at active position
         // LOW = wood grabbed (active), HIGH = wood released (not active)
         // Using debounced reading with 15ms debounce time
-        if (suctionSensorBounce.read() == HIGH) {
-            // Wood released - apply return delay then return servo to home
-            extern bool rotationServoReturnDelayActive; // From main.cpp
-            extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
-            if (!rotationServoReturnDelayActive) {
-                // Start the return delay period
-                rotationServoReturnDelayActive = true;
-                rotationServoReturnDelayStartTime = millis();
-                //serial.println("Wood released detected - starting return delay before returning servo to home.");
-            } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS && !rotationServoReturnCompleted) {
-                // Return delay complete - now return servo to home
-                handleRotationServoReturn();
-                //serial.println("Return delay complete. Returning rotation servo to home position.");
-                rotationServoIsActiveAndTiming = false;
-                rotationServoReturnDelayActive = false; // Reset return delay flag
-                rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
-                // Reset the return delay start time to prevent repeated calls
-                rotationServoReturnDelayStartTime = 0;
-            }
-        } else {
+        if (suctionSensorBounce.read() == HIGH && !rotationServoReturnCompleted) {
+            // Wood released - return servo to home immediately
+            handleRotationServoReturn();
+            //serial.println("Wood released detected - returning rotation servo to home immediately.");
+            rotationServoIsActiveAndTiming = false;
+            rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+        } else if (suctionSensorBounce.read() == LOW) {
             // Suction sensor still reads LOW - wood still grabbed, continue waiting for release
             //serial.println("Waiting for wood to be released (sensor HIGH) before returning rotation servo...");
         }

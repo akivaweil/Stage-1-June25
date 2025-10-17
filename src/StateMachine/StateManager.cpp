@@ -15,6 +15,7 @@ extern Bounce reloadSwitch;
 extern Bounce startCycleSwitch;
 extern Bounce pushwoodForwardSwitch;
 extern Bounce suctionSensorBounce;
+extern Bounce woodPresentSensorBounce;
 
 // External references to global variables from main.cpp
 extern bool comingFromNoWoodWithSensorsClear;
@@ -186,6 +187,10 @@ Bounce* getStartCycleSwitch() {
 
 Bounce* getSuctionSensorBounce() {
     return &suctionSensorBounce;
+}
+
+Bounce* getWoodPresentSensorBounce() {
+    return &woodPresentSensorBounce;
 }
 
 bool getIsReloadMode() {
@@ -410,6 +415,7 @@ void updateSwitches() {
     startCycleSwitch.update();
     pushwoodForwardSwitch.update();
     suctionSensorBounce.update();
+    woodPresentSensorBounce.update();
 }
 
 void handleCommonOperations() {

@@ -22,7 +22,6 @@ static bool homePositionErrorDetected = false;
 static bool rotationClampActivatedThisCycle = false;
 static bool rotationServoActivatedThisCycle = false;
 static bool transferArmSignalSentThisCycle = false;
-static unsigned long lastWoodSensorCheckTime = 0;
 static unsigned long servoHomeWaitStartTime = 0;
 static bool waitingForServoHome = false;
 
@@ -105,19 +104,8 @@ void handleCuttingStep0() {
     }
 
     // Check wood sensor and configure speed accordingly
-    extern const int _2x4_PRESENT_SENSOR;
-    int sensorValue1 = digitalRead(_2x4_PRESENT_SENSOR);
-    delay(5);
-    int sensorValue2 = digitalRead(_2x4_PRESENT_SENSOR);
-    delay(5);
-    int sensorValue3 = digitalRead(_2x4_PRESENT_SENSOR);
-
-    int lowCount = 0;
-    if (sensorValue1 == LOW) lowCount++;
-    if (sensorValue2 == LOW) lowCount++;
-    if (sensorValue3 == LOW) lowCount++;
-
-    bool woodPresent = (lowCount >= 2);
+    Bounce* woodPresentSensor = getWoodPresentSensorBounce();
+    bool woodPresent = (woodPresentSensor && woodPresentSensor->read() == LOW);
 
     if (!woodPresent) {
         configureCutMotorForCuttingSlow();
@@ -138,10 +126,16 @@ void handleCuttingStep1() {
         stepStartTime = millis();
     }
 
-    //! ************************************************************************
-    //! WOOD SENSOR CHECKING: Monitor wood present sensor every 100ms
-    //! ************************************************************************
-    checkWoodPresentSensor();
+    // Update wood present sensor LED
+    Bounce* woodPresentSensor = getWoodPresentSensorBounce();
+    if (woodPresentSensor) {
+        bool woodPresent = (woodPresentSensor->read() == LOW);
+        if (woodPresent) {
+            turnYellowLedOn();
+        } else {
+            turnBlueLedOn();
+        }
+    }
 
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && cutMotor->getCurrentPosition() >= SUCTION_SENSOR_CHECK_DISTANCE_STEPS) {
@@ -174,12 +168,17 @@ void handleCuttingStep1() {
 
 void handleCuttingStep2() {
     FastAccelStepper* cutMotor = getCutMotor();
-    extern const int _2x4_PRESENT_SENSOR;
     
-    //! ************************************************************************
-    //! WOOD SENSOR CHECKING: Monitor wood present sensor every 100ms
-    //! ************************************************************************
-    checkWoodPresentSensor();
+    // Update wood present sensor LED
+    Bounce* woodPresentSensor = getWoodPresentSensorBounce();
+    if (woodPresentSensor) {
+        bool woodPresent = (woodPresentSensor->read() == LOW);
+        if (woodPresent) {
+            turnYellowLedOn();
+        } else {
+            turnBlueLedOn();
+        }
+    }
     
     static unsigned long lastDebugTime = 0;
     if (millis() - lastDebugTime >= 1000) {
@@ -231,20 +230,9 @@ void handleCuttingStep2() {
         configureCutMotorForReturn();
         transferArmSignalSentThisCycle = false;
 
-        // Use stable sensor reading with multiple samples (same as checkWoodPresentSensor)
-        int sensorValue1 = digitalRead(_2x4_PRESENT_SENSOR);
-        delay(5);
-        int sensorValue2 = digitalRead(_2x4_PRESENT_SENSOR);
-        delay(5);
-        int sensorValue3 = digitalRead(_2x4_PRESENT_SENSOR);
-        
-        // Majority vote: wood present if 2 or more readings are LOW
-        int lowCount = 0;
-        if (sensorValue1 == LOW) lowCount++;
-        if (sensorValue2 == LOW) lowCount++;
-        if (sensorValue3 == LOW) lowCount++;
-        
-        bool woodPresent = (lowCount >= 2);
+        // Check wood present sensor using debounced reading
+        Bounce* woodPresentSensor = getWoodPresentSensorBounce();
+        bool woodPresent = (woodPresentSensor && woodPresentSensor->read() == LOW);
         bool no2x4Detected = !woodPresent;
         
         // Update LED before state transition for visual feedback
@@ -299,43 +287,6 @@ void resetCuttingSteps() {
     rotationClampActivatedThisCycle = false;
     rotationServoActivatedThisCycle = false;
     transferArmSignalSentThisCycle = false;
-    lastWoodSensorCheckTime = 0;
     servoHomeWaitStartTime = 0;
     waitingForServoHome = false;
 }
-
-//* ************************************************************************
-//* *********************** WOOD SENSOR CHECKING ***************************
-//* ************************************************************************
-// Checks wood present sensor every 100ms during cutting and updates LED accordingly
-// Yellow LED = wood present (sensor LOW), Blue LED = no wood (sensor HIGH)
-
-void checkWoodPresentSensor() {
-    extern const int _2x4_PRESENT_SENSOR;
-    
-    // Check every 100ms
-    if (millis() - lastWoodSensorCheckTime >= 100) {
-        // Read sensor multiple times for stability
-        int sensorValue1 = digitalRead(_2x4_PRESENT_SENSOR);
-        delay(5);
-        int sensorValue2 = digitalRead(_2x4_PRESENT_SENSOR);
-        delay(5);
-        int sensorValue3 = digitalRead(_2x4_PRESENT_SENSOR);
-        
-        // Use majority vote for stable reading
-        int lowCount = 0;
-        if (sensorValue1 == LOW) lowCount++;
-        if (sensorValue2 == LOW) lowCount++;
-        if (sensorValue3 == LOW) lowCount++;
-        
-        bool woodPresent = (lowCount >= 2); // Majority vote: wood present if 2 or more readings are LOW
-        
-        if (woodPresent) {
-            turnYellowLedOn(); // Wood present - yellow LED
-        } else {
-            turnBlueLedOn(); // No wood - blue LED
-        }
-        
-        lastWoodSensorCheckTime = millis();
-    }
-} 

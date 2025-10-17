@@ -32,6 +32,7 @@ Bounce* getFeedHomingSwitch();
 Bounce* getReloadSwitch();
 Bounce* getStartCycleSwitch();
 Bounce* getSuctionSensorBounce();
+Bounce* getWoodPresentSensorBounce();
 
 // System flag access functions
 bool getIsReloadMode();

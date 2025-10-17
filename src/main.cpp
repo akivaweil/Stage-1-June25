@@ -58,6 +58,7 @@ Bounce reloadSwitch = Bounce();
 Bounce startCycleSwitch = Bounce();
 Bounce pushwoodForwardSwitch = Bounce();
 Bounce suctionSensorBounce = Bounce();
+Bounce woodPresentSensorBounce = Bounce();
 
 // System flags
 bool isHomed = false;
@@ -154,6 +155,9 @@ void setup() {
   
   suctionSensorBounce.attach(WOOD_SUCTION_CONFIRM_SENSOR);
   suctionSensorBounce.interval(15);
+  
+  woodPresentSensorBounce.attach(_2x4_PRESENT_SENSOR);
+  woodPresentSensorBounce.interval(10);
   
   //! Initialize motors
   engine.init();

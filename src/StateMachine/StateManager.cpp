@@ -409,20 +409,23 @@ void handleCommonOperations() {
         cutMotor->forceStopAndNewPosition(0);  // Stop immediately and set position to 0
     }
     // Handle rotation servo return logic
+    // After cooldown period, monitor suction sensor for wood release
     if (rotationServoIsActiveAndTiming && millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS) {
         extern const int WOOD_SUCTION_CONFIRM_SENSOR; // This is in main.cpp
         
-        // Check if suction sensor reads HIGH (wood is properly grabbed by transfer arm)
+        // Check if suction sensor reads HIGH (wood released/not active)
+        // Sensor only works when servo is at active position
+        // LOW = wood grabbed (active), HIGH = wood released (not active)
         // Using debounced reading with 15ms debounce time
         if (suctionSensorBounce.read() == HIGH) {
-            // Normal operation - apply 150ms return delay
+            // Wood released - apply return delay then return servo to home
             extern bool rotationServoReturnDelayActive; // From main.cpp
             extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
             if (!rotationServoReturnDelayActive) {
                 // Start the return delay period
                 rotationServoReturnDelayActive = true;
                 rotationServoReturnDelayStartTime = millis();
-                //serial.println("Starting 150ms return delay before returning servo to home.");
+                //serial.println("Wood released detected - starting return delay before returning servo to home.");
             } else if (millis() - rotationServoReturnDelayStartTime >= ROTATION_SERVO_RETURN_DELAY_MS && !rotationServoReturnCompleted) {
                 // Return delay complete - now return servo to home
                 handleRotationServoReturn();
@@ -434,8 +437,8 @@ void handleCommonOperations() {
                 rotationServoReturnDelayStartTime = 0;
             }
         } else {
-            // Suction sensor still reads LOW - wood not grabbed by transfer arm, continue waiting
-            //serial.println("Waiting for WAS_WOOD_SUCTIONED_SENSOR to read HIGH before returning rotation servo...");
+            // Suction sensor still reads LOW - wood still grabbed, continue waiting for release
+            //serial.println("Waiting for wood to be released (sensor HIGH) before returning rotation servo...");
         }
     }
 

@@ -214,7 +214,7 @@ ConfigurationData getDefaultConfiguration() {
     // Motor Configuration
     config.CUT_MOTOR_STEPS_PER_INCH = 500.0;
     config.FEED_MOTOR_STEPS_PER_INCH = 1000.0;
-    config.CUT_TRAVEL_DISTANCE = 2.2;
+    config.CUT_TRAVEL_DISTANCE = 9.2;
     config.FEED_TRAVEL_DISTANCE = 3.43;
     config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
     config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;

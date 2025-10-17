@@ -37,7 +37,7 @@ extern const int MANUAL_FEED_SWITCH;         // Manual wood feed control
 // Sensors (Active LOW - input pullup)
 extern const int FIRST_CUT_OR_WOOD_FWD_ONE;      // Decides state: LOW = wood_fwd_one, HIGH = first_cut
 extern const int _2x4_PRESENT_SENSOR;
-extern const int WOOD_SUCTION_CONFIRM_SENSOR;  // Wood suction sensor (LOW = wood grabbed/active, HIGH = wood released/not active)
+extern const int WOOD_SUCTION_CONFIRM_SENSOR;  // Transfer Arm suction sensor (HIGH = Transfer Arm suction grabbed wood/active, LOW = Transfer Arm suction not active)
 
 //* ************************************************************************
 //* ************************ CLAMP PINS ***********************************

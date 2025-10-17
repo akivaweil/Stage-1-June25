@@ -212,15 +212,15 @@ ConfigurationData getDefaultConfiguration() {
     // Motor Configuration
     config.CUT_MOTOR_STEPS_PER_INCH = 500.0;
     config.FEED_MOTOR_STEPS_PER_INCH = 1000.0;
-    config.CUT_TRAVEL_DISTANCE = 9.2;
+    config.CUT_TRAVEL_DISTANCE = 2.2;
     config.FEED_TRAVEL_DISTANCE = 3.43;
     config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
     config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
     
     // Cut Motor Speed Settings
     config.CUT_MOTOR_NORMAL_SPEED = 640;
-    config.CUT_MOTOR_NORMAL_ACCELERATION = 17000;
-    config.CUT_MOTOR_RETURN_SPEED = 25000;
+    config.CUT_MOTOR_NORMAL_ACCELERATION = 25000;
+    config.CUT_MOTOR_RETURN_SPEED = 35000;
     config.CUT_MOTOR_HOMING_SPEED = 1500;
     
     // Feed Motor Speed Settings
@@ -231,13 +231,13 @@ ConfigurationData getDefaultConfiguration() {
     config.FEED_MOTOR_HOMING_SPEED = 2000;
     
     // Timing Configuration
-    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
+    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;
     config.CUT_HOME_TIMEOUT = 5000;
     config.TA_SIGNAL_DURATION = 500;
     
     // Operational Constants
     config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
-    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
+    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
     config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
     
     // Safety Constants
@@ -975,7 +975,17 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["key"] = configKey;
                         
                         // Handle configuration settings
-                        if (configKey == "feed_travel_distance") {
+                        if (configKey == "cut_travel_distance") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.1 && newValue <= 20.0) {
+                                CUT_TRAVEL_DISTANCE = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: CUT_TRAVEL_DISTANCE = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (0.1-20.0)";
+                            }
+                        } else if (configKey == "feed_travel_distance") {
                             float newValue = doc["value"];
                             if (newValue >= 0.1 && newValue <= 10.0) {
                                 FEED_TRAVEL_DISTANCE = newValue;
@@ -1010,7 +1020,9 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["key"] = configKey;
                         
                         // Return current values for configuration settings
-                        if (configKey == "feed_travel_distance") {
+                        if (configKey == "cut_travel_distance") {
+                            response["value"] = CUT_TRAVEL_DISTANCE;
+                        } else if (configKey == "feed_travel_distance") {
                             response["value"] = FEED_TRAVEL_DISTANCE;
                         } else if (configKey == "cut_motor_normal_speed") {
                             response["value"] = CUT_MOTOR_NORMAL_SPEED;
@@ -1026,6 +1038,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         // Send all configuration values at once
                         JsonDocument response;
                         response["type"] = "all_config";
+                        response["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
                         response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
                         response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
                         

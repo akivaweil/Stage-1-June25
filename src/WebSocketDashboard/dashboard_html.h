@@ -532,6 +532,17 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                         <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Configuration Settings</h3>
                         
                         <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Travel Distance (inches)</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="cutTravelDistance" step="0.01" min="0.1" max="20.0" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
+                                       placeholder="2.2">
+                                <button onclick="updateConfig('cut_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                            </div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0.1 - 20.0</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
                             <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Feed Travel Distance (inches)</label>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="number" id="feedTravelDistance" step="0.01" min="0.1" max="10.0" 
@@ -796,6 +807,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                         
                         if (data.type === 'all_config') {
                             // Populate all configuration fields
+                            updateConfigField('cut_travel_distance', data.cut_travel_distance);
                             updateConfigField('feed_travel_distance', data.feed_travel_distance);
                             updateConfigField('cut_motor_normal_speed', data.cut_motor_normal_speed);
                         }
@@ -985,6 +997,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         // Configuration field mapping
         const configFieldMap = {
+            'cut_travel_distance': 'cutTravelDistance',
             'feed_travel_distance': 'feedTravelDistance',
             'cut_motor_normal_speed': 'cutMotorNormalSpeed'
         };
@@ -1024,6 +1037,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             let errorMsg = '';
             
             switch (key) {
+                case 'cut_travel_distance':
+                    isValid = value >= 0.1 && value <= 20.0;
+                    errorMsg = 'Range: 0.1 - 20.0 inches';
+                    break;
                 case 'feed_travel_distance':
                     isValid = value >= 0.1 && value <= 10.0;
                     errorMsg = 'Range: 0.1 - 10.0 inches';

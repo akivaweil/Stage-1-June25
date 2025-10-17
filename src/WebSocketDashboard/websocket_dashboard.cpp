@@ -974,7 +974,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["type"] = "config_updated";
                         response["key"] = configKey;
                         
-                        // Handle all configuration settings
+                        // Handle configuration settings
                         if (configKey == "feed_travel_distance") {
                             float newValue = doc["value"];
                             if (newValue >= 0.1 && newValue <= 10.0) {
@@ -985,16 +985,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (0.1-10.0)";
                             }
-                        } else if (configKey == "cut_travel_distance") {
-                            float newValue = doc["value"];
-                            if (newValue >= 1.0 && newValue <= 20.0) {
-                                CUT_TRAVEL_DISTANCE = newValue;
-                                saveConfiguration();
-                                response["value"] = newValue;
-                                addEventToLog("Configuration updated: CUT_TRAVEL_DISTANCE = " + String(newValue));
-                            } else {
-                                response["error"] = "Value out of range (1.0-20.0)";
-                            }
                         } else if (configKey == "cut_motor_normal_speed") {
                             float newValue = doc["value"];
                             if (newValue >= 100 && newValue <= 5000) {
@@ -1004,26 +994,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                                 addEventToLog("Configuration updated: CUT_MOTOR_NORMAL_SPEED = " + String(newValue));
                             } else {
                                 response["error"] = "Value out of range (100-5000)";
-                            }
-                        } else if (configKey == "cut_motor_return_speed") {
-                            float newValue = doc["value"];
-                            if (newValue >= 1000 && newValue <= 50000) {
-                                CUT_MOTOR_RETURN_SPEED = newValue;
-                                saveConfiguration();
-                                response["value"] = newValue;
-                                addEventToLog("Configuration updated: CUT_MOTOR_RETURN_SPEED = " + String(newValue));
-                            } else {
-                                response["error"] = "Value out of range (1000-50000)";
-                            }
-                        } else if (configKey == "feed_motor_normal_speed") {
-                            float newValue = doc["value"];
-                            if (newValue >= 1000 && newValue <= 50000) {
-                                FEED_MOTOR_NORMAL_SPEED = newValue;
-                                saveConfiguration();
-                                response["value"] = newValue;
-                                addEventToLog("Configuration updated: FEED_MOTOR_NORMAL_SPEED = " + String(newValue));
-                            } else {
-                                response["error"] = "Value out of range (1000-50000)";
                             }
                         } else {
                             response["error"] = "Unknown configuration key";
@@ -1039,17 +1009,11 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["type"] = "config_value";
                         response["key"] = configKey;
                         
-                        // Return current values for all configuration settings
+                        // Return current values for configuration settings
                         if (configKey == "feed_travel_distance") {
                             response["value"] = FEED_TRAVEL_DISTANCE;
-                        } else if (configKey == "cut_travel_distance") {
-                            response["value"] = CUT_TRAVEL_DISTANCE;
                         } else if (configKey == "cut_motor_normal_speed") {
                             response["value"] = CUT_MOTOR_NORMAL_SPEED;
-                        } else if (configKey == "cut_motor_return_speed") {
-                            response["value"] = CUT_MOTOR_RETURN_SPEED;
-                        } else if (configKey == "feed_motor_normal_speed") {
-                            response["value"] = FEED_MOTOR_NORMAL_SPEED;
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1063,10 +1027,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         JsonDocument response;
                         response["type"] = "all_config";
                         response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
-                        response["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
                         response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
-                        response["cut_motor_return_speed"] = CUT_MOTOR_RETURN_SPEED;
-                        response["feed_motor_normal_speed"] = FEED_MOTOR_NORMAL_SPEED;
                         
                         String message;
                         serializeJson(response, message);

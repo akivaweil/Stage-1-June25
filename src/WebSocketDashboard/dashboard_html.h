@@ -527,9 +527,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             <div style="padding: 16px;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
                     
-                    <!-- Motor Configuration Section -->
-                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Motor Configuration</h3>
+                    <!-- Configuration Section -->
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto; max-width: 400px;">
+                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Configuration Settings</h3>
                         
                         <div style="margin-bottom: 16px;">
                             <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Feed Travel Distance (inches)</label>
@@ -543,22 +543,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                         </div>
                         
                         <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Travel Distance (inches)</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="cutTravelDistance" step="0.1" min="1.0" max="20.0" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="9.2">
-                                <button onclick="updateConfig('cut_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 1.0 - 20.0</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Speed Configuration Section -->
-                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Motor Speeds</h3>
-                        
-                        <div style="margin-bottom: 16px;">
                             <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Motor Normal Speed</label>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="number" id="cutMotorNormalSpeed" step="10" min="100" max="5000" 
@@ -567,28 +551,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                                 <button onclick="updateConfig('cut_motor_normal_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
                             </div>
                             <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 100 - 5000</div>
-                        </div>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Motor Return Speed</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="cutMotorReturnSpeed" step="100" min="1000" max="50000" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="25000">
-                                <button onclick="updateConfig('cut_motor_return_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 1000 - 50000</div>
-                        </div>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Feed Motor Normal Speed</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="feedMotorNormalSpeed" step="100" min="1000" max="50000" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="22000">
-                                <button onclick="updateConfig('feed_motor_normal_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 1000 - 50000</div>
                         </div>
                     </div>
                 </div>
@@ -835,10 +797,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                         if (data.type === 'all_config') {
                             // Populate all configuration fields
                             updateConfigField('feed_travel_distance', data.feed_travel_distance);
-                            updateConfigField('cut_travel_distance', data.cut_travel_distance);
                             updateConfigField('cut_motor_normal_speed', data.cut_motor_normal_speed);
-                            updateConfigField('cut_motor_return_speed', data.cut_motor_return_speed);
-                            updateConfigField('feed_motor_normal_speed', data.feed_motor_normal_speed);
                         }
                     } catch (error) {
                         console.error('Error parsing WebSocket message:', error);
@@ -1027,10 +986,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         // Configuration field mapping
         const configFieldMap = {
             'feed_travel_distance': 'feedTravelDistance',
-            'cut_travel_distance': 'cutTravelDistance',
-            'cut_motor_normal_speed': 'cutMotorNormalSpeed',
-            'cut_motor_return_speed': 'cutMotorReturnSpeed',
-            'feed_motor_normal_speed': 'feedMotorNormalSpeed'
+            'cut_motor_normal_speed': 'cutMotorNormalSpeed'
         };
         
         function updateConfigField(key, value) {
@@ -1072,21 +1028,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                     isValid = value >= 0.1 && value <= 10.0;
                     errorMsg = 'Range: 0.1 - 10.0 inches';
                     break;
-                case 'cut_travel_distance':
-                    isValid = value >= 1.0 && value <= 20.0;
-                    errorMsg = 'Range: 1.0 - 20.0 inches';
-                    break;
                 case 'cut_motor_normal_speed':
                     isValid = value >= 100 && value <= 5000;
                     errorMsg = 'Range: 100 - 5000';
-                    break;
-                case 'cut_motor_return_speed':
-                    isValid = value >= 1000 && value <= 50000;
-                    errorMsg = 'Range: 1000 - 50000';
-                    break;
-                case 'feed_motor_normal_speed':
-                    isValid = value >= 1000 && value <= 50000;
-                    errorMsg = 'Range: 1000 - 50000';
                     break;
             }
             

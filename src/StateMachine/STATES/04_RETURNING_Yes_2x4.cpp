@@ -37,7 +37,7 @@ void executeReturningYes2x4State() {
 
 void onEnterReturningYes2x4State() {
     //! ************************************************************************
-    //! STEP 1: START CUT MOTOR RETURN AND RETRACT 2X4 SECURE CLAMP
+    //! STEP 1: START CUT MOTOR RETURN (SECURE CLAMP REMAINS EXTENDED)
     //! ************************************************************************
     
     // Increment consecutive yeswood counter
@@ -48,7 +48,7 @@ void onEnterReturningYes2x4State() {
     cutMotorInReturningYes2x4Return = true;
     
     // Cut motor already started in CUTTING state
-    retract2x4SecureClamp();
+    // Secure 2x4 clamp remains extended during first feed motor movement
     
     // Initialize step tracking
     returningYes2x4SubStep = 0;
@@ -81,8 +81,9 @@ void handleReturningYes2x4Sequence() {
         case 1: // Wait for feed motor to complete return movement (no homing)
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 2: FEED MOTOR RETURN COMPLETE - EXTEND FEED CLAMP IMMEDIATELY
+                //! STEP 2: FEED MOTOR RETURN COMPLETE - RETRACT SECURE CLAMP AND EXTEND FEED CLAMP
                 //! ************************************************************************
+                retract2x4SecureClamp();
                 extendFeedClamp();
                 returningYes2x4SubStep = 2;
             }
@@ -117,7 +118,6 @@ void handleReturningYes2x4Sequence() {
                     if (cutMotor) cutMotor->setCurrentPosition(0);
                     cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
                     
-                    retract2x4SecureClamp();
                     configureFeedMotorForNormalOperation();
                     moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                     returningYes2x4SubStep = 3;

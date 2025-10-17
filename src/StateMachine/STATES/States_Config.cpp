@@ -19,7 +19,7 @@ float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2500;
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2300;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 
 //* ************************************************************************
@@ -37,7 +37,7 @@ float CUT_MOTOR_HOMING_SPEED = 1500;
 // Distances & Movement
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
 float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
-float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.02;
+float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2;
 
 // Timing
 unsigned long CUT_HOME_TIMEOUT = 5000;
@@ -54,8 +54,8 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;
 // Speeds
 float FEED_MOTOR_NORMAL_SPEED = 22000;
 float FEED_MOTOR_NORMAL_ACCELERATION = 22000;
-float FEED_MOTOR_RETURN_SPEED = 22000;
-float FEED_MOTOR_RETURN_ACCELERATION = 30000;
+float FEED_MOTOR_RETURN_SPEED = 35000;
+float FEED_MOTOR_RETURN_ACCELERATION = 35000;
 float FEED_MOTOR_HOMING_SPEED = 2000;
 
 // Distances & Movement

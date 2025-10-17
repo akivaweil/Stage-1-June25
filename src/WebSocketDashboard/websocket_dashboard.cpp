@@ -42,6 +42,7 @@ PerformanceMetrics performanceMetrics;
 ErrorInfo errorInfo;
 NetworkInfo networkInfo;
 EventLog eventLog;
+SerialLog serialLog;
 
 // Previous values for change detection
 SystemStatus previousSystemStatus;
@@ -52,6 +53,7 @@ PerformanceMetrics previousPerformanceMetrics;
 ErrorInfo previousErrorInfo;
 NetworkInfo previousNetworkInfo;
 EventLog previousEventLog;
+SerialLog previousSerialLog;
 
 // Helper function to get state name
 String getStateName(SystemState state) {
@@ -886,6 +888,44 @@ void broadcastEventLog() {
     }
 }
 
+// Add serial log message
+void addSerialLog(const String& message) {
+    // Add timestamp to message
+    unsigned long currentTime = millis();
+    String timestampedMessage = "[" + String(currentTime) + "ms] " + message;
+    
+    // Store in circular buffer
+    serialLog.logs[serialLog.logIndex] = timestampedMessage;
+    serialLog.logIndex = (serialLog.logIndex + 1) % 100;
+    if (serialLog.logCount < 100) {
+        serialLog.logCount++;
+    }
+    
+    // Also print to Serial
+    Serial.println(message);
+}
+
+// Broadcast serial log
+void broadcastSerialLog() {
+    if (ws.getClients().size() > 0) {
+        // Always broadcast serial logs (they're always changing)
+        JsonDocument doc;
+        doc["type"] = "serial_log";
+        
+        JsonArray logs = doc["logs"].to<JsonArray>();
+        for (int i = 0; i < serialLog.logCount; i++) {
+            int index = (serialLog.logIndex - serialLog.logCount + i + 100) % 100;
+            if (serialLog.logs[index].length() > 0) {
+                logs.add(serialLog.logs[index]);
+            }
+        }
+        
+        String message;
+        serializeJson(doc, message);
+        ws.textAll(message);
+    }
+}
+
 void setupWebSocketDashboard() {
     // Initialize SPIFFS for serving files (if needed in future)
     if (!SPIFFS.begin(true)) {
@@ -933,6 +973,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
             broadcastErrorStatus();
             broadcastNetworkInfo();
             broadcastEventLog();
+            broadcastSerialLog();
             break;
         }
             
@@ -968,6 +1009,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         broadcastErrorStatus();
                         broadcastNetworkInfo();
                         broadcastEventLog();
+                        broadcastSerialLog();
                     } else if (type == "update_config") {
                         String configKey = doc["key"];
                         JsonDocument response;

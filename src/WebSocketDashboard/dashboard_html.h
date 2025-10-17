@@ -581,6 +581,17 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
         </div>
         
+        <!-- Serial Log Card -->
+        <div class="card full-width">
+            <div class="card-header">
+                <div class="card-icon">🔧</div>
+                <div class="card-title">Serial Log</div>
+            </div>
+            <div class="event-log" id="serialLog">
+                <div class="event-item">Waiting for serial output...</div>
+            </div>
+        </div>
+        
         <!-- Performance Chart Card -->
         <div class="card full-width">
             <div class="card-header">
@@ -792,6 +803,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                             updateEventLog(data.events);
                         }
                         
+                        if (data.type === 'serial_log') {
+                            updateSerialLog(data.logs);
+                        }
+                        
                         
                         if (data.type === 'config_value') {
                             updateConfigField(data.key, data.value);
@@ -912,6 +927,62 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 }
                 
                 logContainer.appendChild(eventItem);
+            });
+            
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function updateSerialLog(logs) {
+            const logContainer = document.getElementById('serialLog');
+            logContainer.innerHTML = '';
+            
+            logs.forEach(log => {
+                const logItem = document.createElement('div');
+                logItem.className = 'event-item';
+                
+                // Parse the log string to extract timestamp and message
+                const match = log.match(/^\[(\d+)ms\] (.+)$/);
+                if (match) {
+                    const timestamp = match[1];
+                    const message = match[2];
+                    
+                    // Create timestamp element
+                    const timestampEl = document.createElement('span');
+                    timestampEl.className = 'event-timestamp';
+                    timestampEl.textContent = '[' + timestamp + 'ms]';
+                    
+                    // Create icon element
+                    const iconEl = document.createElement('span');
+                    iconEl.className = 'event-icon';
+                    iconEl.textContent = '🔧';
+                    
+                    // Create message element
+                    const messageEl = document.createElement('span');
+                    messageEl.className = 'event-message';
+                    messageEl.textContent = message;
+                    
+                    // Determine log type and styling
+                    if (message.toLowerCase().includes('error') || message.toLowerCase().includes('warning')) {
+                        logItem.classList.add('error');
+                        iconEl.textContent = '⚠️';
+                    } else if (message.toLowerCase().includes('waiting')) {
+                        logItem.classList.add('state-change');
+                        iconEl.textContent = '⏳';
+                    } else {
+                        logItem.classList.add('system');
+                        iconEl.textContent = '🔧';
+                    }
+                    
+                    // Append elements
+                    logItem.appendChild(timestampEl);
+                    logItem.appendChild(iconEl);
+                    logItem.appendChild(messageEl);
+                } else {
+                    // Fallback for logs that don't match the expected format
+                    logItem.textContent = log;
+                }
+                
+                logContainer.appendChild(logItem);
             });
             
             logContainer.scrollTop = logContainer.scrollHeight;

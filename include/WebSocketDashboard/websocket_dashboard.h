@@ -36,6 +36,8 @@ void broadcastPerformanceMetrics();
 void broadcastErrorStatus();
 void broadcastNetworkInfo();
 void broadcastEventLog();
+void broadcastSerialLog();
+void addSerialLog(const String& message);
 void addEventToLog(const String& event);
 void updatePerformanceMetrics(unsigned long cycleTime);
 void calculateTimeBasedMetrics();
@@ -140,6 +142,12 @@ struct EventLog {
     int eventCount;
 };
 
+struct SerialLog {
+    String logs[100];
+    int logIndex;
+    int logCount;
+};
+
 extern SystemStatus systemStatus;
 extern SensorStatus sensorStatus;
 extern ClampStatus clampStatus;
@@ -148,5 +156,6 @@ extern PerformanceMetrics performanceMetrics;
 extern ErrorInfo errorInfo;
 extern NetworkInfo networkInfo;
 extern EventLog eventLog;
+extern SerialLog serialLog;
 
 #endif // WEBSOCKET_DASHBOARD_H

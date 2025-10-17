@@ -419,13 +419,21 @@ void handleCommonOperations() {
         // Using debounced reading with 15ms debounce time
         if (suctionSensorBounce.read() == HIGH && !rotationServoReturnCompleted) {
             // Wood released - return servo to home immediately
+            Serial.print("Wood released detected after ");
+            Serial.print(millis() - rotationServoActiveStartTime);
+            Serial.println("ms - returning rotation servo to home immediately.");
             handleRotationServoReturn();
-            //serial.println("Wood released detected - returning rotation servo to home immediately.");
             rotationServoIsActiveAndTiming = false;
             rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
         } else if (suctionSensorBounce.read() == LOW) {
             // Suction sensor still reads LOW - wood still grabbed, continue waiting for release
-            //serial.println("Waiting for wood to be released (sensor HIGH) before returning rotation servo...");
+            static unsigned long lastDebugTime = 0;
+            if (millis() - lastDebugTime >= 500) {
+                Serial.print("Waiting for wood release - sensor still LOW after ");
+                Serial.print(millis() - rotationServoActiveStartTime);
+                Serial.println("ms");
+                lastDebugTime = millis();
+            }
         }
     }
 

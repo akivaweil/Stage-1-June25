@@ -31,9 +31,8 @@ float CUT_MOTOR_STEPS_PER_INCH = 500.0;
 const int CUT_HOMING_DIRECTION = -1;
 
 // Speeds
-float CUT_MOTOR_NORMAL_SPEED = 640;
 float CUT_MOTOR_NORMAL_ACCELERATION = 25000;
-float CUT_MOTOR_NO_WOOD_SPEED = CUT_MOTOR_NORMAL_SPEED * 0.6;
+float CUT_MOTOR_NO_WOOD_SPEED = 384; // 60% of normal speed (640 * 0.6)
 float CUT_MOTOR_RETURN_SPEED = 35000;
 float CUT_MOTOR_HOMING_SPEED = 1500;
 
@@ -62,7 +61,6 @@ float FEED_MOTOR_RETURN_ACCELERATION = 30000;
 float FEED_MOTOR_HOMING_SPEED = 2000;
 
 // Distances & Movement
-float FEED_TRAVEL_DISTANCE = 3.43;
 float FEED_MOTOR_RETURN_DISTANCE = 0.0;
 
 //* ************************************************************************

@@ -25,7 +25,9 @@ float reloadTimeSeconds = 0.0;
 bool reloadTimeActive = false;
 
 // Dashboard configuration variables
-float CUT_TRAVEL_DISTANCE = 2.2; // Default value, can be changed via dashboard
+float CUT_TRAVEL_DISTANCE = 9.2; // Default value, can be changed via dashboard
+float CUT_MOTOR_NORMAL_SPEED = 640; // Default value, can be changed via dashboard
+float FEED_TRAVEL_DISTANCE = 3.43; // Default value, can be changed via dashboard
 
 // Configuration storage - Need more space for all settings
 const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration

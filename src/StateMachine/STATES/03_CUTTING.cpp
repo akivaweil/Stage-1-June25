@@ -228,6 +228,7 @@ void handleCuttingStep2() {
         // Cycle counter will be incremented in RETURNING state when sequence completes
         
         configureCutMotorForReturn();
+        moveCutMotorToHome(); // Start return movement immediately
         transferArmSignalSentThisCycle = false;
 
         // Check wood present sensor using debounced reading

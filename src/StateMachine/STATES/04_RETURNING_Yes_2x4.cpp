@@ -47,7 +47,7 @@ void onEnterReturningYes2x4State() {
     extern bool cutMotorInReturningYes2x4Return;
     cutMotorInReturningYes2x4Return = true;
     
-    moveCutMotorToHome();
+    // Cut motor already started in CUTTING state
     retract2x4SecureClamp();
     
     // Initialize step tracking

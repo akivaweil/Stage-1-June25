@@ -100,7 +100,7 @@ void onEnterReturningNo2x4State() {
     
     // Initialize RETURNING_NO_2x4 sequence from CUTTING_state logic
     configureCutMotorForReturn();
-    moveCutMotorToHome();
+    // Cut motor already started in CUTTING state
     configureFeedMotorForNormalOperation();
 
     turnBlueLedOn();

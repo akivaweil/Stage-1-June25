@@ -12,7 +12,6 @@ extern int ROTATION_SERVO_ACTIVE_POSITION;
 // Motor Configuration
 extern float CUT_MOTOR_STEPS_PER_INCH;
 extern float FEED_MOTOR_STEPS_PER_INCH;
-extern float CUT_TRAVEL_DISTANCE;
 extern float FEED_TRAVEL_DISTANCE;
 extern float CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
 extern float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
@@ -72,8 +71,5 @@ extern float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
 //* ************************************************************************
 // Pre-calculated step values for cutting state to avoid repeated calculations
 extern const long SUCTION_SENSOR_CHECK_DISTANCE_STEPS;
-extern const long ROTATION_CLAMP_ACTIVATION_POSITION_STEPS;
-extern const long ROTATION_SERVO_ACTIVATION_POSITION_STEPS;
-extern const long TA_SIGNAL_ACTIVATION_POSITION_STEPS;
 
 #endif // STATES_CONFIG_H 

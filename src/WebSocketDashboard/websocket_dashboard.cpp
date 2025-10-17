@@ -24,6 +24,8 @@ unsigned long reloadTimeStart = 0;
 float reloadTimeSeconds = 0.0;
 bool reloadTimeActive = false;
 
+// Dashboard configuration variables
+float CUT_TRAVEL_DISTANCE = 2.2; // Default value, can be changed via dashboard
 
 // Configuration storage - Need more space for all settings
 const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
@@ -219,8 +221,8 @@ ConfigurationData getDefaultConfiguration() {
     
     // Cut Motor Speed Settings
     config.CUT_MOTOR_NORMAL_SPEED = 640;
-    config.CUT_MOTOR_NORMAL_ACCELERATION = 25000;
-    config.CUT_MOTOR_RETURN_SPEED = 35000;
+    config.CUT_MOTOR_NORMAL_ACCELERATION = 17000;
+    config.CUT_MOTOR_RETURN_SPEED = 25000;
     config.CUT_MOTOR_HOMING_SPEED = 1500;
     
     // Feed Motor Speed Settings
@@ -231,13 +233,13 @@ ConfigurationData getDefaultConfiguration() {
     config.FEED_MOTOR_HOMING_SPEED = 2000;
     
     // Timing Configuration
-    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;
+    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
     config.CUT_HOME_TIMEOUT = 5000;
     config.TA_SIGNAL_DURATION = 500;
     
     // Operational Constants
     config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
-    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
+    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
     config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
     
     // Safety Constants
@@ -411,6 +413,10 @@ void saveConfiguration() {
 
 float getFeedTravelDistance() {
     return FEED_TRAVEL_DISTANCE;
+}
+
+float getCutTravelDistance() {
+    return CUT_TRAVEL_DISTANCE;
 }
 
 void setFeedTravelDistance(float value) {

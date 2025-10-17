@@ -188,38 +188,48 @@ void handleCuttingStep2() {
             Serial.print("Cut position: ");
             Serial.print(currentPositionInches, 2);
             Serial.print("/");
-            Serial.print(CUT_TRAVEL_DISTANCE);
+            extern float getCutTravelDistance();
+            Serial.print(getCutTravelDistance());
             Serial.print(" inches, Running: ");
             Serial.println(cutMotor->isRunning() ? "YES" : "NO");
         }
         lastDebugTime = millis();
     }
     
-    if (!rotationClampActivatedThisCycle && cutMotor &&
-        cutMotor->getCurrentPosition() >= ROTATION_CLAMP_ACTIVATION_POSITION_STEPS) {
-        extendRotationClamp();
-        rotationClampActivatedThisCycle = true;
-        Serial.print("Rotation clamp activated at ");
-        Serial.print((float)ROTATION_CLAMP_ACTIVATION_POSITION_STEPS / CUT_MOTOR_STEPS_PER_INCH, 2);
-        Serial.println(" inches");
+    if (!rotationClampActivatedThisCycle && cutMotor) {
+        extern float getCutTravelDistance();
+        long activationSteps = (getCutTravelDistance() - ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH;
+        if (cutMotor->getCurrentPosition() >= activationSteps) {
+            extendRotationClamp();
+            rotationClampActivatedThisCycle = true;
+            Serial.print("Rotation clamp activated at ");
+            Serial.print((float)activationSteps / CUT_MOTOR_STEPS_PER_INCH, 2);
+            Serial.println(" inches");
+        }
     }
     
-    if (!rotationServoActivatedThisCycle && cutMotor &&
-        cutMotor->getCurrentPosition() >= ROTATION_SERVO_ACTIVATION_POSITION_STEPS) {
-        activateRotationServo();
-        rotationServoActivatedThisCycle = true;
-        Serial.print("Rotation servo activated at ");
-        Serial.print((float)ROTATION_SERVO_ACTIVATION_POSITION_STEPS / CUT_MOTOR_STEPS_PER_INCH, 2);
-        Serial.println(" inches");
+    if (!rotationServoActivatedThisCycle && cutMotor) {
+        extern float getCutTravelDistance();
+        long activationSteps = (getCutTravelDistance() - ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH;
+        if (cutMotor->getCurrentPosition() >= activationSteps) {
+            activateRotationServo();
+            rotationServoActivatedThisCycle = true;
+            Serial.print("Rotation servo activated at ");
+            Serial.print((float)activationSteps / CUT_MOTOR_STEPS_PER_INCH, 2);
+            Serial.println(" inches");
+        }
     }
     
-    if (!transferArmSignalSentThisCycle && cutMotor &&
-        cutMotor->getCurrentPosition() >= TA_SIGNAL_ACTIVATION_POSITION_STEPS) {
-        sendSignalToTA();
-        transferArmSignalSentThisCycle = true;
-        Serial.print("TA signal sent at ");
-        Serial.print((float)TA_SIGNAL_ACTIVATION_POSITION_STEPS / CUT_MOTOR_STEPS_PER_INCH, 2);
-        Serial.println(" inches (early activation)");
+    if (!transferArmSignalSentThisCycle && cutMotor) {
+        extern float getCutTravelDistance();
+        long activationSteps = (getCutTravelDistance() - TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES) * CUT_MOTOR_STEPS_PER_INCH;
+        if (cutMotor->getCurrentPosition() >= activationSteps) {
+            sendSignalToTA();
+            transferArmSignalSentThisCycle = true;
+            Serial.print("TA signal sent at ");
+            Serial.print((float)activationSteps / CUT_MOTOR_STEPS_PER_INCH, 2);
+            Serial.println(" inches (early activation)");
+        }
     }
     
     if (cutMotor && !cutMotor->isRunning()) {

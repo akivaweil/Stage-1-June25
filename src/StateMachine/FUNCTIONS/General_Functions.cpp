@@ -225,7 +225,8 @@ void configureFeedMotorForSlowOperation(float speedMultiplier) {
 
 void moveCutMotorToCut() {
     if (cutMotor) {
-        cutMotor->moveTo(CUT_TRAVEL_DISTANCE * CUT_MOTOR_STEPS_PER_INCH);
+        extern float getCutTravelDistance();
+        cutMotor->moveTo(getCutTravelDistance() * CUT_MOTOR_STEPS_PER_INCH);
     }
 }
 

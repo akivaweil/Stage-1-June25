@@ -51,6 +51,7 @@ void loadConfiguration();
 void saveConfiguration();
 float getFeedTravelDistance();
 void setFeedTravelDistance(float value);
+float getCutTravelDistance();
 
 // Global variables
 extern AsyncWebServer server;

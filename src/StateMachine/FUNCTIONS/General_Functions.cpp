@@ -521,8 +521,6 @@ void activateRotationServo() {
         
         rotationServoActiveStartTime = millis();
         rotationServoIsActiveAndTiming = true;
-        // Reset safety delay flag for new activation cycle
-        setRotationServoSafetyDelayActive(false);
         // Reset the return completed flag for new activation cycle
         rotationServoReturnCompleted = false;
         //Serial.print("Rotation servo activated to ");

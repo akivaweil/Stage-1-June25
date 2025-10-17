@@ -83,13 +83,7 @@ void setRotationServoActiveStartTime(unsigned long value);
 bool getRotationServoIsActiveAndTiming();
 void setRotationServoIsActiveAndTiming(bool value);
 
-// Rotation servo safety delay access functions
-bool getRotationServoSafetyDelayActive();
-void setRotationServoSafetyDelayActive(bool value);
-
-unsigned long getRotationServoSafetyDelayStartTime();
-void setRotationServoSafetyDelayStartTime(unsigned long value);
-
+// Rotation servo return delay access functions
 unsigned long getRotationServoReturnDelayStartTime();
 void setRotationServoReturnDelayStartTime(unsigned long value);
 

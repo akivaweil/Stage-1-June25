@@ -134,10 +134,6 @@ void handleStartSwitchContinuousMode();
 //* ************************************************************************
 bool shouldStartCycle();
 void activateRotationServo();
-
-// Rotation servo safety delay access functions (forward declarations)
-bool getRotationServoSafetyDelayActive();
-void setRotationServoSafetyDelayActive(bool value);
 void handleRotationServoReturn();
 void handleTASignalTiming();
 void moveFeedMotorToPostCutHome();

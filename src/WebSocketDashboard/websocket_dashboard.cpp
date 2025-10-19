@@ -55,6 +55,7 @@ ErrorInfo previousErrorInfo;
 NetworkInfo previousNetworkInfo;
 EventLog previousEventLog;
 SerialLog previousSerialLog;
+float previousReloadTime = 0.0;
 
 // Forward declarations
 void updateSensorStatus();
@@ -790,11 +791,15 @@ void broadcastPerformanceMetrics() {
         // Recalculate time-based metrics before broadcasting
         calculateTimeBasedMetrics();
         
+        // Check if reload time changed (for active reload timer)
+        float currentReloadTime = getReloadTime();
+        bool reloadTimeChanged = (currentReloadTime != previousReloadTime);
+        
         // Only broadcast if something changed
-        if (hasPerformanceMetricsChanged()) {
+        if (hasPerformanceMetricsChanged() || reloadTimeChanged) {
             JsonDocument doc;
             doc["type"] = "performance_metrics";
-            doc["reloadTime"] = getReloadTime();
+            doc["reloadTime"] = currentReloadTime;
             
             // Time-based averages (cycles per minute)
             doc["avgCycles1Min"] = performanceMetrics.avgCycles1Min;
@@ -813,6 +818,7 @@ void broadcastPerformanceMetrics() {
             
             // Update previous values
             previousPerformanceMetrics = performanceMetrics;
+            previousReloadTime = currentReloadTime;
         }
     }
 }

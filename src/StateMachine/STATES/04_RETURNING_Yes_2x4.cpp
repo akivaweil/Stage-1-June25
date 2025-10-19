@@ -287,9 +287,6 @@ void handleFeedWoodMovement() {
             break;
             
         case 2: // Movement complete and wood cleared - transition to final step
-            while (digitalRead(_2x4_PRESENT_SENSOR) == LOW) {
-                delay(10);
-            }
             extend2x4SecureClamp();
             returningYes2x4SubStep = 4; // Move to final completion step
             break;

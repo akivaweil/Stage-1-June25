@@ -187,26 +187,30 @@ void handleReturningNo2x4Step(int step) {
             handleWaitForMotorAndCylinderAction(feedMotor, true); // true = extend
             break;
             
-        case STEP_FINAL_COMPLETION: // Final step: always extend secure clamp when transitioning to IDLE
+        case STEP_FINAL_COMPLETION: // Final step: wait for sensor to clear, then extend secure clamp
             if (feedMotor && !feedMotor->isRunning()) {
-                // Always extend secure wood clamp when completing no2x4 sequence
-                // This ensures wood is secured regardless of sensor state
-                extend2x4SecureClamp();
-                // Set flag to prevent IDLE from retracting the clamp
-                setComingFromNoWoodWithSensorsClear(true);
-                
-                // Complete sequence and transition to IDLE
-                resetReturningNo2x4Steps();
-                setCuttingCycleInProgress(false);
-                
-                
-                // When no wood is detected, require manual reset of cycle switch
-                // This prevents automatic restart when no wood is present
-                if (getStartCycleSwitch()->read() == HIGH) {
-                    setStartSwitchSafe(false);
+                // Wait for 2x4 present sensor to be not active (HIGH) before extending clamp
+                extern const int _2x4_PRESENT_SENSOR;
+                if (digitalRead(_2x4_PRESENT_SENSOR) == HIGH) {
+                    // Sensor is clear (not active) - safe to extend secure clamp
+                    extend2x4SecureClamp();
+                    // Set flag to prevent IDLE from retracting the clamp
+                    setComingFromNoWoodWithSensorsClear(true);
+                    
+                    // Complete sequence and transition to IDLE
+                    resetReturningNo2x4Steps();
+                    setCuttingCycleInProgress(false);
+                    
+                    
+                    // When no wood is detected, require manual reset of cycle switch
+                    // This prevents automatic restart when no wood is present
+                    if (getStartCycleSwitch()->read() == HIGH) {
+                        setStartSwitchSafe(false);
+                    }
+                    
+                    changeState(IDLE);
                 }
-                
-                changeState(IDLE);
+                // If sensor is still active (LOW), wait here (non-blocking)
             }
             break;
     }

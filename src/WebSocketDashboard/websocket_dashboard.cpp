@@ -511,7 +511,7 @@ void initializeDashboardData() {
 void updateSensorStatus() {
     sensorStatus._2x4Present = digitalRead(_2x4_PRESENT_SENSOR) == LOW;
     sensorStatus.woodSuctionConfirm = digitalRead(WOOD_SUCTION_CONFIRM_SENSOR) == LOW;
-    sensorStatus.firstCutOrWoodFwdOne = digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == HIGH;
+    sensorStatus.firstCutOrWoodFwdOne = digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == LOW;
     sensorStatus.cutMotorHomeSwitch = digitalRead(CUT_MOTOR_HOME_SWITCH) == HIGH;
     sensorStatus.feedMotorHomeSensor = digitalRead(FEED_MOTOR_HOME_SENSOR) == LOW;
     sensorStatus.reloadSwitch = digitalRead(RELOAD_SWITCH) == HIGH;

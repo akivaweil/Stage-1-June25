@@ -171,6 +171,9 @@ bool hasEventLogChanged() {
 
 // Configuration structure for all settings
 struct ConfigurationData {
+    // Magic number to detect valid configuration
+    uint32_t magic;
+    
     // Motor Configuration
     float CUT_MOTOR_STEPS_PER_INCH;
     float FEED_MOTOR_STEPS_PER_INCH;
@@ -220,9 +223,15 @@ struct ConfigurationData {
     uint32_t checksum;
 };
 
+// Magic number to identify valid configuration
+#define CONFIG_MAGIC 0x54415753  // "TAWS" in hex
+
 // Default configuration values
 ConfigurationData getDefaultConfiguration() {
     ConfigurationData config;
+    
+    // Set magic number
+    config.magic = CONFIG_MAGIC;
     
     // Motor Configuration
     config.CUT_MOTOR_STEPS_PER_INCH = 500.0;
@@ -321,15 +330,90 @@ void applyConfiguration(const ConfigurationData& config) {
     SUCTION_SENSOR_CHECK_DISTANCE_INCHES = config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
 }
 
-// Calculate checksum for configuration
+// Calculate checksum for configuration - only checksum the actual data fields, not padding
 uint32_t calculateChecksum(const ConfigurationData& config) {
     uint32_t checksum = 0;
-    const uint8_t* data = (const uint8_t*)&config;
-    size_t size = sizeof(config) - sizeof(config.checksum); // Exclude checksum field
     
-    for (size_t i = 0; i < size; i++) {
-        checksum += data[i];
-    }
+    // Manually checksum each field to avoid structure padding issues
+    const uint8_t* data;
+    
+    // Magic number
+    data = (const uint8_t*)&config.magic;
+    for (size_t i = 0; i < sizeof(config.magic); i++) checksum += data[i];
+    
+    // Motor Configuration
+    data = (const uint8_t*)&config.CUT_MOTOR_STEPS_PER_INCH;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_STEPS_PER_INCH); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_MOTOR_STEPS_PER_INCH;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_STEPS_PER_INCH); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_TRAVEL_DISTANCE;
+    for (size_t i = 0; i < sizeof(config.CUT_TRAVEL_DISTANCE); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_TRAVEL_DISTANCE;
+    for (size_t i = 0; i < sizeof(config.FEED_TRAVEL_DISTANCE); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES); i++) checksum += data[i];
+    
+    // Cut Motor Speed Settings
+    data = (const uint8_t*)&config.CUT_MOTOR_NORMAL_SPEED;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_NORMAL_SPEED); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_MOTOR_NORMAL_ACCELERATION;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_NORMAL_ACCELERATION); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_MOTOR_RETURN_SPEED;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_RETURN_SPEED); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_MOTOR_HOMING_SPEED;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_HOMING_SPEED); i++) checksum += data[i];
+    
+    // Feed Motor Speed Settings
+    data = (const uint8_t*)&config.FEED_MOTOR_NORMAL_SPEED;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_NORMAL_SPEED); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_MOTOR_NORMAL_ACCELERATION;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_NORMAL_ACCELERATION); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_MOTOR_RETURN_SPEED;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_RETURN_SPEED); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_MOTOR_RETURN_ACCELERATION;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_RETURN_ACCELERATION); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_MOTOR_HOMING_SPEED;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_HOMING_SPEED); i++) checksum += data[i];
+    
+    // Timing Configuration
+    data = (const uint8_t*)&config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    for (size_t i = 0; i < sizeof(config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_HOME_TIMEOUT;
+    for (size_t i = 0; i < sizeof(config.CUT_HOME_TIMEOUT); i++) checksum += data[i];
+    data = (const uint8_t*)&config.TA_SIGNAL_DURATION;
+    for (size_t i = 0; i < sizeof(config.TA_SIGNAL_DURATION); i++) checksum += data[i];
+    
+    // Operational Constants
+    data = (const uint8_t*)&config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
+    for (size_t i = 0; i < sizeof(config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES); i++) checksum += data[i];
+    data = (const uint8_t*)&config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
+    for (size_t i = 0; i < sizeof(config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES); i++) checksum += data[i];
+    data = (const uint8_t*)&config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    for (size_t i = 0; i < sizeof(config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES); i++) checksum += data[i];
+    
+    // Safety Constants
+    data = (const uint8_t*)&config.ROTATION_SERVO_RETURN_DELAY_MS;
+    for (size_t i = 0; i < sizeof(config.ROTATION_SERVO_RETURN_DELAY_MS); i++) checksum += data[i];
+    
+    // Motor Control Constants
+    data = (const uint8_t*)&config.FEED_MOTOR_RETURN_DISTANCE;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_RETURN_DISTANCE); i++) checksum += data[i];
+    
+    // Timing Constants
+    data = (const uint8_t*)&config.CUT_MOTOR_RECOVERY_TIMEOUT_MS;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_RECOVERY_TIMEOUT_MS); i++) checksum += data[i];
+    data = (const uint8_t*)&config.CUT_MOTOR_VERIFICATION_DELAY_MS;
+    for (size_t i = 0; i < sizeof(config.CUT_MOTOR_VERIFICATION_DELAY_MS); i++) checksum += data[i];
+    data = (const uint8_t*)&config.SENSOR_STABILIZATION_DELAY_MS;
+    for (size_t i = 0; i < sizeof(config.SENSOR_STABILIZATION_DELAY_MS); i++) checksum += data[i];
+    data = (const uint8_t*)&config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
+    for (size_t i = 0; i < sizeof(config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES); i++) checksum += data[i];
+    
+    // Version
+    data = (const uint8_t*)&config.version;
+    for (size_t i = 0; i < sizeof(config.version); i++) checksum += data[i];
     
     return checksum;
 }
@@ -343,6 +427,12 @@ void loadConfiguration() {
     
     // Validate configuration
     bool isValid = true;
+    
+    // Check magic number first
+    if (config.magic != CONFIG_MAGIC) {
+        isValid = false;
+        Serial.println("Configuration magic number invalid (EEPROM may be empty), using defaults");
+    }
     
     // Check version
     if (config.version != 1) {
@@ -378,6 +468,9 @@ void saveConfiguration() {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
     
     ConfigurationData config;
+    
+    // Set magic number
+    config.magic = CONFIG_MAGIC;
     
     // Get current values
     config.CUT_MOTOR_STEPS_PER_INCH = CUT_MOTOR_STEPS_PER_INCH;

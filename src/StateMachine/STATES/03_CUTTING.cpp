@@ -165,13 +165,7 @@ void handleCuttingStep0() {
     Serial.println("Starting cut motion");
         
     //! Extend clamps to secure wood
-    // Wait for wood present sensor to be not active before extending secure clamp
-    if (waitForWoodPresentSensorNotActive()) {
-        extend2x4SecureClamp();
-    } else {
-        // Wood present sensor still active, wait
-        return;
-    }
+    extend2x4SecureClamp();
     extendFeedClamp();
 
     //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)

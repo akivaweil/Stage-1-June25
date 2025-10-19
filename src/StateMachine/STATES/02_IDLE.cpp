@@ -105,7 +105,10 @@ void handleReloadModeLogic() {
         setIsReloadMode(false);
         // Only extend 2x4 secure clamp if not coming from no-wood situation
         if (!getComingFromNoWoodWithSensorsClear()) {
-            extend2x4SecureClamp(); // Re-extend 2x4 secure clamp
+            // Wait for wood present sensor to be not active before extending secure clamp
+            if (waitForWoodPresentSensorNotActive()) {
+                extend2x4SecureClamp(); // Re-extend 2x4 secure clamp
+            }
         }
         retractFeedClamp();   // Keep feed clamp retracted (idle state default)
         turnBlueLedOff();       // Turn off blue LED
@@ -164,7 +167,10 @@ void checkStartConditions() {
         configureCutMotorForCutting();
         
         extendFeedClamp();
-        extend2x4SecureClamp();
+        // Wait for wood present sensor to be not active before extending secure clamp
+        if (waitForWoodPresentSensorNotActive()) {
+            extend2x4SecureClamp();
+        }
         
         // LED status will be handled by cutting state based on wood sensor
     }

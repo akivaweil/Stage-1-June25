@@ -71,6 +71,16 @@ void retractRotationClamp() {
     //serial.println("Rotation Clamp Retracted");
 }
 
+bool waitForWoodPresentSensorNotActive() {
+    // Wait until wood present sensor is NOT active (reads HIGH)
+    // Sensor is active when LOW, not active when HIGH
+    Bounce* woodPresentSensor = getWoodPresentSensorBounce();
+    if (woodPresentSensor) {
+        return (woodPresentSensor->read() == HIGH);
+    }
+    return false;
+}
+
 //* ************************************************************************
 //* *************************** LED FUNCTIONS ******************************
 //* ************************************************************************

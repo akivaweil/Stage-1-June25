@@ -19,7 +19,7 @@ float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2300;
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2100;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 
 //* ************************************************************************
@@ -37,7 +37,7 @@ float CUT_MOTOR_HOMING_SPEED = 1500;
 // Distances & Movement
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
 float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
-float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2;
+float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.5;
 
 // Timing
 unsigned long CUT_HOME_TIMEOUT = 5000;
@@ -54,8 +54,8 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;
 // Speeds
 float FEED_MOTOR_NORMAL_SPEED = 22000;
 float FEED_MOTOR_NORMAL_ACCELERATION = 22000;
-float FEED_MOTOR_RETURN_SPEED = 35000;
-float FEED_MOTOR_RETURN_ACCELERATION = 35000;
+float FEED_MOTOR_RETURN_SPEED = 40000;
+float FEED_MOTOR_RETURN_ACCELERATION = 50000;
 float FEED_MOTOR_HOMING_SPEED = 2000;
 
 // Distances & Movement
@@ -64,7 +64,7 @@ float FEED_MOTOR_RETURN_DISTANCE = 0.0;
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************
 //* ************************************************************************
-unsigned long TA_SIGNAL_DURATION = 500;
+unsigned long TA_SIGNAL_DURATION = 1000;
 float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
 
 //* ************************************************************************
@@ -73,11 +73,7 @@ float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
 unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;
 
 //* ************************************************************************
-//* ************************ [🎛️] MOTOR CONTROL ****************************
-//* ************************************************************************
-long LARGE_POSITION_VALUE = 10000;
-
-//* ************************************************************************
 //* ************************ [📐] PRE-CALCULATED STEPS *********************
 //* ************************************************************************
 const long SUCTION_SENSOR_CHECK_DISTANCE_STEPS = SUCTION_SENSOR_CHECK_DISTANCE_INCHES * CUT_MOTOR_STEPS_PER_INCH;
+

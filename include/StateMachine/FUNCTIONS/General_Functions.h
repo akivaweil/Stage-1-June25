@@ -85,6 +85,7 @@ void extend2x4SecureClamp();
 void retract2x4SecureClamp();
 void extendRotationClamp();
 void retractRotationClamp();
+bool waitForWoodPresentSensorNotActive();
 
 //* ************************************************************************
 //* *************************** LED FUNCTIONS ******************************

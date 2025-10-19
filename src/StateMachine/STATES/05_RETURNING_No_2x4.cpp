@@ -189,11 +189,17 @@ void handleReturningNo2x4Step(int step) {
             
         case STEP_FINAL_COMPLETION: // Final step: always extend secure clamp when transitioning to IDLE
             if (feedMotor && !feedMotor->isRunning()) {
-                // Always extend secure wood clamp when completing no2x4 sequence
-                // This ensures wood is secured regardless of sensor state
-                extend2x4SecureClamp();
-                // Set flag to prevent IDLE from retracting the clamp
-                setComingFromNoWoodWithSensorsClear(true);
+                // Wait until wood present sensor is not active before extending secure clamp
+                if (waitForWoodPresentSensorNotActive()) {
+                    // Always extend secure wood clamp when completing no2x4 sequence
+                    // This ensures wood is secured regardless of sensor state
+                    extend2x4SecureClamp();
+                    // Set flag to prevent IDLE from retracting the clamp
+                    setComingFromNoWoodWithSensorsClear(true);
+                } else {
+                    // Wood present sensor still active, wait
+                    return;
+                }
                 
                 // Complete sequence and transition to IDLE
                 resetReturningNo2x4Steps();

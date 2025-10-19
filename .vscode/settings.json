@@ -1,3 +1,124 @@
 {
-    "idf.pythonInstallPath": "/opt/homebrew/bin/python3"
+    "idf.pythonInstallPath": "/opt/homebrew/bin/python3",
+    "better-comments.multilineComments": true,
+    "better-comments.highlightPlainText": false,
+    "better-comments.tags": [
+        {
+            "tag": "!",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "?",
+            "color": "#3498DB",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "*",
+            "color": "#98C379",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "TODO:",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "//",
+            "color": "#474747",
+            "strikethrough": true,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        }
+    ],
+    "folder-color.pathColors": [
+        {
+            "folderPath": "include/Config",
+            "color": "foldercolorizer.color_00ff00",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "src/Config",
+            "color": "foldercolorizer.color_00ff00",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "include/ErrorStates",
+            "color": "foldercolorizer.color_ff0000",
+            "badge": "⚠️"
+        },
+        {
+            "folderPath": "src/ErrorStates",
+            "color": "foldercolorizer.color_ff0000",
+            "badge": "⚠️"
+        },
+        {
+            "folderPath": "include/OTAUpdater",
+            "color": "foldercolorizer.color_0000ff",
+            "badge": "📡"
+        },
+        {
+            "folderPath": "src/OTAUpdater",
+            "color": "foldercolorizer.color_0000ff",
+            "badge": "📡"
+        },
+        {
+            "folderPath": "include/StateMachine",
+            "color": "foldercolorizer.color_800080",
+            "badge": "🔄"
+        },
+        {
+            "folderPath": "src/StateMachine",
+            "color": "foldercolorizer.color_800080",
+            "badge": "🔄"
+        },
+        {
+            "folderPath": "include/StateMachine/FUNCTIONS",
+            "color": "foldercolorizer.color_ffff00",
+            "badge": "🔧"
+        },
+        {
+            "folderPath": "src/StateMachine/FUNCTIONS",
+            "color": "foldercolorizer.color_ffff00",
+            "badge": "🔧"
+        },
+        {
+            "folderPath": "include/StateMachine/STATES",
+            "color": "foldercolorizer.color_ffa500",
+            "badge": "📋"
+        },
+        {
+            "folderPath": "src/StateMachine/STATES",
+            "color": "foldercolorizer.color_ffa500",
+            "badge": "📋"
+        },
+        {
+            "folderPath": "include/WebSocketDashboard",
+            "color": "foldercolorizer.color_00ffff",
+            "badge": "📊"
+        },
+        {
+            "folderPath": "src/WebSocketDashboard",
+            "color": "foldercolorizer.color_00ffff",
+            "badge": "📊"
+        }
+    ]
 }

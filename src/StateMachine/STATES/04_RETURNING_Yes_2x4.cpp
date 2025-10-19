@@ -139,7 +139,10 @@ void handleReturningYes2x4Sequence() {
                         onErrorOccurred("Cut motor home switch not detected after max moves");
                         if (cutMotor) cutMotor->forceStop();
                         if (feedMotor) feedMotor->forceStop();
-                        extend2x4SecureClamp();
+                        // Wait for wood present sensor to be not active before extending secure clamp
+                        if (waitForWoodPresentSensorNotActive()) {
+                            extend2x4SecureClamp();
+                        }
                         turnRedLedOn();
                         turnYellowLedOff();
                         changeState(ERROR);
@@ -160,7 +163,13 @@ void handleReturningYes2x4Sequence() {
                 //! ************************************************************************
                 //! STEP 5: SEQUENCE COMPLETE - CHECK FOR CONTINUOUS OPERATION OR RETURN TO IDLE
                 //! ************************************************************************
-                extend2x4SecureClamp();
+                // Wait for wood present sensor to be not active before extending secure clamp
+                if (waitForWoodPresentSensorNotActive()) {
+                    extend2x4SecureClamp();
+                } else {
+                    // Wood present sensor still active, wait
+                    return;
+                }
                 turnYellowLedOff();
                 setCuttingCycleInProgress(false);
                 
@@ -220,8 +229,14 @@ void handleFeedMotorReturnSequence() {
                 //! ************************************************************************
                 //! STEP 8: EXTEND 2X4 SECURE CLAMP
                 //! ************************************************************************
-                extend2x4SecureClamp();
-                feedMotorReturnSubStep = 3;
+                // Wait for wood present sensor to be not active before extending secure clamp
+                if (waitForWoodPresentSensorNotActive()) {
+                    extend2x4SecureClamp();
+                    feedMotorReturnSubStep = 3;
+                } else {
+                    // Wood present sensor still active, wait
+                    return;
+                }
             }
             break;
             
@@ -262,8 +277,14 @@ void handleFeedWoodMovement() {
             break;
             
         case 2: // Movement complete - transition to final step
-            extend2x4SecureClamp();
-            returningYes2x4SubStep = 4; // Move to final completion step
+            // Wait for wood present sensor to be not active before extending secure clamp
+            if (waitForWoodPresentSensorNotActive()) {
+                extend2x4SecureClamp();
+                returningYes2x4SubStep = 4; // Move to final completion step
+            } else {
+                // Wood present sensor still active, wait
+                return;
+            }
             break;
     }
 }

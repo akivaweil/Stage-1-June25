@@ -194,7 +194,6 @@ struct ConfigurationData {
     unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
     
     // Motor Control Constants
-    long LARGE_POSITION_VALUE;
     float FEED_MOTOR_RETURN_DISTANCE;
     // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
     
@@ -248,7 +247,6 @@ ConfigurationData getDefaultConfiguration() {
     config.ROTATION_SERVO_RETURN_DELAY_MS = 150;
     
     // Motor Control Constants
-    config.LARGE_POSITION_VALUE = 10000;
     config.FEED_MOTOR_RETURN_DISTANCE = 0.0;
     // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
     
@@ -301,7 +299,6 @@ void applyConfiguration(const ConfigurationData& config) {
     ROTATION_SERVO_RETURN_DELAY_MS = config.ROTATION_SERVO_RETURN_DELAY_MS;
     
     // Motor Control Constants
-    LARGE_POSITION_VALUE = config.LARGE_POSITION_VALUE;
     FEED_MOTOR_RETURN_DISTANCE = config.FEED_MOTOR_RETURN_DISTANCE;
     // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
     
@@ -391,7 +388,6 @@ void saveConfiguration() {
     config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
     config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
-    config.LARGE_POSITION_VALUE = LARGE_POSITION_VALUE;
     config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
     // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
     config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;

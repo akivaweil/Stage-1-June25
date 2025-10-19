@@ -535,10 +535,16 @@ void activateRotationServo() {
 void handleRotationServoReturn() {
     // Move rotation servo to home position
     Servo* servo = getRotationServo();
+    Serial.print("handleRotationServoReturn - servo pointer: ");
+    Serial.println(servo ? "VALID" : "NULL");
     if (servo) {
+        Serial.print("Servo attached: ");
+        Serial.println(servo->attached() ? "YES" : "NO");
+        Serial.print("Writing position: ");
+        Serial.println(ROTATION_SERVO_HOME_POSITION);
         // Force servo write with robust control - no attach checks, just send the command
         servo->write(ROTATION_SERVO_HOME_POSITION);
-        //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_HOME_POSITION);
+        Serial.println("Servo write() called");
     }
     
     //Serial.print("Rotation servo returned to home position (");

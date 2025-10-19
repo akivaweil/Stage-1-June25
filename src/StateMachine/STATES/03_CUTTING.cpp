@@ -136,10 +136,22 @@ void onEnterCuttingState() {
     static bool servoAttached = false;
     if (!servoAttached) {
         Servo* servo = getRotationServo();
-        if (servo && !servo->attached()) {
-            servo->attach(ROTATION_SERVO_PIN);
-            Serial.println("Rotation servo attached for first cutting cycle");
-            servoAttached = true;
+        Serial.print("Servo pointer: ");
+        Serial.println(servo ? "VALID" : "NULL");
+        if (servo) {
+            Serial.print("Servo attached status: ");
+            Serial.println(servo->attached() ? "YES" : "NO");
+            if (!servo->attached()) {
+                bool result = servo->attach(ROTATION_SERVO_PIN);
+                Serial.print("Servo attach result: ");
+                Serial.println(result ? "SUCCESS" : "FAILED");
+                if (result) {
+                    Serial.println("Rotation servo attached for first cutting cycle");
+                    servoAttached = true;
+                }
+            } else {
+                servoAttached = true;
+            }
         }
     }
 }
@@ -182,7 +194,10 @@ void handleCuttingStep0() {
     //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)
     if (isWoodProperlyGrabbed()) {
         extern bool rotationServoIsActiveAndTiming;
+        Serial.println("Wood properly grabbed - calling handleRotationServoReturn()");
         handleRotationServoReturn();
+        Serial.print("Servo write called with position: ");
+        Serial.println(ROTATION_SERVO_HOME_POSITION);
         if (rotationServoIsActiveAndTiming) {
             Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
         } else {

@@ -14,7 +14,6 @@ void onEnterIdleState();
 void onExitIdleState();
 
 // Helper function declarations
-void handleReloadModeLogic();
 void checkFirstCutConditions();
 void checkStartConditions();
 

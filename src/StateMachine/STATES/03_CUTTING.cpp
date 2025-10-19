@@ -26,7 +26,7 @@ static bool rotationServoActivatedThisCycle = false;
 static bool transferArmSignalSentThisCycle = false;
 static unsigned long servoHomeWaitStartTime = 0;
 static bool waitingForServoHome = false;
-static unsigned long lastDebugTime = 0;
+static unsigned long cuttingLastDebugTime = 0;
 
 //* ************************************************************************
 //* ************************ HELPER FUNCTIONS ******************************
@@ -109,8 +109,7 @@ void activateComponentAtPosition(bool& activatedFlag, float activationOffsetInch
 
 // Outputs debug information about cut motor position
 void outputCutMotorDebug() {
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 1000) {
+    if (millis() - cuttingLastDebugTime >= 1000) {
         FastAccelStepper* cutMotor = getCutMotor();
         if (cutMotor) {
             long currentPosition = cutMotor->getCurrentPosition();
@@ -123,7 +122,7 @@ void outputCutMotorDebug() {
             Serial.print(" inches, Running: ");
             Serial.println(cutMotor->isRunning() ? "YES" : "NO");
         }
-        lastDebugTime = millis();
+        cuttingLastDebugTime = millis();
     }
 }
 

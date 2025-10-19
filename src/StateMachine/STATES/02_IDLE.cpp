@@ -47,9 +47,13 @@
 // If no wood detected, turn on blue LED for NO_WOOD mode
 
 void executeIdleState() {
-    // Handle reload mode logic first
-    handleReloadModeLogic();
-    
+    // Check if reload switch is activated - if so, transition to reload state
+    bool reloadSwitchOn = getReloadSwitch()->read() == HIGH;
+    if (reloadSwitchOn && !getIsReloadMode()) {
+        changeState(RELOAD);
+        return;
+    }
+
     // Check for FeedFirstCut conditions if not in reload mode
     if (!getIsReloadMode()) {
         checkFirstCutConditions();
@@ -59,29 +63,32 @@ void executeIdleState() {
 
 void onEnterIdleState() {
     // Cycle counter is now incremented in RETURNING states to handle continuous mode properly
-    
-    // CRITICAL: Secure 2x4 clamp MUST remain extended in normal idle state
-    // Only retracts when entering reload mode (handled in handleReloadModeLogic)
+
     // Check if coming from no2x4 with no wood detected - if so, keep secure clamp extended
     bool comingFromNoWood = getComingFromNoWoodWithSensorsClear();
-    
-    if (comingFromNoWood) {
+    bool isReloadMode = getIsReloadMode();
+
+    // Handle 2x4 secure clamp based on reload mode and no-wood status
+    if (isReloadMode) {
+        // In reload mode - retract 2x4 secure clamp for safety
+        retract2x4SecureClamp();
+    } else if (comingFromNoWood) {
         // Coming from no2x4 with no wood - keep secure clamp extended
         // Don't retract the secure clamp, it should stay extended
     } else {
-        // Normal case - keep secure clamp extended (only retracts in reload mode)
-        // retract2x4SecureClamp(); // REMOVED - secure clamp stays extended in normal idle
+        // Normal case - extend secure clamp (only retracted in reload mode)
+        extend2x4SecureClamp();
     }
-    
+
     // Always retract other clamps (but NOT the secure 2x4 clamp in normal idle)
     retractFeedClamp();
     retractRotationClamp();
-    
+
     // Reset the no-wood flag if it was set
     if (comingFromNoWood) {
         setComingFromNoWoodWithSensorsClear(false);
     }
-    
+
     //serial.println("Idle: All clamps retracted");
 }
 
@@ -89,28 +96,6 @@ void onExitIdleState() {
     // No specific cleanup needed when exiting IDLE state
 }
 
-void handleReloadModeLogic() {
-    // Check current state of reload switch (HIGH = ON with pull-down resistor)
-    bool reloadSwitchOn = getReloadSwitch()->read() == HIGH;
-    bool isReloadMode = getIsReloadMode();
-    
-    if (reloadSwitchOn && !isReloadMode) {
-        // Enter reload mode
-        setIsReloadMode(true);
-        retractFeedClamp(); // Retract feed clamp
-        retract2x4SecureClamp(); // Retract 2x4 secure clamp in reload mode only
-        turnBlueLedOn();     // Turn on blue LED for reload mode
-    } else if (!reloadSwitchOn && isReloadMode) {
-        // Exit reload mode
-        setIsReloadMode(false);
-        // Only extend 2x4 secure clamp if not coming from no-wood situation
-        if (!getComingFromNoWoodWithSensorsClear()) {
-            extend2x4SecureClamp(); // Re-extend 2x4 secure clamp
-        }
-        retractFeedClamp();   // Keep feed clamp retracted (idle state default)
-        turnBlueLedOff();       // Turn off blue LED
-    }
-}
 
 void checkFirstCutConditions() {
     // Check for pushwood forward switch press and FIRST_CUT_OR_WOOD_FWD_ONE sensor state

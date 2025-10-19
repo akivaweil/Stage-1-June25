@@ -38,7 +38,8 @@ enum SystemState {
     RETURNING_YES_2x4,
     RETURNING_NO_2x4,
     FEED_FIRST_CUT,
-    FEED_WOOD_FWD_ONE
+    FEED_WOOD_FWD_ONE,
+    RELOAD
 };
 
 extern SystemState currentState;

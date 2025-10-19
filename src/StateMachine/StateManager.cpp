@@ -38,6 +38,7 @@ void executeFeedWoodFwdOneState();
 void executeCuttingState();
 void executeReturningYes2x4State();
 void executeReturningNo2x4State();
+void executeReloadState();
 
 // Forward declarations for state lifecycle functions
 void onEnterStartupState();
@@ -48,6 +49,7 @@ void onEnterFeedWoodFwdOneState();
 void onEnterCuttingState();
 void onEnterReturningYes2x4State();
 void onEnterReturningNo2x4State();
+void onEnterReloadState();
 
 void onExitStartupState();
 void onExitHomingState();
@@ -57,6 +59,7 @@ void onExitFeedWoodFwdOneState();
 void onExitCuttingState();
 void onExitReturningYes2x4State();
 void onExitReturningNo2x4State();
+void onExitReloadState();
 
 void executeStateMachine() {
     handleCommonOperations();
@@ -91,6 +94,9 @@ void executeStateMachine() {
         case RETURNING_NO_2x4:
             executeReturningNo2x4State();
             break;
+        case RELOAD:
+            executeReloadState();
+            break;
         case ERROR:
             handleStandardErrorState();
             break;
@@ -118,6 +124,7 @@ void changeState(SystemState newState) {
             case CUTTING: onExitCuttingState(); break;
             case RETURNING_YES_2x4: onExitReturningYes2x4State(); break;
             case RETURNING_NO_2x4: onExitReturningNo2x4State(); break;
+            case RELOAD: onExitReloadState(); break;
             // Error states don't have onExit handlers
             default: break;
         }
@@ -138,6 +145,7 @@ void changeState(SystemState newState) {
             case CUTTING: onEnterCuttingState(); break;
             case RETURNING_YES_2x4: onEnterReturningYes2x4State(); break;
             case RETURNING_NO_2x4: onEnterReturningNo2x4State(); break;
+            case RELOAD: onEnterReloadState(); break;
             // Error states don't have onEnter handlers
             default: break;
         }
@@ -428,11 +436,11 @@ void handleCommonOperations() {
             rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
         } else if (suctionSensorBounce.read() == LOW) {
             // Suction sensor still reads LOW - Transfer Arm suction not active yet, continue waiting
-            static unsigned long lastDebugTime = 0;
-            if (millis() - lastDebugTime >= 500) {
+            static unsigned long suctionWaitDebugTime = 0;
+            if (millis() - suctionWaitDebugTime >= 500) {
                 String message = "Waiting for Transfer Arm suction to grab wood - sensor still LOW after " + String(millis() - rotationServoActiveStartTime) + "ms";
                 addSerialLog(message);
-                lastDebugTime = millis();
+                suctionWaitDebugTime = millis();
             }
         }
     }

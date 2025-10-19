@@ -193,6 +193,7 @@ void handleReturningNo2x4Step(int step) {
                 extern const int _2x4_PRESENT_SENSOR;
                 if (digitalRead(_2x4_PRESENT_SENSOR) == HIGH) {
                     // Sensor is clear (not active) - safe to extend secure clamp
+                    delay(1000);
                     extend2x4SecureClamp();
                     // Set flag to prevent IDLE from retracting the clamp
                     setComingFromNoWoodWithSensorsClear(true);

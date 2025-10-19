@@ -176,24 +176,9 @@ void setup() {
     //serial.println("Failed to init feedMotor");
   }
   
-  //! Initialize servo with robust attachment
-  //Serial.printf("Initializing servo on pin %d with robust attachment\n", ROTATION_SERVO_PIN);
-  
-  // Force servo attachment using multiple methods to ensure proper initialization
+  //! Initialize servo
   rotationServo.attach(ROTATION_SERVO_PIN);
-  rotationServo.attach(ROTATION_SERVO_PIN, 500, 2500);
-  rotationServo.attach(ROTATION_SERVO_PIN, 1000, 2000);
-  rotationServo.attach(ROTATION_SERVO_PIN, 544, 2400);  // Standard servo range
-  
-  // Final forced attach
-  rotationServo.attach(ROTATION_SERVO_PIN);
-  
-  //Serial.println("✓ Servo attachment completed - Commands will be sent regardless of attach status");
-  
-  // SAFETY: Do NOT set initial servo position during startup
-  // This prevents the servo from moving and potentially ramming stuck wood into the blade
-  // The servo will only be positioned when manually starting a cut cycle
-  //Serial.println("Servo initialization complete - no initial position set for safety");
+  rotationServo.write(ROTATION_SERVO_HOME_POSITION);
   
   //! Configure initial state
   currentState = STARTUP;

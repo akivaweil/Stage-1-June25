@@ -30,7 +30,7 @@ const int CUT_HOMING_DIRECTION = -1;
 
 // Speeds (defaults - can be modified via dashboard)
 float CUT_MOTOR_NORMAL_SPEED = 640;
-float CUT_MOTOR_NORMAL_ACCELERATION = 16000;
+float CUT_MOTOR_NORMAL_ACCELERATION = 13000;
 float CUT_MOTOR_NO_WOOD_SPEED = 512; // 80% of normal speed
 float CUT_MOTOR_RETURN_SPEED = 20000;
 float CUT_MOTOR_HOMING_SPEED = 1500;

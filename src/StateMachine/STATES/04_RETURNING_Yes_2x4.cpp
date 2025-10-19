@@ -161,6 +161,7 @@ void handleReturningYes2x4Sequence() {
                 //! ************************************************************************
                 extend2x4SecureClamp();
                 turnYellowLedOff();
+                incrementCuttingCycleCounter();
                 setCuttingCycleInProgress(false);
                 
                 // Reset consecutive yeswood counter only when it reaches 3

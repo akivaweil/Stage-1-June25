@@ -200,6 +200,7 @@ void handleReturningNo2x4Step(int step) {
                     
                     // Complete sequence and transition to IDLE
                     resetReturningNo2x4Steps();
+                    incrementCuttingCycleCounter();
                     setCuttingCycleInProgress(false);
                     
                     

@@ -261,30 +261,29 @@ void handleFeedWoodMovement() {
                 extern const int _2x4_PRESENT_SENSOR;
                 
                 // Debounce variables
-                static unsigned long lastDebounceTime = 0;
-                static bool sensorStable = false;
+                static unsigned long highStartTime = 0;
+                static bool waitingForHigh = true;
                 const unsigned long debounceDelay = 50; // 50ms debounce
                 
                 unsigned long currentTime = millis();
                 bool sensorReading = digitalRead(_2x4_PRESENT_SENSOR);
                 
-                // Reset debounce timer if sensor state changed
+                // If sensor is LOW (wood present), reset and keep waiting
                 if (sensorReading == LOW) {
-                    lastDebounceTime = currentTime;
-                    sensorStable = false;
+                    highStartTime = 0;
+                    waitingForHigh = true;
                 }
-                
-                // Check if sensor has been HIGH for debounce duration
-                if (sensorReading == HIGH && !sensorStable) {
-                    if (currentTime - lastDebounceTime >= debounceDelay) {
-                        sensorStable = true;
+                // If sensor is HIGH (no wood), track when it first went HIGH
+                else if (sensorReading == HIGH && waitingForHigh) {
+                    if (highStartTime == 0) {
+                        highStartTime = currentTime; // Record when sensor first went HIGH
                     }
-                }
-                
-                // Move to next step when sensor is stable HIGH
-                if (sensorStable) {
-                    feedMotorHomingSubStep = 2;
-                    sensorStable = false; // Reset for next time
+                    // Check if sensor has been HIGH for debounce duration
+                    else if (currentTime - highStartTime >= debounceDelay) {
+                        waitingForHigh = false;
+                        feedMotorHomingSubStep = 2;
+                        highStartTime = 0; // Reset for next time
+                    }
                 }
             }
             break;

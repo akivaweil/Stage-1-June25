@@ -23,9 +23,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             min-height: 100vh;
-            padding: 12px;
+            padding: 16px;
             overflow-x: hidden;
-            line-height: 1.4;
+            line-height: 1.5;
             display: block !important;
             visibility: visible !important;
         }
@@ -79,7 +79,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             margin: 0 auto;
             display: grid !important;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 16px;
             padding: 0 4px;
             animation: fadeInUp 0.8s ease-out;
             visibility: visible !important;
@@ -90,9 +90,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 
-                        0 2px 8px rgba(0, 0, 0, 0.1),
+            padding: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 
+                        0 4px 16px rgba(0, 0, 0, 0.1),
                         inset 0 1px 0 rgba(255, 255, 255, 0.1);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -125,21 +125,21 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .card-title {
             color: #ffffff;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: 600;
             letter-spacing: -0.02em;
         }
         
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
         }
         
         .status-item {
@@ -166,14 +166,14 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         .status-label {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             margin-bottom: 4px;
             font-weight: 500;
         }
         
         .status-value {
             color: #ffffff;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 700;
             letter-spacing: -0.01em;
             transition: all 0.3s ease;
@@ -185,8 +185,8 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         .metric-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
         }
         
         .metric-item {
@@ -195,7 +195,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         .metric-value {
             color: #ffffff;
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 4px;
             letter-spacing: -0.02em;
@@ -203,7 +203,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         .metric-label {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 500;
         }
         
@@ -258,7 +258,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         
         .event-log {
-            max-height: 200px;
+            max-height: 280px;
             overflow-y: auto;
             background: rgba(0, 0, 0, 0.25);
             border-radius: 10px;
@@ -286,10 +286,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         .event-item {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             margin-bottom: 6px;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 10px 12px;
+            border-radius: 8px;
             background: rgba(255, 255, 255, 0.1);
             border-left: 3px solid rgba(59, 130, 246, 0.6);
             display: flex;
@@ -349,7 +349,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             color: rgba(255, 255, 255, 0.6);
             font-size: 0.7rem;
             margin-right: 6px;
-            min-width: 60px;
+            min-width: 65px;
             font-family: 'Courier New', monospace;
         }
         
@@ -362,7 +362,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         }
         
         .chart-container {
-            height: 150px;
+            height: 180px;
             background: rgba(0, 0, 0, 0.25);
             border-radius: 10px;
             display: flex;
@@ -370,7 +370,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             justify-content: center;
             color: rgba(255, 255, 255, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 500;
         }
         
@@ -427,33 +427,33 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 <div class="card-title">Performance Metrics</div>
             </div>
             
-            <div style="text-align: center; padding: 16px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2);">
-                <div style="color: #ffffff; font-size: 2.2rem; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.02em;" id="reloadTime">-</div>
-                <div style="color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.05em;">RELOAD TIME</div>
+            <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div style="color: #ffffff; font-size: 2.6rem; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em;" id="reloadTime">-</div>
+                <div style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; font-weight: 600; letter-spacing: 0.05em;">RELOAD TIME</div>
             </div>
             
             <!-- Time-based Performance Breakdown -->
-            <div style="margin-top: 16px;">
-                <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; text-align: center;">Cycles Over Time</h3>
-                <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+            <div style="margin-top: 18px;">
+                <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; font-weight: 600; margin-bottom: 12px; text-align: center;">Cycles Over Time</h3>
+                <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;">
                     <div class="metric-item">
-                        <div class="metric-value" id="avgCycles1Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles1Min" style="font-size: 2rem;">0.0</div>
                         <div class="metric-label">1 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="avgCycles3Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles3Min" style="font-size: 2rem;">0.0</div>
                         <div class="metric-label">3 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="avgCycles5Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles5Min" style="font-size: 2rem;">0.0</div>
                         <div class="metric-label">5 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="avgCycles15Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles15Min" style="font-size: 2rem;">0.0</div>
                         <div class="metric-label">15 Min Avg/min</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value" id="avgCycles30Min" style="font-size: 1.8rem;">0.0</div>
+                        <div class="metric-value" id="avgCycles30Min" style="font-size: 2rem;">0.0</div>
                         <div class="metric-label">30 Min Avg/min</div>
                     </div>
                 </div>
@@ -524,44 +524,44 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 <div class="card-icon">⚙️</div>
                 <div class="card-title">Configuration Settings</div>
             </div>
-            <div style="padding: 12px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+            <div style="padding: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
                     
                     <!-- Configuration Section -->
-                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 16px; border: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto; max-width: 400px;">
-                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 6px;">Configuration Settings</h3>
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto; max-width: 400px;">
+                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Configuration Settings</h3>
                         
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; font-weight: 500; margin-bottom: 4px;">Cut Travel Distance (inches)</label>
-                            <div style="display: flex; gap: 6px; align-items: center;">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Travel Distance (inches)</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="number" id="cutTravelDistance" step="0.1" min="0.1" max="20.0" 
-                                       style="flex: 1; padding: 6px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.85rem;" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
                                        placeholder="9.2">
-                                <button onclick="updateConfig('cut_travel_distance')" style="padding: 6px 10px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.75rem; font-weight: 600; cursor: pointer;">Update</button>
+                                <button onclick="updateConfig('cut_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
                             </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.7rem; margin-top: 2px;">Range: 0.1 - 20.0</div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0.1 - 20.0</div>
                         </div>
                         
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; font-weight: 500; margin-bottom: 4px;">Feed Travel Distance (inches)</label>
-                            <div style="display: flex; gap: 6px; align-items: center;">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Feed Travel Distance (inches)</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="number" id="feedTravelDistance" step="0.01" min="0.1" max="10.0" 
-                                       style="flex: 1; padding: 6px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.85rem;" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
                                        placeholder="3.43">
-                                <button onclick="updateConfig('feed_travel_distance')" style="padding: 6px 10px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.75rem; font-weight: 600; cursor: pointer;">Update</button>
+                                <button onclick="updateConfig('feed_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
                             </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.7rem; margin-top: 2px;">Range: 0.1 - 10.0</div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0.1 - 10.0</div>
                         </div>
                         
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; font-weight: 500; margin-bottom: 4px;">Cut Motor Normal Speed</label>
-                            <div style="display: flex; gap: 6px; align-items: center;">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Motor Normal Speed</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="number" id="cutMotorNormalSpeed" step="10" min="100" max="5000" 
-                                       style="flex: 1; padding: 6px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.85rem;" 
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
                                        placeholder="640">
-                                <button onclick="updateConfig('cut_motor_normal_speed')" style="padding: 6px 10px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.75rem; font-weight: 600; cursor: pointer;">Update</button>
+                                <button onclick="updateConfig('cut_motor_normal_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
                             </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.7rem; margin-top: 2px;">Range: 100 - 5000</div>
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 100 - 5000</div>
                         </div>
                     </div>
                 </div>

@@ -369,6 +369,8 @@ void loadConfiguration() {
 }
 
 void saveConfiguration() {
+    EEPROM.begin(CONFIG_EEPROM_SIZE);
+    
     ConfigurationData config;
     
     // Get current values

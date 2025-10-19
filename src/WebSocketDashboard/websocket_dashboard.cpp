@@ -1217,11 +1217,11 @@ void updateDashboardStatus() {
         // Force broadcast performance metrics when reload timer is running (time changes frequently)
         broadcastPerformanceMetrics();
     }
-    
+
     // Update time since last cycle continuously
     updateTimeSinceLastCycle();
-    
-    
+
+
     // Only broadcast when motors are not moving to avoid timing interference
     // Now each broadcast function checks for changes internally
     if (getCurrentState() != CUTTING) {
@@ -1230,6 +1230,9 @@ void updateDashboardStatus() {
         broadcastClampStatus();
         broadcastLEDStatus();
         broadcastNetworkInfo();
+        broadcastPerformanceMetrics();
+    } else if (reloadTimeActive) {
+        // During cutting, still broadcast performance metrics if reload timer is active
         broadcastPerformanceMetrics();
     }
 }

@@ -237,6 +237,7 @@ void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendCla
 
         // Start reload timer after STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP completes
         if (returningNo2x4Step == STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP) {
+            Serial.println("Starting reload timer after STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP");
             startReloadTimer();
         }
     }

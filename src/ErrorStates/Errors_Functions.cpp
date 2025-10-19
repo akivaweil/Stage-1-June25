@@ -2,6 +2,7 @@
 // It relies on the main file for pin definitions and global variable declarations (via extern).
 #include "ErrorStates/Errors_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
+#include "Config/config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
 //* ************************************************************************
@@ -53,6 +54,7 @@ void handleSuctionErrorLedBlink(unsigned long& lastBlinkTimeRef, bool& blinkStat
 // ========================================================================
 
 //! TIMEOUT AND SPEED CONSTANTS
+// Error recovery constants
 const unsigned long CUT_MOTOR_HOME_RECOVERY_TIMEOUT_MS = 5000; // 5 second maximum recovery time
 const float CUT_MOTOR_HOME_RECOVERY_SPEED = 1000; // Recovery speed (same as homing speed)
 

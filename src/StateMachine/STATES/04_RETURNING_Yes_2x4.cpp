@@ -253,40 +253,14 @@ void handleFeedWoodMovement() {
             feedMotorHomingSubStep = 1;
             break;
             
-        case 1: // Wait for movement to complete and wood to clear sensor
+        case 1: // Wait for movement to complete
             if (feedMotor && !feedMotor->isRunning()) {
-                // Wait until wood present sensor is not active (HIGH = no wood) with debounce
-                extern const int _2x4_PRESENT_SENSOR;
-                
-                // Debounce variables
-                static unsigned long highStartTime = 0;
-                static bool waitingForHigh = true;
-                const unsigned long debounceDelay = 50; // 50ms debounce
-                
-                unsigned long currentTime = millis();
-                bool sensorReading = digitalRead(_2x4_PRESENT_SENSOR);
-                
-                // If sensor is LOW (wood present), reset and keep waiting
-                if (sensorReading == LOW) {
-                    highStartTime = 0;
-                    waitingForHigh = true;
-                }
-                // If sensor is HIGH (no wood), track when it first went HIGH
-                else if (sensorReading == HIGH && waitingForHigh) {
-                    if (highStartTime == 0) {
-                        highStartTime = currentTime; // Record when sensor first went HIGH
-                    }
-                    // Check if sensor has been HIGH for debounce duration
-                    else if (currentTime - highStartTime >= debounceDelay) {
-                        waitingForHigh = false;
-                        feedMotorHomingSubStep = 2;
-                        highStartTime = 0; // Reset for next time
-                    }
-                }
+                // Movement complete - proceed directly to next step without waiting for wood sensor
+                feedMotorHomingSubStep = 2;
             }
             break;
             
-        case 2: // Movement complete and wood cleared - transition to final step
+        case 2: // Movement complete - transition to final step
             extend2x4SecureClamp();
             returningYes2x4SubStep = 4; // Move to final completion step
             break;

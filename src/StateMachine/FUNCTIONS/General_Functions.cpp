@@ -6,6 +6,7 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
 #include "StateMachine/StateManager.h"
+#include "Config/config.h"
 
 // External motor object references from main.cpp
 extern FastAccelStepper* cutMotor;

@@ -4,6 +4,8 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
 #include "Config/Pins_Definitions.h"
+#include "Config/Motor_Config.h"
+#include "Config/config.h"
 #include <ArduinoJson.h>
 #include <EEPROM.h>
 
@@ -24,12 +26,11 @@ unsigned long reloadTimeStart = 0;
 float reloadTimeSeconds = 0.0;
 bool reloadTimeActive = false;
 
-// Dashboard configuration variables
-float CUT_TRAVEL_DISTANCE = 9.2; // Default value, can be changed via dashboard
-float CUT_MOTOR_NORMAL_SPEED = 640; // Default value, can be changed via dashboard
-float FEED_TRAVEL_DISTANCE = 3.43; // Default value, can be changed via dashboard
+// Dashboard configuration variables - these are loaded from EEPROM/config and can be modified via dashboard
+float CUT_TRAVEL_DISTANCE = 9.2;
+float FEED_TRAVEL_DISTANCE = 3.43;
 
-// Configuration storage - Need more space for all settings
+// EEPROM configuration constants
 const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
 const int CONFIG_OFFSET = 0; // Configuration starts at beginning of extended EEPROM
 
@@ -227,41 +228,41 @@ ConfigurationData getDefaultConfiguration() {
     config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
     config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
     
-    // Cut Motor Speed Settings
-    config.CUT_MOTOR_NORMAL_SPEED = 640;
-    config.CUT_MOTOR_NORMAL_ACCELERATION = 17000;
-    config.CUT_MOTOR_RETURN_SPEED = 25000;
-    config.CUT_MOTOR_HOMING_SPEED = 1500;
+    // Cut Motor Speed Settings - use Motor_Config defaults
+    config.CUT_MOTOR_NORMAL_SPEED = CUT_MOTOR_NORMAL_SPEED;
+    config.CUT_MOTOR_NORMAL_ACCELERATION = CUT_MOTOR_NORMAL_ACCELERATION;
+    config.CUT_MOTOR_RETURN_SPEED = CUT_MOTOR_RETURN_SPEED;
+    config.CUT_MOTOR_HOMING_SPEED = CUT_MOTOR_HOMING_SPEED;
+
+    // Feed Motor Speed Settings - use Motor_Config defaults
+    config.FEED_MOTOR_NORMAL_SPEED = FEED_MOTOR_NORMAL_SPEED;
+    config.FEED_MOTOR_NORMAL_ACCELERATION = FEED_MOTOR_NORMAL_ACCELERATION;
+    config.FEED_MOTOR_RETURN_SPEED = FEED_MOTOR_RETURN_SPEED;
+    config.FEED_MOTOR_RETURN_ACCELERATION = FEED_MOTOR_RETURN_ACCELERATION;
+    config.FEED_MOTOR_HOMING_SPEED = FEED_MOTOR_HOMING_SPEED;
     
-    // Feed Motor Speed Settings
-    config.FEED_MOTOR_NORMAL_SPEED = 22000;
-    config.FEED_MOTOR_NORMAL_ACCELERATION = 22000;
-    config.FEED_MOTOR_RETURN_SPEED = 22000;
-    config.FEED_MOTOR_RETURN_ACCELERATION = 30000;
-    config.FEED_MOTOR_HOMING_SPEED = 2000;
-    
-    // Timing Configuration
-    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2400;
-    config.CUT_HOME_TIMEOUT = 5000;
-    config.TA_SIGNAL_DURATION = 500;
-    
-    // Operational Constants
-    config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
-    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.053;
-    config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
-    
-    // Safety Constants
-    config.ROTATION_SERVO_RETURN_DELAY_MS = 150;
-    
-    // Motor Control Constants
-    config.FEED_MOTOR_RETURN_DISTANCE = 0.0;
+    // Timing Configuration - use Motor_Config defaults
+    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    config.CUT_HOME_TIMEOUT = CUT_HOME_TIMEOUT;
+    config.TA_SIGNAL_DURATION = TA_SIGNAL_DURATION;
+
+    // Operational Constants - use Motor_Config defaults
+    config.ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
+    config.ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
+    config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+
+    // Safety Constants - use Motor_Config defaults
+    config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
+
+    // Motor Control Constants - use Motor_Config defaults
+    config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
     // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
-    
-    // Timing Constants
-    config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;
-    config.CUT_MOTOR_VERIFICATION_DELAY_MS = 20;
-    config.SENSOR_STABILIZATION_DELAY_MS = 30;
-    config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2;
+
+    // Timing Constants - use Motor_Config defaults
+    config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
+    config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
+    config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
+    config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES = SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
     
     config.version = 1;
     config.checksum = 0; // Will be calculated

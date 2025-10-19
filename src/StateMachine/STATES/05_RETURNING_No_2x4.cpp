@@ -2,17 +2,13 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "Config/Pins_Definitions.h"
+#include "Config/config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
-// Timing constants for this state
+// State-specific constants
 const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
 const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
-const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100; // Delay between clamp extending/retracting and feed motor movement
-
-// Feed motor speed configuration for this state
 const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 returning sequence
-
-// Feed motor position constants
 const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
 const float FEED_MOTOR_HOME_POSITION = 1.0; // Home position
 const float FEED_MOTOR_FINAL_POSITION = -1.2; // Final position
@@ -189,9 +185,13 @@ void handleReturningNo2x4Step(int step) {
             
         case STEP_FINAL_COMPLETION: // Final step: wait for sensor to clear, then extend secure clamp
             if (feedMotor && !feedMotor->isRunning()) {
+                // Retract feed clamp before checking sensor
+                retractFeedClamp();
+                delay(5);
+
                 // Wait for 2x4 present sensor to be not active (HIGH) before extending clamp
                 extern const int _2x4_PRESENT_SENSOR;
-                if (digitalRead(_2x4_PRESENT_SENSOR) == HIGH) {
+                if (getWoodPresentSensorBounce()->read() == HIGH) {
                     // Sensor is clear (not active) - safe to extend secure clamp
                     delay(1000);
                     extend2x4SecureClamp();

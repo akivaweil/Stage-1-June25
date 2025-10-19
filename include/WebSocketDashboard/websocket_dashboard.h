@@ -158,7 +158,4 @@ extern NetworkInfo networkInfo;
 extern EventLog eventLog;
 extern SerialLog serialLog;
 
-// Global reload timer variable
-extern bool reloadTimeActive;
-
 #endif // WEBSOCKET_DASHBOARD_H

@@ -11,9 +11,6 @@
 #include "StateMachine/StateManager.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
-// Declare external variables from WebSocket dashboard
-extern bool reloadTimeActive;
-
 //* ************************************************************************
 //* ************************ AUTOMATED TABLE SAW **************************
 //* ************************************************************************
@@ -222,8 +219,7 @@ void loop() {
   
   // Update dashboard status periodically (only when not cutting to avoid timing interference)
   static unsigned long lastDashboardUpdate = 0;
-  unsigned long updateInterval = reloadTimeActive ? 50 : 1000; // Update every 50ms when reload timer active, otherwise every second
-  if (millis() - lastDashboardUpdate > updateInterval) {
+  if (millis() - lastDashboardUpdate > 1000) { // Update every second
     updateDashboardStatus();
     lastDashboardUpdate = millis();
   }

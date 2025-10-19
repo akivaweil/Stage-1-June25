@@ -110,7 +110,6 @@ void onEnterReturningNo2x4State() {
 
 void onExitReturningNo2x4State() {
     resetReturningNo2x4Steps();
-    startReloadTimer(); // Start reload timer when exiting RETURNING_NO_2x4 state
 }
 
 void handleReturningNo2x4Sequence() {
@@ -181,6 +180,7 @@ void handleReturningNo2x4Step(int step) {
             
         case STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP: // Wait for feed motor at -1, ensure clamp extended
             handleWaitForMotorAndCylinderAction(feedMotor, true); // true = extend
+            startReloadTimer(); // Start reload time tracking when reaching final step
             break;
             
         case STEP_FINAL_COMPLETION: // Final step: wait for sensor to clear, then extend secure clamp
@@ -234,8 +234,6 @@ void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendCla
         }
         cylinderActionTime = millis();
         waitingForCylinder = true; // Will cause step increment after delay
-
-        // Timer start moved to onExitReturningNo2x4State()
     }
 }
 

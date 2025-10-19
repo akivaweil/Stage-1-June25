@@ -257,10 +257,34 @@ void handleFeedWoodMovement() {
             
         case 1: // Wait for movement to complete and wood to clear sensor
             if (feedMotor && !feedMotor->isRunning()) {
-                // Wait until wood present sensor is not active (HIGH = no wood)
+                // Wait until wood present sensor is not active (HIGH = no wood) with debounce
                 extern const int _2x4_PRESENT_SENSOR;
-                if (digitalRead(_2x4_PRESENT_SENSOR) == HIGH) {
+                
+                // Debounce variables
+                static unsigned long lastDebounceTime = 0;
+                static bool sensorStable = false;
+                const unsigned long debounceDelay = 50; // 50ms debounce
+                
+                unsigned long currentTime = millis();
+                bool sensorReading = digitalRead(_2x4_PRESENT_SENSOR);
+                
+                // Reset debounce timer if sensor state changed
+                if (sensorReading == LOW) {
+                    lastDebounceTime = currentTime;
+                    sensorStable = false;
+                }
+                
+                // Check if sensor has been HIGH for debounce duration
+                if (sensorReading == HIGH && !sensorStable) {
+                    if (currentTime - lastDebounceTime >= debounceDelay) {
+                        sensorStable = true;
+                    }
+                }
+                
+                // Move to next step when sensor is stable HIGH
+                if (sensorStable) {
                     feedMotorHomingSubStep = 2;
+                    sensorStable = false; // Reset for next time
                 }
             }
             break;

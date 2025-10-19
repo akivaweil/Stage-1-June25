@@ -176,9 +176,10 @@ void setup() {
     //serial.println("Failed to init feedMotor");
   }
   
-  //! Initialize servo
-  rotationServo.attach(ROTATION_SERVO_PIN);
-  rotationServo.write(ROTATION_SERVO_HOME_POSITION);
+  // SAFETY: Do NOT attach servo during startup
+  // Servo will be attached only when entering the first cutting state
+  // This prevents the servo from moving and potentially ramming stuck wood into the blade
+  //Serial.println("Servo will be attached only during first cutting cycle for safety");
   
   //! Configure initial state
   currentState = STARTUP;

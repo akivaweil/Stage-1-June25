@@ -3,6 +3,7 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
+#include "Config/Pins_Definitions.h"
 
 //* ************************************************************************
 //* ************************** CUTTING STATE *******************************
@@ -130,6 +131,17 @@ void onEnterCuttingState() {
     resetCuttingSteps();
     startCuttingCycleTimer();
     stopReloadTimer(); // Stop reload time tracking when entering cutting state
+    
+    //! SAFETY: Attach servo only on first cutting cycle
+    static bool servoAttached = false;
+    if (!servoAttached) {
+        Servo* servo = getRotationServo();
+        if (servo && !servo->attached()) {
+            servo->attach(ROTATION_SERVO_PIN);
+            Serial.println("Rotation servo attached for first cutting cycle");
+            servoAttached = true;
+        }
+    }
 }
 
 void onExitCuttingState() {

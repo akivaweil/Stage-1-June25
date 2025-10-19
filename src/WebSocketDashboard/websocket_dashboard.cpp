@@ -76,6 +76,7 @@ String getStateName(SystemState state) {
         case RETURNING_NO_2x4: return "RETURNING_NO_2x4";
         case FEED_FIRST_CUT: return "FEED_FIRST_CUT";
         case FEED_WOOD_FWD_ONE: return "FEED_WOOD_FWD_ONE";
+        case RELOAD: return "RELOAD";
         default: return "UNKNOWN";
     }
 }

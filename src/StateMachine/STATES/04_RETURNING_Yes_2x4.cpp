@@ -139,7 +139,6 @@ void handleReturningYes2x4Sequence() {
                         onErrorOccurred("Cut motor home switch not detected after max moves");
                         if (cutMotor) cutMotor->forceStop();
                         if (feedMotor) feedMotor->forceStop();
-                        extend2x4SecureClamp();
                         turnRedLedOn();
                         turnYellowLedOff();
                         changeState(ERROR);
@@ -215,12 +214,11 @@ void handleFeedMotorReturnSequence() {
             feedMotorReturnSubStep = 2;
             break;
             
-        case 2: // Wait for move completion then extend 2x4 secure clamp
+        case 2: // Wait for move completion
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 8: EXTEND 2X4 SECURE CLAMP
+                //! STEP 8: FEED MOTOR RETURN MOVE COMPLETE
                 //! ************************************************************************
-                extend2x4SecureClamp();
                 feedMotorReturnSubStep = 3;
             }
             break;
@@ -289,6 +287,9 @@ void handleFeedWoodMovement() {
             break;
             
         case 2: // Movement complete and wood cleared - transition to final step
+            while (digitalRead(_2x4_PRESENT_SENSOR) == LOW) {
+                delay(10);
+            }
             extend2x4SecureClamp();
             returningYes2x4SubStep = 4; // Move to final completion step
             break;

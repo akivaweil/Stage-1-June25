@@ -30,15 +30,15 @@ const int CUT_HOMING_DIRECTION = -1;
 
 // Speeds (defaults - can be modified via dashboard)
 float CUT_MOTOR_NORMAL_SPEED = 640;
-float CUT_MOTOR_NORMAL_ACCELERATION = 25000;
-float CUT_MOTOR_NO_WOOD_SPEED = CUT_MOTOR_NORMAL_SPEED * 0.6;
-float CUT_MOTOR_RETURN_SPEED = 25000;
+float CUT_MOTOR_NORMAL_ACCELERATION = 16000;
+float CUT_MOTOR_NO_WOOD_SPEED = 512; // 80% of normal speed
+float CUT_MOTOR_RETURN_SPEED = 20000;
 float CUT_MOTOR_HOMING_SPEED = 1500;
 
 // Distances & Movement (defaults - can be modified via dashboard)
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
 float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
-float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.2;
+float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.5;
 
 // Timing
 unsigned long CUT_HOME_TIMEOUT = 5000;
@@ -55,8 +55,8 @@ const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;
 // Speeds (defaults - can be modified via dashboard)
 float FEED_MOTOR_NORMAL_SPEED = 22000;
 float FEED_MOTOR_NORMAL_ACCELERATION = 22000;
-float FEED_MOTOR_RETURN_SPEED = 22000;
-float FEED_MOTOR_RETURN_ACCELERATION = 30000;
+float FEED_MOTOR_RETURN_SPEED = 40000;
+float FEED_MOTOR_RETURN_ACCELERATION = 50000;
 float FEED_MOTOR_HOMING_SPEED = 2000;
 
 // Distances & Movement (defaults - can be modified via dashboard)
@@ -65,7 +65,7 @@ float FEED_MOTOR_RETURN_DISTANCE = 0.0;
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************
 //* ************************************************************************
-unsigned long TA_SIGNAL_DURATION = 500;
+unsigned long TA_SIGNAL_DURATION = 1000;
 float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
 
 //* ************************************************************************

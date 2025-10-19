@@ -415,6 +415,7 @@ void handleCommonOperations() {
     if (cutMotorInReturningYes2x4Return && cutMotor && cutMotor->isRunning() && cutHomingSwitch.read() == HIGH) {
         //serial.println("Cut motor hit homing sensor during RETURNING_YES_2x4 return - stopping immediately!");
         cutMotor->forceStopAndNewPosition(0);  // Stop immediately and set position to 0
+        delay(50); // Allow sensor to settle after force-stop to prevent false negative verification
     }
     // Handle rotation servo return logic
     // After cooldown period, monitor suction sensor for Transfer Arm grabbing wood

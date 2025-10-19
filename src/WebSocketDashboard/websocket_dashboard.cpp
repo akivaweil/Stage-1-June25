@@ -25,6 +25,9 @@ unsigned long lastStateChangeTime = 0;
 unsigned long reloadTimeStart = 0;
 float reloadTimeSeconds = 0.0;
 bool reloadTimeActive = false;
+float reloadTimes[5] = {0.0, 0.0, 0.0, 0.0, 0.0}; // Store last 5 reload times
+int reloadTimeIndex = 0; // Index for circular buffer
+int reloadTimeCount = 0; // Number of reload times recorded
 
 // Dashboard configuration variables - these are loaded from EEPROM/config and can be modified via dashboard
 float CUT_TRAVEL_DISTANCE = 9.2;
@@ -1171,17 +1174,33 @@ void stopReloadTimer() {
     if (reloadTimeActive) {
         reloadTimeSeconds = (float)(millis() - reloadTimeStart) / 1000.0;
         reloadTimeActive = false;
+        
+        // Store in circular buffer
+        reloadTimes[reloadTimeIndex] = reloadTimeSeconds;
+        reloadTimeIndex = (reloadTimeIndex + 1) % 5;
+        if (reloadTimeCount < 5) {
+            reloadTimeCount++;
+        }
+        
         Serial.println("Reload timer stopped - Time: " + String(reloadTimeSeconds, 1) + "s");
         addEventToLog("Reload completed - " + String(reloadTimeSeconds, 1) + "s");
     }
 }
 
-// Get current reload time (either active timer or last completed time)
+// Get current reload time (either active timer or average of last 5 completed times)
 float getReloadTime() {
     if (reloadTimeActive) {
         return (float)(millis() - reloadTimeStart) / 1000.0;
     } else {
-        return reloadTimeSeconds;
+        // Calculate average of last 5 reload times
+        if (reloadTimeCount == 0) {
+            return 0.0;
+        }
+        float sum = 0.0;
+        for (int i = 0; i < reloadTimeCount; i++) {
+            sum += reloadTimes[i];
+        }
+        return sum / (float)reloadTimeCount;
     }
 }
 

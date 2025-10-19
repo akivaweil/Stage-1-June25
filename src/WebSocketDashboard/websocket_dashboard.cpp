@@ -55,6 +55,12 @@ NetworkInfo previousNetworkInfo;
 EventLog previousEventLog;
 SerialLog previousSerialLog;
 
+// Forward declarations
+void updateSensorStatus();
+void updateClampStatus();
+void updateLEDStatus();
+void updateNetworkInfo();
+
 // Helper function to get state name
 String getStateName(SystemState state) {
     switch(state) {
@@ -481,6 +487,12 @@ void initializeDashboardData() {
     }
     
     addEventToLog("System initialized");
+    
+    // Initialize current sensor, clamp, and LED statuses
+    updateSensorStatus();
+    updateClampStatus();
+    updateLEDStatus();
+    updateNetworkInfo();
     
     // Initialize previous values for change detection
     previousSystemStatus = systemStatus;

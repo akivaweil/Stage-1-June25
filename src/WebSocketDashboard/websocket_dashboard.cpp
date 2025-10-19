@@ -790,8 +790,8 @@ void broadcastPerformanceMetrics() {
         // Recalculate time-based metrics before broadcasting
         calculateTimeBasedMetrics();
         
-        // Only broadcast if something changed
-        if (hasPerformanceMetricsChanged()) {
+        // Broadcast if something changed OR if reload timer is active (for real-time updates)
+        if (hasPerformanceMetricsChanged() || reloadTimeActive) {
             JsonDocument doc;
             doc["type"] = "performance_metrics";
             doc["reloadTime"] = getReloadTime();

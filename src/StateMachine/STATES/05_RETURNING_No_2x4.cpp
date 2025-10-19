@@ -110,7 +110,7 @@ void onEnterReturningNo2x4State() {
 
 void onExitReturningNo2x4State() {
     resetReturningNo2x4Steps();
-    // Reload timer now starts after STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP completes
+    startReloadTimer(); // Start reload timer when exiting RETURNING_NO_2x4 state
 }
 
 void handleReturningNo2x4Sequence() {
@@ -235,11 +235,7 @@ void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendCla
         cylinderActionTime = millis();
         waitingForCylinder = true; // Will cause step increment after delay
 
-        // Start reload timer after STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP completes
-        if (returningNo2x4Step == STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP) {
-            Serial.println("Starting reload timer after STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP");
-            startReloadTimer();
-        }
+        // Timer start moved to onExitReturningNo2x4State()
     }
 }
 

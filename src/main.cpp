@@ -222,7 +222,7 @@ void loop() {
   
   // Update dashboard status periodically (only when not cutting to avoid timing interference)
   static unsigned long lastDashboardUpdate = 0;
-  unsigned long updateInterval = reloadTimeActive ? 100 : 1000; // Update every 100ms when reload timer active, otherwise every second
+  unsigned long updateInterval = reloadTimeActive ? 50 : 1000; // Update every 50ms when reload timer active, otherwise every second
   if (millis() - lastDashboardUpdate > updateInterval) {
     updateDashboardStatus();
     lastDashboardUpdate = millis();

@@ -30,7 +30,7 @@ const int CUT_HOMING_DIRECTION = -1;
 
 // Speeds
 float CUT_MOTOR_NORMAL_ACCELERATION = 25000;
-float CUT_MOTOR_NO_WOOD_SPEED = 384; // 60% of normal speed (640 * 0.6)
+float CUT_MOTOR_NO_WOOD_SPEED = CUT_MOTOR_NORMAL_SPEED * 0.8; // 60% of normal speed
 float CUT_MOTOR_RETURN_SPEED = 35000;
 float CUT_MOTOR_HOMING_SPEED = 1500;
 

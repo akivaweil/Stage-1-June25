@@ -446,10 +446,10 @@ void handleCommonOperations() {
         }
     }
 
-    // Handle Rotation Clamp retraction after delay from servo activation
+    // Handle Rotation Clamp retraction after delay from servo start rotation
     if (rotationClampIsExtended && rotationServoIsActiveAndTiming && (millis() - rotationServoActiveStartTime >= ROTATION_CLAMP_RETRACT_DELAY_MS)) {
         retractRotationClamp();
-        //serial.println("Rotation Clamp retracted after servo activation delay.");
+        //serial.println("Rotation Clamp retracted after servo rotation delay.");
     }
 
     // 2x4 sensor - Update global _2x4Present flag

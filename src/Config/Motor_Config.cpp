@@ -19,7 +19,7 @@ float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-unsigned long ROTATION_CLAMP_RETRACT_DELAY_MS = 2900;
+unsigned long ROTATION_CLAMP_RETRACT_DELAY_MS = 750;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 3.3;
 
 //* ************************************************************************

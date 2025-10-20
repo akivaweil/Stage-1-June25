@@ -60,7 +60,6 @@ void retract2x4SecureClamp() {
 void extendRotationClamp() {
     // Rotation clamp extends when HIGH
     digitalWrite(ROTATION_CLAMP, HIGH); // Extended 
-    rotationClampExtendTime = millis();
     rotationClampIsExtended = true;
     //serial.println("Rotation Clamp Extended");
 }

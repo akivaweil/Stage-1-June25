@@ -34,7 +34,7 @@ extern float FEED_MOTOR_HOMING_SPEED;
 
 // Timing Configuration
 extern unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
-extern unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
+extern unsigned long ROTATION_CLAMP_RETRACT_DELAY_MS;
 extern unsigned long CUT_HOME_TIMEOUT;
 extern unsigned long TA_SIGNAL_DURATION;
 

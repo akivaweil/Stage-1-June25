@@ -20,7 +20,7 @@ extern float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-extern unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
+extern unsigned long ROTATION_CLAMP_RETRACT_DELAY_MS;
 extern float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
 
 //* ************************************************************************

@@ -87,18 +87,19 @@ void executeHomingState() {
         }
     } else if (!feedMotorHomed) {
         if (!feedHomingPhaseInitiated) {
-            //serial.println("Starting feed motor homing phase (blocking)..."); 
+            //serial.println("Starting feed motor homing phase (non-blocking)..."); 
             retractFeedClamp(); 
             //serial.println("Feed clamp retracted for homing."); 
             feedHomingPhaseInitiated = true;
         }
-        //serial.println("Calling homeFeedMotorBlocking...");
-        homeFeedMotorBlocking(*getFeedHomingSwitch());
-        extendFeedClamp();
-        //serial.println("Feed clamp re-extended.");
-        feedMotorHomed = true; 
-        feedHomingPhaseInitiated = false; // Reset for next potential homing cycle
-        //serial.println("Feed motor homing marked as successful.");
+        //serial.println("Calling homeFeedMotorNonBlocking...");
+        if (homeFeedMotorNonBlocking(*getFeedHomingSwitch())) {
+            extendFeedClamp();
+            //serial.println("Feed clamp re-extended.");
+            feedMotorHomed = true; 
+            feedHomingPhaseInitiated = false; // Reset for next potential homing cycle
+            //serial.println("Feed motor homing marked as successful.");
+        }
     } else {
         //serial.println("All homing steps complete! Transitioning to IDLE..."); 
         cutMotorHomed = false; 

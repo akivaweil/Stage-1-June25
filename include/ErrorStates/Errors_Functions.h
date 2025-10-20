@@ -52,6 +52,7 @@ void stopCutMotor();
 void stopFeedMotor();
 void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout);
 void homeFeedMotorBlocking(Bounce& homingSwitch);
+bool homeFeedMotorNonBlocking(Bounce& homingSwitch);
 void moveFeedMotorToInitialAfterHoming();
 bool checkAndRecalibrateCutMotorHome(int attempts);
 void moveFeedMotorToPostCutHome();

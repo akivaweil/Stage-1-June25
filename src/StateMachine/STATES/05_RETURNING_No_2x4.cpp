@@ -10,7 +10,7 @@ const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clam
 const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
 const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 returning sequence
 const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
-const float FEED_MOTOR_HOME_POSITION = 1.0; // Home position
+const float FEED_MOTOR_HOME_POSITION = 0.8; // Home position
 const float FEED_MOTOR_FINAL_POSITION = -1.2; // Final position
 
 // Step enumeration for better readability

@@ -400,12 +400,96 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
     //serial.println("Feed motor homed successfully.");
 }
 
+// Non-blocking feed motor homing state variables
+static bool feedMotorHomingInProgress = false;
+static int feedMotorHomingStep = 0;
+static unsigned long feedMotorHomingStartTime = 0;
+static unsigned long feedMotorHomingLastRestartCheck = 0;
+
+// Non-blocking feed motor homing function
+bool homeFeedMotorNonBlocking(Bounce& homingSwitch) {
+    if (!feedMotor) {
+        return false;
+    }
+    
+    // Initialize homing if not already in progress
+    if (!feedMotorHomingInProgress) {
+        feedMotorHomingInProgress = true;
+        feedMotorHomingStep = 0;
+        feedMotorHomingStartTime = millis();
+        feedMotorHomingLastRestartCheck = millis();
+        
+        // Step 1: Start moving toward home sensor
+        feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
+        feedMotor->runForward();
+        feedMotorHomingStep = 1;
+        return false; // Not complete yet
+    }
+    
+    // Check for timeout
+    const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
+    if (millis() - feedMotorHomingStartTime > FEED_HOME_TIMEOUT) {
+        feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
+        feedMotorHomingInProgress = false;
+        return false; // Failed due to timeout
+    }
+    
+    // Step 1: Wait for home sensor to trigger
+    if (feedMotorHomingStep == 1) {
+        homingSwitch.update();
+        
+        // If motor stopped running unexpectedly, restart it
+        if (millis() - feedMotorHomingLastRestartCheck >= 1000) {
+            if (!feedMotor->isRunning()) {
+                feedMotor->runForward();
+            }
+            feedMotorHomingLastRestartCheck = millis();
+        }
+        
+        if (homingSwitch.read() == LOW) {
+            // Home sensor detected - stop motor and move to step 2
+            feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+            feedMotorHomingStep = 2;
+            return false; // Not complete yet
+        }
+    }
+    
+    // Step 2: Move to working position
+    if (feedMotorHomingStep == 2) {
+        if (!feedMotor->isRunning()) {
+            // Move to working position (-0.5 inch from sensor)
+            feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
+            feedMotorHomingStep = 3;
+        }
+        return false; // Not complete yet
+    }
+    
+    // Step 3: Wait for positioning to complete
+    if (feedMotorHomingStep == 3) {
+        if (!feedMotor->isRunning()) {
+            // Set working position as zero
+            feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+            configureFeedMotorForNormalOperation();
+            feedMotorHomingInProgress = false;
+            return true; // Complete!
+        }
+        
+        // Check for positioning timeout
+        if (millis() - feedMotorHomingStartTime > FEED_HOME_TIMEOUT) {
+            feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
+            feedMotorHomingInProgress = false;
+            return false; // Failed due to timeout
+        }
+    }
+    
+    return false; // Still in progress
+}
+
 void moveFeedMotorToInitialAfterHoming() {
     if (feedMotor) {
         configureFeedMotorForNormalOperation();
         moveFeedMotorToHome();
-        while(feedMotor->isRunning()){
-        }
+        // Removed blocking while loop - let the state machine handle this
     }
 }
 

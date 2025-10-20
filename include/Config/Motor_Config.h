@@ -69,6 +69,12 @@ extern const float FEED_MOTOR_2ND_POSITION;
 extern const float FEED_MOTOR_HOME_POSITION;
 extern const float FEED_MOTOR_FINAL_POSITION;
 
+// Feed motor position constants for FEED_FIRST_CUT state
+extern const float FEED_MOTOR_FIRST_RUN_START_POSITION;
+extern const float FEED_MOTOR_FIRST_RUN_END_POSITION;
+extern const float FEED_MOTOR_SECOND_RUN_START_POSITION;
+extern const float FEED_MOTOR_SECOND_RUN_END_POSITION;
+
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************
 //* ************************************************************************

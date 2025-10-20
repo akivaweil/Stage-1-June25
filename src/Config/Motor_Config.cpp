@@ -68,6 +68,12 @@ const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movemen
 const float FEED_MOTOR_HOME_POSITION = 1.0; // Home position
 const float FEED_MOTOR_FINAL_POSITION = -0.9; // Final position
 
+// Feed motor position constants for FEED_FIRST_CUT state
+const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
+const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.0; // inches - absolute position for first run end
+const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = 1.2; // inches - absolute position for second run end
+
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************
 //* ************************************************************************

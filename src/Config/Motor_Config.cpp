@@ -19,7 +19,7 @@ float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2500;
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 
 //* ************************************************************************
@@ -28,14 +28,14 @@ float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 float CUT_MOTOR_STEPS_PER_INCH = 500.0;
 const int CUT_HOMING_DIRECTION = -1;
 
-// Speeds (defaults - can be modified via dashboard)
+// Speeds
 float CUT_MOTOR_NORMAL_SPEED = 640;
 float CUT_MOTOR_NORMAL_ACCELERATION = 16000;
 float CUT_MOTOR_NO_WOOD_SPEED = 512; // 80% of normal speed
 float CUT_MOTOR_RETURN_SPEED = 20000;
 float CUT_MOTOR_HOMING_SPEED = 1500;
 
-// Distances & Movement (defaults - can be modified via dashboard)
+// Distances & Movement
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
 float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
 float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.5;
@@ -52,14 +52,14 @@ float FEED_MOTOR_STEPS_PER_INCH = 1000.0;
 const int FEED_HOMING_DIRECTION = 1;
 const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.5;
 
-// Speeds (defaults - can be modified via dashboard)
+// Speeds
 float FEED_MOTOR_NORMAL_SPEED = 22000;
 float FEED_MOTOR_NORMAL_ACCELERATION = 22000;
 float FEED_MOTOR_RETURN_SPEED = 40000;
 float FEED_MOTOR_RETURN_ACCELERATION = 50000;
 float FEED_MOTOR_HOMING_SPEED = 2000;
 
-// Distances & Movement (defaults - can be modified via dashboard)
+// Distances & Movement
 float FEED_MOTOR_RETURN_DISTANCE = 0.0;
 
 //* ************************************************************************

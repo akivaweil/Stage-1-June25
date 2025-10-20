@@ -32,15 +32,11 @@ const float DECELERATION_DISTANCE_INCHES = 0.2; // Maximum 0.2 inch deceleration
 //* ************************ STATE OPERATION CONSTANTS ********************
 //* ************************************************************************
 const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
-const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 returning sequence
-const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
-const float FEED_MOTOR_HOME_POSITION = 1.0; // Home position
-const float FEED_MOTOR_FINAL_POSITION = -1.2; // Final position
 
 const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
 const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end
 const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
-const float FEED_MOTOR_SECOND_RUN_END_POSITION = 2.1; // inches - absolute position for second run end
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = 1.8; // inches - absolute position for second run end
 
 const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
 

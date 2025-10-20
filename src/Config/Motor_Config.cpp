@@ -19,7 +19,7 @@ float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-unsigned long ROTATION_CLAMP_RETRACT_DELAY_MS = 750;
+unsigned long ROTATION_CLAMP_RETRACT_DELAY_MS = 500;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 3.3;
 
 //* ************************************************************************
@@ -61,6 +61,12 @@ float FEED_MOTOR_HOMING_SPEED = 2000;
 
 // Distances & Movement
 float FEED_MOTOR_RETURN_DISTANCE = 0.0;
+
+// Feed motor position constants for RETURNING_NO_2x4 state
+const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 returning sequence
+const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
+const float FEED_MOTOR_HOME_POSITION = 1.0; // Home position
+const float FEED_MOTOR_FINAL_POSITION = -0.9; // Final position
 
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************

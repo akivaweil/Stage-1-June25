@@ -63,6 +63,12 @@ extern float FEED_MOTOR_HOMING_SPEED;
 // Distances & Movement (defaults - can be modified via dashboard)
 extern float FEED_MOTOR_RETURN_DISTANCE;
 
+// Feed motor position constants for RETURNING_NO_2x4 state
+extern const float FEED_MOTOR_SPEED_MULTIPLIER;
+extern const float FEED_MOTOR_2ND_POSITION;
+extern const float FEED_MOTOR_HOME_POSITION;
+extern const float FEED_MOTOR_FINAL_POSITION;
+
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************
 //* ************************************************************************

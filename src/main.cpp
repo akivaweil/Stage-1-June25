@@ -3,6 +3,7 @@
 #include <FastAccelStepper.h>
 #include <esp_system.h>
 #include <ESP32Servo.h>
+#include <esp_task_wdt.h>
 #include "Config/Pins_Definitions.h"
 #include "Config/Config.h"
 #include "OTAUpdater/ota_updater.h"
@@ -93,6 +94,10 @@ bool cutMotorInReturningYes2x4Return = false;
 void setup() {
   Serial.begin(115200);
   Serial.println("Automated Table Saw Control System - Stage 1");
+  
+  // Initialize watchdog timer (10 second timeout)
+  esp_task_wdt_init(10, true);
+  esp_task_wdt_add(NULL);
   
   setupOTA();
   
@@ -209,6 +214,9 @@ void setup() {
 }
 
 void loop() {
+  // Feed watchdog timer
+  esp_task_wdt_reset();
+  
   // Only handle OTA requests when in IDLE state for safety
   if (currentState == IDLE) {
     handleOTA();

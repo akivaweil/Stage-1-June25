@@ -122,15 +122,28 @@ void checkFirstCutConditions() {
 void checkStartConditions() {
     turnGreenLedOn();
     
+    // Sync continuous mode flag with actual switch state to prevent race conditions
+    bool startSwitchOn = getStartCycleSwitch()->read() == HIGH;
+    bool startSwitchSafe = getStartSwitchSafe();
+    if (startSwitchOn != getContinuousModeActive() && startSwitchSafe) {
+        setContinuousModeActive(startSwitchOn);
+    }
+    
     bool startCycleRose = getStartCycleSwitch()->rose();
     bool continuousModeActive = getContinuousModeActive();
     bool cuttingCycleInProgress = getCuttingCycleInProgress();
     bool woodSuctionError = getWoodSuctionError();
-    bool startSwitchSafe = getStartSwitchSafe();
     bool _2x4Present = get2x4Present();
     
-    if (((startCycleRose || (continuousModeActive && !cuttingCycleInProgress)) 
-        && !woodSuctionError) && startSwitchSafe) {
+    // For continuous mode, also verify switch is still HIGH to prevent false triggers
+    bool shouldStart = false;
+    if (startCycleRose) {
+        shouldStart = true; // Manual press
+    } else if (continuousModeActive && !cuttingCycleInProgress && startSwitchOn) {
+        shouldStart = true; // Continuous mode with switch still ON
+    }
+    
+    if (shouldStart && !woodSuctionError && startSwitchSafe) {
         
         // Don't start new cycle if coming from no-wood situation - require manual reset
         if (getComingFromNoWoodWithSensorsClear()) {

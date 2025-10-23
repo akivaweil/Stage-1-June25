@@ -91,8 +91,11 @@ void onEnterReturningNo2x4State() {
     // Cut motor already started in CUTTING state
     configureFeedMotorForNormalOperation();
 
-    showBlueLed();
-    turnYellowLedOff();
+    // Turn on all 4 LEDs
+    digitalWrite(STATUS_LED_RED, HIGH);
+    digitalWrite(STATUS_LED_YELLOW, HIGH);
+    digitalWrite(STATUS_LED_GREEN, HIGH);
+    digitalWrite(STATUS_LED_BLUE, HIGH);
     
     // Initialize step tracking
     returningNo2x4Step = 0;

@@ -40,7 +40,28 @@ void updateWoodPresentLed() {
         if (woodPresent) {
             turnYellowLedOn();
         } else {
-            turnBlueLedOn();
+            //! Gentle blinking pattern: 1500ms on, 500ms off (2 second cycle)
+            static unsigned long lastLedChangeTime = 0;
+            static bool ledState = true; // Start with LED on
+            
+            unsigned long currentTime = millis();
+            unsigned long timeSinceLastChange = currentTime - lastLedChangeTime;
+            
+            if (ledState && timeSinceLastChange >= 1500) {
+                // Been on for 1500ms, turn off
+                turnBlueLedOff();
+                ledState = false;
+                lastLedChangeTime = currentTime;
+            } else if (!ledState && timeSinceLastChange >= 500) {
+                // Been off for 500ms, turn on
+                turnBlueLedOn();
+                ledState = true;
+                lastLedChangeTime = currentTime;
+            } else if (ledState && lastLedChangeTime == 0) {
+                // Initialize on first call
+                turnBlueLedOn();
+                lastLedChangeTime = currentTime;
+            }
         }
     }
 }

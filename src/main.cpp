@@ -95,6 +95,9 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Automated Table Saw Control System - Stage 1");
   
+  // Set CPU frequency to 80MHz to reduce power consumption
+  setCpuFrequencyMhz(80);
+  
   // Initialize watchdog timer (10 second timeout)
   esp_task_wdt_init(10, true);
   esp_task_wdt_add(NULL);

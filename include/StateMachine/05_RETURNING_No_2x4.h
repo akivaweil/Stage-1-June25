@@ -19,7 +19,6 @@ void handleReturningNo2x4Sequence();
 void handleReturningNo2x4Step(int step);
 void handleCutMotorHomingWithIncrementalMoves();
 void handleFeedMotorHomingSequenceNo2x4();
-void handleAttentionSequence();
 
 // Step handler helper functions
 void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendClamp);

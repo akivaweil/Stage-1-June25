@@ -157,11 +157,10 @@ The system operates through a comprehensive state machine with the following sta
   3. Wait for feed motor home, retract feed clamp
   4. Move feed motor to 2.0 inches
   5. Extend feed clamp
-  6. **Attention Sequence**: 9 rapid feed clamp extension/retraction movements
-  7. Move feed motor to home
-  8. Retract feed clamp
-  9. Move feed motor to final position
-  10. Verify cut home position
+  6. Move feed motor to home
+  7. Retract feed clamp
+  8. Move feed motor to final position
+  9. Verify cut home position
 - **Completion**: Transitions to IDLE state
 
 ### 9. ERROR States

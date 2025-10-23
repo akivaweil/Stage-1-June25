@@ -1,6 +1,7 @@
 #include "StateMachine/05_RETURNING_No_2x4.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/STATES/States_Config.h"
 #include "Config/Pins_Definitions.h"
 #include "Config/config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
@@ -87,17 +88,17 @@ static bool ledState = true; // Start with LED on
 
 
 void executeReturningNo2x4State() {
-    //! Gentle blinking pattern: 1500ms on, 500ms off (2 second cycle)
+    //! Gentle blinking pattern using config constants
     unsigned long currentTime = millis();
     unsigned long timeSinceLastChange = currentTime - lastLedChangeTime;
     
-    if (ledState && timeSinceLastChange >= 3000) {
-        // Been on for 1500ms, turn off
+    if (ledState && timeSinceLastChange >= LED_BLINK_ON_DURATION_MS) {
+        // Been on for configured duration, turn off
         turnBlueLedOff();
         ledState = false;
         lastLedChangeTime = currentTime;
-    } else if (!ledState && timeSinceLastChange >= 200) {
-        // Been off for 500ms, turn on
+    } else if (!ledState && timeSinceLastChange >= LED_BLINK_OFF_DURATION_MS) {
+        // Been off for configured duration, turn on
         turnBlueLedOn();
         ledState = true;
         lastLedChangeTime = currentTime;
@@ -158,7 +159,6 @@ void handleReturningNo2x4Sequence() {
 void handleReturningNo2x4Step(int step) {
     FastAccelStepper* cutMotor = getCutMotor();
     FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_TRAVEL_DISTANCE; // From main.cpp
     
     switch (step) { 
         case STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP: // Wait for cut motor, then extend feed clamp

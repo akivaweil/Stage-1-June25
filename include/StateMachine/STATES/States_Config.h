@@ -63,6 +63,10 @@ extern unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
 extern unsigned long SENSOR_STABILIZATION_DELAY_MS;
 extern float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
 
+// LED Blinking Configuration
+extern unsigned long LED_BLINK_ON_DURATION_MS;
+extern unsigned long LED_BLINK_OFF_DURATION_MS;
+
 //* ************************************************************************
 //* ******************** PRE-CALCULATED STEP VALUES ***********************
 //* ************************************************************************

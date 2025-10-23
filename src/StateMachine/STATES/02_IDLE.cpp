@@ -1,6 +1,7 @@
 #include "StateMachine/02_IDLE.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/STATES/States_Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
 //* ************************************************************************
@@ -46,7 +47,33 @@
 // Ensure position and wood secure clamps are engaged
 // If no wood detected, turn on blue LED for NO_WOOD mode
 
+// LED blinking variables for gentle blue blink pattern when no wood detected
+static unsigned long idleLastLedChangeTime = 0;
+static bool idleLedState = true; // Start with LED on
+
 void executeIdleState() {
+    //! Handle gentle blue LED blinking if coming from no-wood situation
+    if (getComingFromNoWoodWithSensorsClear()) {
+        unsigned long currentTime = millis();
+        unsigned long timeSinceLastChange = currentTime - idleLastLedChangeTime;
+        
+        if (idleLedState && timeSinceLastChange >= LED_BLINK_ON_DURATION_MS) {
+            // Been on for configured duration, turn off
+            turnBlueLedOff();
+            idleLedState = false;
+            idleLastLedChangeTime = currentTime;
+        } else if (!idleLedState && timeSinceLastChange >= LED_BLINK_OFF_DURATION_MS) {
+            // Been off for configured duration, turn on
+            turnBlueLedOn();
+            idleLedState = true;
+            idleLastLedChangeTime = currentTime;
+        } else if (idleLedState && idleLastLedChangeTime == 0) {
+            // Initialize on first call
+            turnBlueLedOn();
+            idleLastLedChangeTime = currentTime;
+        }
+    }
+    
     // Check if reload switch is activated - if so, transition to reload state
     bool reloadSwitchOn = getReloadSwitch()->read() == HIGH;
     if (reloadSwitchOn && !getIsReloadMode()) {
@@ -75,6 +102,10 @@ void onEnterIdleState() {
     } else if (comingFromNoWood) {
         // Coming from no2x4 with no wood - keep secure clamp extended
         // Don't retract the secure clamp, it should stay extended
+        // Initialize LED blinking pattern
+        turnBlueLedOn();
+        idleLastLedChangeTime = millis();
+        idleLedState = true;
     } else {
         // Normal case - extend secure clamp (only retracted in reload mode)
         extend2x4SecureClamp();
@@ -84,10 +115,8 @@ void onEnterIdleState() {
     retractFeedClamp();
     retractRotationClamp();
 
-    // Reset the no-wood flag if it was set
-    if (comingFromNoWood) {
-        setComingFromNoWoodWithSensorsClear(false);
-    }
+    // NOTE: Do NOT reset the no-wood flag here - keep it set so blinking continues
+    // It will be reset when starting a new cycle or pressing feed button
 
     //serial.println("Idle: All clamps retracted");
 }
@@ -120,7 +149,10 @@ void checkFirstCutConditions() {
 }
 
 void checkStartConditions() {
-    turnGreenLedOn();
+    // Only turn on green LED if not coming from no-wood situation
+    if (!getComingFromNoWoodWithSensorsClear()) {
+        turnGreenLedOn();
+    }
     
     // Sync continuous mode flag with actual switch state to prevent race conditions
     bool startSwitchOn = getStartCycleSwitch()->read() == HIGH;

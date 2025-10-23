@@ -216,7 +216,7 @@ void executeFeedFirstCutStep() {
                     changeState(CUTTING);
                     setCuttingCycleInProgress(true);
                     configureCutMotorForCutting();
-                    turnYellowLedOn();
+                    showYellowLed();
                     extendFeedClamp();
                 } else {
                     //serial.println("FeedFirstCut: Start cycle switch LOW - transitioning to IDLE state");

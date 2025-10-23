@@ -21,7 +21,7 @@
 //! ************************************************************************
 
 void executeStartupState() {
-    turnBlueLedOn();  // Blue LED on during startup/homing
+    showBlueLed();  // Blue LED on during startup/homing
     
     // Display IP address on startup
     Serial.print("IP Address: ");

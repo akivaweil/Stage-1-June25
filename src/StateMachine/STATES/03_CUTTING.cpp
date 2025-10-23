@@ -38,9 +38,9 @@ void updateWoodPresentLed() {
     if (woodPresentSensor) {
         bool woodPresent = (woodPresentSensor->read() == LOW);
         if (woodPresent) {
-            turnYellowLedOn();
+            showYellowLed();
         } else {
-            turnBlueLedOn();
+            showBlueLed();
         }
     }
 }
@@ -267,10 +267,10 @@ void handleCuttingStep2() {
         
         //! Update LED before state transition for visual feedback
         if (no2x4Detected) {
-            turnBlueLedOn();
+            showBlueLed();
             turnYellowLedOff();
         } else {
-            turnYellowLedOn();
+            showYellowLed();
             turnBlueLedOff();
         }
         
@@ -290,8 +290,8 @@ void handleHomePositionError() {
     if (millis() - lastErrorBlinkTime > 100) { 
         errorBlinkState = !errorBlinkState;
         setErrorBlinkState(errorBlinkState);
-        if(errorBlinkState) turnRedLedOn(); else turnRedLedOff();
-        if(!errorBlinkState) turnYellowLedOn(); else turnYellowLedOff();
+        if(errorBlinkState) showRedLed(); else turnRedLedOff();
+        if(!errorBlinkState) showYellowLed(); else turnYellowLedOff();
         setLastErrorBlinkTime(millis());
     }
     

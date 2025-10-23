@@ -139,7 +139,7 @@ void handleReturningYes2x4Sequence() {
                         onErrorOccurred("Cut motor home switch not detected after max moves");
                         if (cutMotor) cutMotor->forceStop();
                         if (feedMotor) feedMotor->forceStop();
-                        turnRedLedOn();
+                        showRedLed();
                         turnYellowLedOff();
                         changeState(ERROR);
                         setErrorStartTime(millis());
@@ -174,7 +174,7 @@ void handleReturningYes2x4Sequence() {
                 if (getStartCycleSwitch()->read() == HIGH && getStartSwitchSafe()) {
                     extendFeedClamp();
                     configureCutMotorForCutting();
-                    turnYellowLedOn();
+                    showYellowLed();
                     setCuttingCycleInProgress(true);
                     changeState(CUTTING);
                     resetReturningYes2x4Steps();

@@ -4,9 +4,9 @@
 #include "WebSocketDashboard/websocket_dashboard.h"
 
 // External references to functions from main.cpp (LED and motor functions only)
-extern void turnRedLedOn();
+extern void showRedLed();
 extern void turnRedLedOff();
-extern void turnYellowLedOn();
+extern void showYellowLed();
 extern void turnYellowLedOff();
 extern void stopCutMotor();
 extern void stopFeedMotor();
@@ -25,8 +25,8 @@ void handleCutMotorErrorState() {
         bool newBlinkState = !getErrorBlinkState();
         setErrorBlinkState(newBlinkState);
         
-        if(newBlinkState) turnRedLedOn(); else turnRedLedOff();
-        if(!newBlinkState) turnYellowLedOn(); else turnYellowLedOff();
+        if(newBlinkState) showRedLed(); else turnRedLedOff();
+        if(!newBlinkState) showYellowLed(); else turnYellowLedOff();
         
         setLastErrorBlinkTime(millis());
     }

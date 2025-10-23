@@ -25,13 +25,13 @@ void extendRotationClamp();
 void retractRotationClamp();
 
 // LED Control Functions
-void turnRedLedOn();
+void showRedLed();
 void turnRedLedOff();
-void turnYellowLedOn();
+void showYellowLed();
 void turnYellowLedOff();
-void turnGreenLedOn();
+void showGreenLed();
 void turnGreenLedOff();
-void turnBlueLedOn();
+void showBlueLed();
 void turnBlueLedOff();
 void allLedsOff();
 void handleHomingLedBlink();

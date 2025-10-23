@@ -120,7 +120,7 @@ void checkFirstCutConditions() {
 }
 
 void checkStartConditions() {
-    turnGreenLedOn();
+    showGreenLed();
     
     bool startCycleRose = getStartCycleSwitch()->rose();
     bool continuousModeActive = getContinuousModeActive();
@@ -138,7 +138,7 @@ void checkStartConditions() {
         }
         
         turnGreenLedOff();
-        turnYellowLedOn();
+        showYellowLed();
         turnBlueLedOff();
         
         // Reset the no-wood flag when starting a new cutting cycle

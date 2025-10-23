@@ -77,7 +77,7 @@ void retractRotationClamp() {
 //* ************************************************************************
 // Contains functions for controlling LEDs.
 
-void turnRedLedOn() {
+void showRedLed() {
   static bool lastRedLedState = false;
   digitalWrite(STATUS_LED_RED, HIGH);
   digitalWrite(STATUS_LED_YELLOW, LOW);
@@ -98,7 +98,7 @@ void turnRedLedOff() {
   }
 }
 
-void turnYellowLedOn() {
+void showYellowLed() {
   static bool lastYellowLedState = false;
   digitalWrite(STATUS_LED_YELLOW, HIGH);
   digitalWrite(STATUS_LED_RED, LOW);
@@ -119,7 +119,7 @@ void turnYellowLedOff() {
   }
 }
 
-void turnGreenLedOn() {
+void showGreenLed() {
   static bool lastGreenLedState = false;
   digitalWrite(STATUS_LED_GREEN, HIGH);
   digitalWrite(STATUS_LED_RED, LOW);
@@ -140,7 +140,7 @@ void turnGreenLedOff() {
   }
 }
 
-void turnBlueLedOn() {
+void showBlueLed() {
   static bool lastBlueLedState = false;
   digitalWrite(STATUS_LED_BLUE, HIGH);
   digitalWrite(STATUS_LED_RED, LOW);
@@ -172,7 +172,7 @@ void handleHomingLedBlink() {
     static unsigned long blinkTimer = 0;
     if (millis() - blinkTimer > 500) {
         blinkState = !blinkState;
-        if (blinkState) turnBlueLedOn(); else turnBlueLedOff();
+        if (blinkState) showBlueLed(); else turnBlueLedOff();
         blinkTimer = millis();
     }
 }
@@ -524,7 +524,7 @@ void handleReloadMode() {
             isReloadMode = true;
             retractFeedClamp();
             retract2x4SecureClamp();
-            turnYellowLedOn();
+            showYellowLed();
             //serial.println("Entered reload mode");
         } else if (!reloadSwitchOn && isReloadMode) {
             isReloadMode = false;

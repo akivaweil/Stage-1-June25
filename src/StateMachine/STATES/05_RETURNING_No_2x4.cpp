@@ -81,8 +81,28 @@ static int returningNo2x4Step = 0;
 static unsigned long cylinderActionTime = 0;
 static bool waitingForCylinder = false;
 
+// LED blinking variables for gentle blue blink pattern
+static unsigned long lastLedChangeTime = 0;
+static bool ledState = true; // Start with LED on
+
 
 void executeReturningNo2x4State() {
+    //! Gentle blinking pattern: 1500ms on, 500ms off (2 second cycle)
+    unsigned long currentTime = millis();
+    unsigned long timeSinceLastChange = currentTime - lastLedChangeTime;
+    
+    if (ledState && timeSinceLastChange >= 3000) {
+        // Been on for 1500ms, turn off
+        turnBlueLedOff();
+        ledState = false;
+        lastLedChangeTime = currentTime;
+    } else if (!ledState && timeSinceLastChange >= 200) {
+        // Been off for 500ms, turn on
+        turnBlueLedOn();
+        ledState = true;
+        lastLedChangeTime = currentTime;
+    }
+    
     handleReturningNo2x4Sequence(); 
 }
 
@@ -99,8 +119,11 @@ void onEnterReturningNo2x4State() {
     // Cut motor already started in CUTTING state
     configureFeedMotorForNormalOperation();
 
+    // Initialize LED blinking pattern
     turnBlueLedOn();
     turnYellowLedOff();
+    lastLedChangeTime = millis();
+    ledState = true;
     
     // Initialize step tracking
     returningNo2x4Step = 0;

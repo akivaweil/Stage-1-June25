@@ -38,7 +38,7 @@ void updateWoodPresentLed() {
     if (woodPresentSensor) {
         bool woodPresent = (woodPresentSensor->read() == LOW);
         if (woodPresent) {
-            turnYellowLedOn();
+            turnOnlyYellowLedOn();
         } else {
             //! Gentle blinking pattern using config constants
             static unsigned long lastLedChangeTime = 0;
@@ -54,12 +54,12 @@ void updateWoodPresentLed() {
                 lastLedChangeTime = currentTime;
             } else if (!ledState && timeSinceLastChange >= LED_BLINK_OFF_DURATION_MS) {
                 // Been off for configured duration, turn on
-                turnBlueLedOn();
+                turnOnlyBlueLedOn();
                 ledState = true;
                 lastLedChangeTime = currentTime;
             } else if (ledState && lastLedChangeTime == 0) {
                 // Initialize on first call
-                turnBlueLedOn();
+                turnOnlyBlueLedOn();
                 lastLedChangeTime = currentTime;
             }
         }
@@ -288,10 +288,10 @@ void handleCuttingStep2() {
         
         //! Update LED before state transition for visual feedback
         if (no2x4Detected) {
-            turnBlueLedOn();
+            turnOnlyBlueLedOn();
             turnYellowLedOff();
         } else {
-            turnYellowLedOn();
+            turnOnlyYellowLedOn();
             turnBlueLedOff();
         }
         
@@ -311,8 +311,8 @@ void handleHomePositionError() {
     if (millis() - lastErrorBlinkTime > 100) { 
         errorBlinkState = !errorBlinkState;
         setErrorBlinkState(errorBlinkState);
-        if(errorBlinkState) turnRedLedOn(); else turnRedLedOff();
-        if(!errorBlinkState) turnYellowLedOn(); else turnYellowLedOff();
+        if(errorBlinkState) turnOnlyRedLedOn(); else turnRedLedOff();
+        if(!errorBlinkState) turnOnlyYellowLedOn(); else turnYellowLedOff();
         setLastErrorBlinkTime(millis());
     }
     

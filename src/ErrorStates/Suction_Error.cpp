@@ -4,7 +4,7 @@
 #include <Bounce2.h>
 
 // External references to functions from main.cpp (LED functions only)
-extern void turnRedLedOn();
+extern void turnOnlyRedLedOn();
 extern void turnRedLedOff();
 extern void turnYellowLedOff();
 extern void turnGreenLedOff();
@@ -46,7 +46,7 @@ void handleSuctionErrorState() {
     if (millis() - lastSuctionErrorBlinkTime >= SUCTION_ERROR_BLINK_INTERVAL) {
         lastSuctionErrorBlinkTime = millis();
         suctionErrorBlinkState = !suctionErrorBlinkState;
-        if(suctionErrorBlinkState) turnRedLedOn(); else turnRedLedOff();
+        if(suctionErrorBlinkState) turnOnlyRedLedOn(); else turnRedLedOff();
     }
     
     // Step 3: Ensure other LEDs are off

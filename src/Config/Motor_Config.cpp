@@ -77,7 +77,7 @@ unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;
 //* ************************ [💡] LED BLINKING *****************************
 //* ************************************************************************
 unsigned long LED_BLINK_ON_DURATION_MS = 3000;  // LED on duration for no-wood indication
-unsigned long LED_BLINK_OFF_DURATION_MS = 200; // LED off duration for no-wood indication
+unsigned long LED_BLINK_OFF_DURATION_MS = 100; // LED off duration for no-wood indication
 
 //* ************************************************************************
 //* ************************ [📐] PRE-CALCULATED STEPS *********************

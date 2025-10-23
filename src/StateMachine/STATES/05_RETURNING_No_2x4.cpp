@@ -101,7 +101,7 @@ void executeReturningNo2x4State() {
             lastLedChangeTime = currentTime;
         } else if (!ledState && timeSinceLastChange >= LED_BLINK_OFF_DURATION_MS) {
             // Been off for configured duration, turn on
-            turnBlueLedOn();
+            turnOnlyBlueLedOn();
             ledState = true;
             lastLedChangeTime = currentTime;
         }

@@ -136,7 +136,7 @@ void setup() {
   extend2x4SecureClamp();
   retractRotationClamp();
   allLedsOff();
-  turnBlueLedOn();
+  turnOnlyBlueLedOn();
   
   //! Configure switch debouncing
   cutHomingSwitch.attach(CUT_MOTOR_HOME_SWITCH);

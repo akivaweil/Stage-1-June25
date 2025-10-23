@@ -64,12 +64,12 @@ void executeIdleState() {
             idleLastLedChangeTime = currentTime;
         } else if (!idleLedState && timeSinceLastChange >= LED_BLINK_OFF_DURATION_MS) {
             // Been off for configured duration, turn on
-            turnBlueLedOn();
+            turnOnlyBlueLedOn();
             idleLedState = true;
             idleLastLedChangeTime = currentTime;
         } else if (idleLedState && idleLastLedChangeTime == 0) {
             // Initialize on first call
-            turnBlueLedOn();
+            turnOnlyBlueLedOn();
             idleLastLedChangeTime = currentTime;
         }
     }
@@ -103,7 +103,7 @@ void onEnterIdleState() {
         // Coming from no2x4 with no wood - keep secure clamp extended
         // Don't retract the secure clamp, it should stay extended
         // Initialize LED blinking pattern
-        turnBlueLedOn();
+        turnOnlyBlueLedOn();
         idleLastLedChangeTime = millis();
         idleLedState = true;
     } else {
@@ -151,7 +151,7 @@ void checkFirstCutConditions() {
 void checkStartConditions() {
     // Only turn on green LED if not coming from no-wood situation
     if (!getComingFromNoWoodWithSensorsClear()) {
-        turnGreenLedOn();
+        turnOnlyGreenLedOn();
     }
     
     // Sync continuous mode flag with actual switch state to prevent race conditions
@@ -183,7 +183,7 @@ void checkStartConditions() {
         }
         
         turnGreenLedOff();
-        turnYellowLedOn();
+        turnOnlyYellowLedOn();
         turnBlueLedOff();
         
         // Reset the no-wood flag when starting a new cutting cycle

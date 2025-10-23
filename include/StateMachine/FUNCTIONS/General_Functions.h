@@ -90,13 +90,13 @@ void retractRotationClamp();
 //* ************************************************************************
 //* *************************** LED FUNCTIONS ******************************
 //* ************************************************************************
-void turnRedLedOn();
+void turnOnlyRedLedOn();
 void turnRedLedOff();
-void turnYellowLedOn();
+void turnOnlyYellowLedOn();
 void turnYellowLedOff();
-void turnGreenLedOn();
+void turnOnlyGreenLedOn();
 void turnGreenLedOff();
-void turnBlueLedOn();
+void turnOnlyBlueLedOn();
 void turnBlueLedOff();
 void allLedsOff();
 void handleHomingLedBlink();

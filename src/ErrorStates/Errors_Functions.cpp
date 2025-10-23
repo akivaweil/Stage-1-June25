@@ -13,8 +13,8 @@
 void handleErrorLedBlink() {
     if (millis() - lastErrorBlinkTime > 250) {
         errorBlinkState = !errorBlinkState;
-        if(errorBlinkState) turnRedLedOn(); else turnRedLedOff();
-        if(!errorBlinkState) turnYellowLedOn(); else turnYellowLedOff();
+        if(errorBlinkState) turnOnlyRedLedOn(); else turnRedLedOff();
+        if(!errorBlinkState) turnOnlyYellowLedOn(); else turnYellowLedOff();
         lastErrorBlinkTime = millis();
     }
 }
@@ -23,7 +23,7 @@ void handleSuctionErrorLedBlink(unsigned long& lastBlinkTimeRef, bool& blinkStat
     if (millis() - lastBlinkTimeRef >= 1500) {
         lastBlinkTimeRef = millis();
         blinkStateRef = !blinkStateRef;
-        if(blinkStateRef) turnRedLedOn(); else turnRedLedOff();
+        if(blinkStateRef) turnOnlyRedLedOn(); else turnRedLedOff();
     }
     turnYellowLedOff();
     turnGreenLedOff();
@@ -361,7 +361,7 @@ void executeCutMotorErrorStateTransition(
     }
     
     //! SET ERROR INDICATION LEDS - Visual status indicators
-    turnRedLedOn();      // Red = Error condition
+    turnOnlyRedLedOn();      // Red = Error condition
     turnYellowLedOff();  // Yellow off = Operation stopped
     //serial.println("Error LEDs activated (Red ON, Yellow OFF).");
     

@@ -59,7 +59,7 @@ void executeHomingState() {
         bool blinkState = getBlinkState();
         blinkState = !blinkState;
         setBlinkState(blinkState);
-        if (blinkState) turnBlueLedOn(); else turnBlueLedOff();
+        if (blinkState) turnOnlyBlueLedOn(); else turnBlueLedOff();
         blinkTimer = millis();
     }
 
@@ -110,7 +110,7 @@ void executeHomingState() {
         //serial.println("isHomed flag set to true.");
 
         turnBlueLedOff();
-        turnGreenLedOn();
+        turnOnlyGreenLedOn();
         //serial.println("LEDs updated: Blue OFF, Green ON.");
 
         // SAFETY CHANGE: Do NOT automatically home the rotation servo on startup

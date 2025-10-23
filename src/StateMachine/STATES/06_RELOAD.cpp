@@ -35,7 +35,7 @@ void onEnterReloadState() {
     // Ensure clamps are properly positioned for reload mode
     retractFeedClamp();
     retract2x4SecureClamp();
-    turnBlueLedOn();
+    turnOnlyBlueLedOn();
 
     // Reset any state flags that might be set
     setComingFromNoWoodWithSensorsClear(false);
@@ -57,7 +57,7 @@ void handleReloadModeLogic() {
         setIsReloadMode(true);
         retractFeedClamp(); // Retract feed clamp
         retract2x4SecureClamp(); // Retract 2x4 secure clamp in reload mode only
-        turnBlueLedOn();     // Turn on blue LED for reload mode
+        turnOnlyBlueLedOn();     // Turn on blue LED for reload mode
     } else if (!reloadSwitchOn && isReloadMode) {
         // Exit reload mode
         setIsReloadMode(false);

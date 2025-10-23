@@ -82,10 +82,14 @@ void executeReturningNo2x4State() {
     
     //! Turn all LEDs on for first 500ms when entering state
     if (timeSinceEntry < 500) {
-        turnRedLedOn();
-        turnYellowLedOn();
-        turnGreenLedOn();
-        turnBlueLedOn();
+        extern const int STATUS_LED_RED;
+        extern const int STATUS_LED_YELLOW;
+        extern const int STATUS_LED_GREEN;
+        extern const int STATUS_LED_BLUE;
+        digitalWrite(STATUS_LED_RED, HIGH);
+        digitalWrite(STATUS_LED_YELLOW, HIGH);
+        digitalWrite(STATUS_LED_GREEN, HIGH);
+        digitalWrite(STATUS_LED_BLUE, HIGH);
     } else {
         //! Gentle blinking pattern using config constants after initial flash
         unsigned long timeSinceLastChange = currentTime - lastLedChangeTime;

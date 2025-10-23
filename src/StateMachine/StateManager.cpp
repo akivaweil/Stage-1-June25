@@ -459,6 +459,8 @@ void handleCommonOperations() {
     // Handle start switch safety check
     if (!startSwitchSafe && startCycleSwitch.fell()) {
         startSwitchSafe = true;
+        // Reset no-wood flag when switch falls to allow cycle start
+        comingFromNoWoodWithSensorsClear = false;
     }
     
     // Handle error acknowledgment separately

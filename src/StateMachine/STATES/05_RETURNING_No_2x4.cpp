@@ -7,8 +7,6 @@
 #include "WebSocketDashboard/websocket_dashboard.h"
 
 // State-specific constants
-const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
-const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
 const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 returning sequence
 const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
 const float FEED_MOTOR_HOME_POSITION = 0.8; // Home position
@@ -20,12 +18,11 @@ enum ReturningNo2x4Step {
     STEP_WAIT_CUT_MOTOR_EXTEND_FEED_CLAMP = 1,
     STEP_MOVE_FEED_MOTOR_TO_2_INCHES = 2,
     STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP = 3,
-    STEP_ATTENTION_SEQUENCE = 4,
-    STEP_MOVE_FEED_MOTOR_TO_HOME = 5,
-    STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP = 6,
-    STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION = 7,
-    STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP = 8,
-    STEP_FINAL_COMPLETION = 9
+    STEP_MOVE_FEED_MOTOR_TO_HOME = 4,
+    STEP_WAIT_FEED_MOTOR_HOME_RETRACT_CLAMP = 5,
+    STEP_MOVE_FEED_MOTOR_TO_FINAL_POSITION = 6,
+    STEP_WAIT_FEED_MOTOR_FINAL_EXTEND_CLAMP = 7,
+    STEP_FINAL_COMPLETION = 8
 };
 
 //* ************************************************************************
@@ -34,12 +31,7 @@ enum ReturningNo2x4Step {
 // Handles the RETURNING_NO_2x4 cutting sequence when no wood is detected.
 // This state manages the multi-step process for handling material that doesn't trigger the wood sensor.
 // 
-// REFACTORED: 2025-01-XX - Major refactoring to reduce if-else complexity:
-// - Replaced 9 consecutive if-else statements in attention sequence with a loop
-// - Added step enumeration for better readability and maintainability
-// - Extracted common patterns into reusable helper functions
-// - Consolidated error handling into dedicated functions
-// - Improved code organization and reduced duplication
+// The blinking blue LED now handles attention-getting instead of mechanical movements
 
 //! ************************************************************************
 //! STEP 1: INITIALIZE SEQUENCE - MOVE CUT MOTOR HOME AND RETRACT 2X4 CLAMP
@@ -58,23 +50,19 @@ enum ReturningNo2x4Step {
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 5: ATTENTION GETTING SEQUENCE - INTENSE FEED CLAMP EXTENSION/RETRACTION (9 MOVEMENTS)
+//! STEP 5: MOVE FEED MOTOR TO 3.4 (POSITIVE DIRECTION - RETRACT CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 6: MOVE FEED MOTOR TO 3.4 (POSITIVE DIRECTION - RETRACT CLAMP)
+//! STEP 6: WAIT FOR FEED MOTOR AT 3.4 AND RETRACT FEED CLAMP
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 7: WAIT FOR FEED MOTOR AT 3.4 AND RETRACT FEED CLAMP
+//! STEP 7: MOVE FEED MOTOR TO -1 AGAIN (NEGATIVE DIRECTION - EXTEND CLAMP)
 //! ************************************************************************
 
 //! ************************************************************************
-//! STEP 8: MOVE FEED MOTOR TO -1 AGAIN (NEGATIVE DIRECTION - EXTEND CLAMP)
-//! ************************************************************************
-
-//! ************************************************************************
-//! STEP 9: WAIT FOR FEED MOTOR AT -1 AND EXTEND FEED CLAMP
+//! STEP 8: WAIT FOR FEED MOTOR AT -1 AND EXTEND FEED CLAMP
 //! ************************************************************************
 
 // Static variables for returning no 2x4 state tracking
@@ -85,23 +73,34 @@ static bool waitingForCylinder = false;
 // LED blinking variables for gentle blue blink pattern
 static unsigned long lastLedChangeTime = 0;
 static bool ledState = true; // Start with LED on
+static unsigned long stateEntryTime = 0; // Track when state was entered
 
 
 void executeReturningNo2x4State() {
-    //! Gentle blinking pattern using config constants
     unsigned long currentTime = millis();
-    unsigned long timeSinceLastChange = currentTime - lastLedChangeTime;
+    unsigned long timeSinceEntry = currentTime - stateEntryTime;
     
-    if (ledState && timeSinceLastChange >= LED_BLINK_ON_DURATION_MS) {
-        // Been on for configured duration, turn off
-        turnBlueLedOff();
-        ledState = false;
-        lastLedChangeTime = currentTime;
-    } else if (!ledState && timeSinceLastChange >= LED_BLINK_OFF_DURATION_MS) {
-        // Been off for configured duration, turn on
+    //! Turn all LEDs on for first 500ms when entering state
+    if (timeSinceEntry < 500) {
+        turnRedLedOn();
+        turnYellowLedOn();
+        turnGreenLedOn();
         turnBlueLedOn();
-        ledState = true;
-        lastLedChangeTime = currentTime;
+    } else {
+        //! Gentle blinking pattern using config constants after initial flash
+        unsigned long timeSinceLastChange = currentTime - lastLedChangeTime;
+        
+        if (ledState && timeSinceLastChange >= LED_BLINK_ON_DURATION_MS) {
+            // Been on for configured duration, turn off
+            turnBlueLedOff();
+            ledState = false;
+            lastLedChangeTime = currentTime;
+        } else if (!ledState && timeSinceLastChange >= LED_BLINK_OFF_DURATION_MS) {
+            // Been off for configured duration, turn on
+            turnBlueLedOn();
+            ledState = true;
+            lastLedChangeTime = currentTime;
+        }
     }
     
     handleReturningNo2x4Sequence(); 
@@ -120,9 +119,8 @@ void onEnterReturningNo2x4State() {
     // Cut motor already started in CUTTING state
     configureFeedMotorForNormalOperation();
 
-    // Initialize LED blinking pattern
-    turnBlueLedOn();
-    turnYellowLedOff();
+    // Initialize LED flash timing
+    stateEntryTime = millis();
     lastLedChangeTime = millis();
     ledState = true;
     
@@ -175,10 +173,6 @@ void handleReturningNo2x4Step(int step) {
             
         case STEP_WAIT_FEED_MOTOR_AT_2_INCHES_EXTEND_CLAMP: // Wait for feed motor at -1, ensure clamp extended
             handleWaitForFeedMotorAndExtendClamp();
-            break;
-            
-        case STEP_ATTENTION_SEQUENCE: // Attention-getting sequence: 9 movements total
-            handleAttentionSequence();
             break;
             
         case STEP_MOVE_FEED_MOTOR_TO_HOME: // Move feed motor to 3.4 (positive direction - retract clamp)
@@ -267,46 +261,7 @@ void handleWaitForFeedMotorAndExtendClamp() {
     if (feedMotor && !feedMotor->isRunning()) {
         extendFeedClamp();
         //serial.println("ReturningNo2x4: Feed clamp extended at -1");
-        returningNo2x4Step = STEP_ATTENTION_SEQUENCE; // Move to attention sequence
-    }
-}
-
-//* ************************************************************************
-//* ****************** ATTENTION SEQUENCE HANDLER **************************
-//* ************************************************************************
-// Handles the attention-getting sequence with 9 movements
-
-void handleAttentionSequence() {
-    static int attentionStep = 0;
-    static unsigned long attentionStartTime = 0;
-    
-    // Check if we need to wait for the delay
-    if (attentionStep > 0 && millis() - attentionStartTime < ATTENTION_SEQUENCE_DELAY_MS) {
-        return; // Still waiting
-    }
-    
-    // Execute the current movement
-    if (attentionStep < ATTENTION_SEQUENCE_MOVEMENTS) {
-        // Alternate between retract and extend, starting with retract
-        if (attentionStep % 2 == 0) {
-            retractFeedClamp();
-        } else {
-            extendFeedClamp();
-        }
-        
-        //serial.println("ReturningNo2x4: Attention sequence - " + 
-        //    (attentionStep % 2 == 0 ? "retracting" : "extending") + 
-        //    " feed clamp (" + String(attentionStep + 1) + "/" + String(ATTENTION_SEQUENCE_MOVEMENTS) + ")");
-        
-        attentionStep++;
-        attentionStartTime = millis();
-    } else {
-        // Sequence complete - ensure clamp is extended and move to next step
-        extendFeedClamp();
-        //serial.println("ReturningNo2x4: Attention sequence - final extension (" + String(ATTENTION_SEQUENCE_MOVEMENTS) + "/" + String(ATTENTION_SEQUENCE_MOVEMENTS) + ")");
-        
-        attentionStep = 0; // Reset for next time
-        returningNo2x4Step = STEP_MOVE_FEED_MOTOR_TO_HOME;
+        returningNo2x4Step = STEP_MOVE_FEED_MOTOR_TO_HOME; // Move directly to home step
     }
 }
 

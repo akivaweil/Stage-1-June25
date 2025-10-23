@@ -15,7 +15,6 @@ const int CONFIG_OFFSET = 0; // Configuration starts at beginning of extended EE
 //* ************************ TIMING CONSTANTS ******************************
 //* ************************************************************************
 // SENSOR_STABILIZATION_DELAY_MS moved to Motor_Config.cpp
-const unsigned long ATTENTION_SEQUENCE_DELAY_MS = 50; // Delay between feed clamp movements in attention sequence
 const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100; // Delay between clamp extending/retracting and feed motor movement
 const unsigned long FEED_CLAMP_DELAY_MS = 300; // Delay after extending feed clamp and retracting secure clamp
 const unsigned long CYLINDER_ACTION_DELAY_MS = 150; // Delay for cylinder actions
@@ -31,7 +30,6 @@ const float DECELERATION_DISTANCE_INCHES = 0.2; // Maximum 0.2 inch deceleration
 //* ************************************************************************
 //* ************************ STATE OPERATION CONSTANTS ********************
 //* ************************************************************************
-const int ATTENTION_SEQUENCE_MOVEMENTS = 9; // Total number of movements in attention sequence
 const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 returning sequence
 const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
 const float FEED_MOTOR_HOME_POSITION = 1.0; // Home position

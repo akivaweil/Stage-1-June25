@@ -19,7 +19,7 @@ float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2400;
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
 
 //* ************************************************************************

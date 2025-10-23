@@ -217,8 +217,8 @@ void loop() {
   // Feed watchdog timer
   esp_task_wdt_reset();
   
-  // Only handle OTA requests when in IDLE state for safety
-  if (currentState == IDLE) {
+  // Handle OTA requests when in IDLE or HOMING state
+  if (currentState == IDLE || currentState == HOMING) {
     handleOTA();
   }
 

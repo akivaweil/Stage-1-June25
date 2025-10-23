@@ -209,8 +209,8 @@ void setup() {
 }
 
 void loop() {
-  // Only handle OTA requests when in IDLE state for safety
-  if (currentState == IDLE) {
+  // Only handle OTA requests when in IDLE or HOMING state for safety
+  if (currentState == IDLE || currentState == HOMING) {
     handleOTA();
   }
 

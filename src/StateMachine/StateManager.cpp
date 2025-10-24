@@ -446,15 +446,31 @@ void handleCommonOperations() {
                 waitingForSuctionDelay = true;
                 String message = "Transfer Arm suction grabbed wood - waiting 3 seconds before returning servo to home.";
                 addSerialLog(message);
-            } else if (millis() - suctionHighDetectedTime >= 3000) {
-                // 3 seconds have passed - return servo to home
-                String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
-                addSerialLog(message);
-                handleRotationServoReturn();
-                rotationServoIsActiveAndTiming = false;
-                rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
-                waitingForSuctionDelay = false; // Reset for next cycle
-                cooldownEntered = false; // Reset for next cycle
+            } else {
+                // Check every second if sensor went LOW and reset timer if it did
+                static unsigned long lastCheckTime = 0;
+                if (millis() - lastCheckTime >= 1000) {
+                    suctionSensorBounce.update();
+                    if (suctionSensorBounce.read() == LOW) {
+                        // Sensor went LOW during wait - reset timer
+                        suctionHighDetectedTime = millis();
+                        String message = "Suction sensor went LOW during wait - timer reset.";
+                        addSerialLog(message);
+                    }
+                    lastCheckTime = millis();
+                }
+                
+                // Check if 3 seconds have passed
+                if (millis() - suctionHighDetectedTime >= 3000) {
+                    // 3 seconds have passed continuously - return servo to home
+                    String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
+                    addSerialLog(message);
+                    handleRotationServoReturn();
+                    rotationServoIsActiveAndTiming = false;
+                    rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+                    waitingForSuctionDelay = false; // Reset for next cycle
+                    cooldownEntered = false; // Reset for next cycle
+                }
             }
         } else if (suctionSensorBounce.read() == LOW) {
             // Suction sensor still reads LOW - Transfer Arm suction not active yet, continue waiting

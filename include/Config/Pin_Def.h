@@ -1,5 +1,5 @@
-#ifndef PIN_DEFINITIONS_H
-#define PIN_DEFINITIONS_H
+#ifndef PIN_DEF_H
+#define PIN_DEF_H
 
 //* ************************************************************************
 //* ************************ PIN DEFINITIONS *****************************
@@ -62,4 +62,5 @@ extern const int STATUS_LED_YELLOW;   // Warning/caution indication
 extern const int STATUS_LED_GREEN;    // Ready/operation OK indication
 extern const int STATUS_LED_BLUE;     // Process active indication
 
-#endif // PIN_DEFINITIONS_H 
+#endif // PIN_DEF_H
+

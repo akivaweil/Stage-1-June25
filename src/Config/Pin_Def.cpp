@@ -1,4 +1,4 @@
-#include "Config/Pins_Definitions.h"
+#include "Config/Pin_Def.h"
 
 //* ************************************************************************
 //* ************************ PIN DEFINITIONS *****************************
@@ -59,4 +59,5 @@ const int TRANSFER_ARM_SIGNAL_PIN = 8;  // Signal to Transfer Arm system
 const int STATUS_LED_RED = 47;      // Error/fault indication
 const int STATUS_LED_YELLOW = 21;   // Warning/caution indication
 const int STATUS_LED_GREEN = 37;    // Ready/operation OK indication
-const int STATUS_LED_BLUE = 19;     // Process active indication 
+const int STATUS_LED_BLUE = 19;     // Process active indication
+

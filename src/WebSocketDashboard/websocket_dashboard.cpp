@@ -3,7 +3,7 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
-#include "Config/Pins_Definitions.h"
+#include "Config/Pin_Def.h"
 #include "Config/Motor_Config.h"
 #include "Config/config.h"
 #include <ArduinoJson.h>

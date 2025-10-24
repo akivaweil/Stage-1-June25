@@ -14,9 +14,9 @@ extern void turnBlueLedOff();
 extern void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout);
 extern Bounce cutHomingSwitch;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💨 SUCTION ERROR                                                      ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
+//║ 💨 SUCTION ERROR                                          ║
+//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 // Handles wood suction error detection and recovery.
 // This state is entered from CUTTING (Step 1) if the WOOD_SUCTION_CONFIRM_SENSOR indicates an error (LOW = no suction detected).
 // Step 1: Automatically home the cut motor upon entering this state for safety.

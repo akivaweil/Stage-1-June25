@@ -11,9 +11,9 @@ extern void turnYellowLedOff();
 extern void stopCutMotor();
 extern void stopFeedMotor();
 
-//* ************************************************************************
-//* *********************** CUT MOTOR ERROR ********************************
-//* ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ ⚠️ CUT MOTOR ERROR                                                     ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Handles cut motor specific error states.
 // Step 1: Blink red and yellow LEDs to indicate a cut motor error at standard rate.
 // Step 2: Ensure cut and feed motors are stopped.

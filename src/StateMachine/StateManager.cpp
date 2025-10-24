@@ -424,19 +424,41 @@ void handleCommonOperations() {
     if (rotationServoIsActiveAndTiming && millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS) {
         extern const int WOOD_SUCTION_CONFIRM_SENSOR; // This is in main.cpp
         
+        static unsigned long suctionHighDetectedTime = 0;
+        static bool waitingForSuctionDelay = false;
+        static bool cooldownEntered = false;
+        
+        // Reset waiting flags when entering cooldown period for first time
+        if (!cooldownEntered) {
+            suctionHighDetectedTime = 0;
+            waitingForSuctionDelay = false;
+            cooldownEntered = true;
+        }
+        
         // Check if suction sensor reads HIGH (Transfer Arm suction grabbed wood)
         // Sensor only works when servo is at active position
         // HIGH = Transfer Arm suction grabbed wood (active), LOW = Transfer Arm suction not active
         // Using debounced reading with 15ms debounce time
         if (suctionSensorBounce.read() == HIGH && !rotationServoReturnCompleted) {
-            // Transfer Arm suction grabbed wood - return servo to home immediately
-            String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home immediately.";
-            addSerialLog(message);
-            handleRotationServoReturn();
-            rotationServoIsActiveAndTiming = false;
-            rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+            if (!waitingForSuctionDelay) {
+                // First time detecting HIGH - start 3 second timer
+                suctionHighDetectedTime = millis();
+                waitingForSuctionDelay = true;
+                String message = "Transfer Arm suction grabbed wood - waiting 3 seconds before returning servo to home.";
+                addSerialLog(message);
+            } else if (millis() - suctionHighDetectedTime >= 3000) {
+                // 3 seconds have passed - return servo to home
+                String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
+                addSerialLog(message);
+                handleRotationServoReturn();
+                rotationServoIsActiveAndTiming = false;
+                rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
+                waitingForSuctionDelay = false; // Reset for next cycle
+                cooldownEntered = false; // Reset for next cycle
+            }
         } else if (suctionSensorBounce.read() == LOW) {
             // Suction sensor still reads LOW - Transfer Arm suction not active yet, continue waiting
+            waitingForSuctionDelay = false; // Reset if sensor goes LOW
             static unsigned long suctionWaitDebugTime = 0;
             if (millis() - suctionWaitDebugTime >= 500) {
                 String message = "Waiting for Transfer Arm suction to grab wood - sensor still LOW after " + String(millis() - rotationServoActiveStartTime) + "ms";

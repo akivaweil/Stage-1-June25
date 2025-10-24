@@ -57,6 +57,15 @@ void handleSuctionErrorState() {
             // 3 seconds have passed since sensor cleared - now home the motor
             homeCutMotorBlocking(cutHomingSwitch, 10000); // 10 second timeout
             hasHomedCutMotor = true;
+            
+            // Reset flags and transition back to CUTTING state
+            hasHomedCutMotor = false;
+            waitingForSensorClear = true;
+            sensorCleared = false;
+            sensorClearedTime = 0;
+            
+            turnRedLedOff(); // Turn off error LED
+            changeState(CUTTING); // Return to cutting state
         }
     }
 

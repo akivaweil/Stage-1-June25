@@ -8,9 +8,9 @@
 #include "../../../include/StateMachine/STATES/States_Config.h"
 #include "../../../include/WebSocketDashboard/websocket_dashboard.h"
 
-//* ************************************************************************
-//* ******************** RETURNING YES 2X4 STATE **************************
-//* ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ ✅ RETURNING YES 2X4 STATE                                          ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Handles the simultaneous return sequence when wood sensor detects lumber.
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
 // Includes final feed wood movement to configured distance before transitioning to next cycle or IDLE.
@@ -32,9 +32,9 @@ void executeReturningYes2x4State() {
 }
 
 void onEnterReturningYes2x4State() {
-    //! ************************************************************************
-    //! STEP 1: START CUT MOTOR RETURN (SECURE CLAMP REMAINS EXTENDED)
-    //! ************************************************************************
+    //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+    //║ STEP 1: START CUT MOTOR RETURN (SECURE CLAMP REMAINS EXTENDED)     ║
+    //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
     
     // Increment consecutive yeswood counter
     incrementConsecutiveYeswoodCount();
@@ -73,9 +73,9 @@ void handleReturningYes2x4Sequence() {
             
         case 1: // Wait for feed motor to complete return movement (no homing)
             if (feedMotor && !feedMotor->isRunning()) {
-                //! ************************************************************************
-                //! STEP 2: FEED MOTOR RETURN COMPLETE - RETRACT SECURE CLAMP AND EXTEND FEED CLAMP
-                //! ************************************************************************
+                //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+                //║ STEP 2: FEED MOTOR RETURN COMPLETE - RETRACT SECURE CLAMP AND EXTEND FEED CLAMP ║
+                //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
                 retract2x4SecureClamp();
                 extendFeedClamp();
                 returningYes2x4SubStep = 2;
@@ -85,9 +85,9 @@ void handleReturningYes2x4Sequence() {
         case 2: // Wait for cut motor completion
             // Wait for cut motor to complete return home, then execute homing sequence
             if (cutMotor && !cutMotor->isRunning()) {
-                //! ************************************************************************
-                //! STEP 3: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE
-                //! ************************************************************************
+                //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+                //║ STEP 3: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE ║
+                //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
                 cutMotorInReturningYes2x4Return = false;
                 
                 bool sensorDetectedHome = false;

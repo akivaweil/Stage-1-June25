@@ -3,20 +3,20 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
-//* ************************************************************************
-//* ************************** RELOAD STATE ********************************
-//* ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ 🔄 RELOAD STATE                                                      ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Handles reload mode operations when the reload switch is active.
 // Provides safe conditions for loading new wood pieces into the system.
 // Maintains clamps in retracted position for safe wood loading.
 
-//! ************************************************************************
-//! STEP 1: MAINTAIN BLUE LED TO INDICATE RELOAD MODE IS ACTIVE
-//! ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ STEP 1: MAINTAIN BLUE LED TO INDICATE RELOAD MODE IS ACTIVE         ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
-//! ************************************************************************
-//! STEP 2: MONITOR RELOAD SWITCH STATE FOR EXIT CONDITION
-//! ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ STEP 2: MONITOR RELOAD SWITCH STATE FOR EXIT CONDITION              ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // When reload switch is turned OFF, exit reload mode and return to IDLE
 
 void executeReloadState() {

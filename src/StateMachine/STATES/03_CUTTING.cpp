@@ -4,9 +4,9 @@
 #include "StateMachine/STATES/States_Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
-//* ************************************************************************
-//* ************************** CUTTING STATE *******************************
-//* ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ ⚔️ CUTTING STATE                                                     ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Handles the wood cutting operation with a clean 3-step process:
 // Step 0: Initialize cutting sequence - extend clamps and configure motors
 // Step 1: Check suction sensor and start cut motor movement
@@ -15,9 +15,9 @@
 // After cutting completion, transitions to appropriate RETURNING state based on wood detection.
 // All post-cutting logic (return sequences, homing, continuous mode) is handled by RETURNING states.
 
-//* ************************************************************************
-//* ************************ STATE VARIABLES ********************************
-//* ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ 📊 STATE VARIABLES                                                   ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 static int cuttingStep = 0;
 static unsigned long stepStartTime = 0;
 static bool homePositionErrorDetected = false;
@@ -28,9 +28,9 @@ static unsigned long servoHomeWaitStartTime = 0;
 static bool waitingForServoHome = false;
 static unsigned long cuttingLastDebugTime = 0;
 
-//* ************************************************************************
-//* ************************ HELPER FUNCTIONS ******************************
-//* ************************************************************************
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ 🔧 HELPER FUNCTIONS                                                  ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 // Updates LED based on wood present sensor reading
 void updateWoodPresentLed() {

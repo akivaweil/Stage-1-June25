@@ -21,10 +21,6 @@
 static int returningYes2x4SubStep = 0;
 static int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
 
-// Cut motor homing recovery timing
-static unsigned long cutMotorHomingAttemptStartTime = 0;
-static bool cutMotorHomingAttemptInProgress = false;
-static float cutMotorIncrementalMoveTotalInches = 0.0;
 
 // Feed wood movement sequence tracking
 static int feedMotorHomingSubStep = 0;
@@ -53,9 +49,6 @@ void onEnterReturningYes2x4State() {
     // Initialize step tracking
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
-    cutMotorHomingAttemptStartTime = 0;
-    cutMotorHomingAttemptInProgress = false;
-    cutMotorIncrementalMoveTotalInches = 0.0;
     feedMotorHomingSubStep = 0;
 }
 
@@ -91,7 +84,7 @@ void handleReturningYes2x4Sequence() {
 
         case 2: // Wait for cut motor completion
             // Wait for cut motor to complete return home, then execute homing sequence
-            if (cutMotor && !cutMotor->isRunning() && !cutMotorHomingAttemptInProgress) {
+            if (cutMotor && !cutMotor->isRunning()) {
                 //! ************************************************************************
                 //! STEP 3: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE
                 //! ************************************************************************
@@ -116,36 +109,22 @@ void handleReturningYes2x4Sequence() {
                 //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED WITH FEED WOOD MOVEMENT
                 //! ************************************************************************
                     if (cutMotor) cutMotor->setCurrentPosition(0);
-                    cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
                     
                     configureFeedMotorForNormalOperation();
                     moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                     returningYes2x4SubStep = 3;
                 } else {
-                    // Home switch not detected - try incremental move recovery
-                    
-                    if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
-                        Serial.print("Attempting incremental move. Total moved: ");
-                        Serial.print(cutMotorIncrementalMoveTotalInches);
-                        Serial.println(" inches.");
-                        if (cutMotor) {
-                            cutMotor->move(-CUT_MOTOR_INCREMENTAL_MOVE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
-                            cutMotorIncrementalMoveTotalInches += CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
-                        }
-                        // Stay in same step to re-check sensor after move
-                    } else {
-                        // Max incremental moves exceeded - transition to error
-                        Serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
-                        onErrorOccurred("Cut motor home switch not detected after max moves");
-                        if (cutMotor) cutMotor->forceStop();
-                        if (feedMotor) feedMotor->forceStop();
-                        showRedLed();
-                        turnYellowLedOff();
-                        changeState(ERROR);
-                        setErrorStartTime(millis());
-                        resetReturningYes2x4Steps();
-                        return;
-                    }
+                    // Home switch not detected - transition to error
+                    Serial.println("ERROR: Cut motor home switch not detected!");
+                    onErrorOccurred("Cut motor home switch not detected");
+                    if (cutMotor) cutMotor->forceStop();
+                    if (feedMotor) feedMotor->forceStop();
+                    showRedLed();
+                    turnYellowLedOff();
+                    changeState(ERROR);
+                    setErrorStartTime(millis());
+                    resetReturningYes2x4Steps();
+                    return;
                 }
             }
             break;
@@ -275,8 +254,5 @@ void handleFeedWoodMovement() {
 void resetReturningYes2x4Steps() {
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
-    cutMotorHomingAttemptStartTime = 0;
-    cutMotorHomingAttemptInProgress = false;
-    cutMotorIncrementalMoveTotalInches = 0.0;
     feedMotorHomingSubStep = 0;
 } 

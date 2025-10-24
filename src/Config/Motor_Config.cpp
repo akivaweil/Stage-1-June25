@@ -7,20 +7,12 @@
 //* ************************************************************************
 //* ************************ [⚙️] ROTATION SERVO **************************
 //* ************************************************************************
-int ROTATION_SERVO_HOME_POSITION = 27;
-int ROTATION_SERVO_ACTIVE_POSITION = 120;
-
-unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;
-unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
-unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;
-
-float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
+// (Servo parameters moved to config.cpp)
 
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;
-float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
+// (Rotation clamp parameters moved to config.cpp)
 
 //* ************************************************************************
 //* ************************ [🔄] CUT MOTOR ********************************
@@ -39,11 +31,6 @@ float CUT_MOTOR_HOMING_SPEED = 1500;
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
 float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
 float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.5;
-
-// Timing
-unsigned long CUT_HOME_TIMEOUT = 5000;
-unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;
-unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;
 
 //* ************************************************************************
 //* ************************ [⚡] FEED MOTOR *******************************
@@ -65,13 +52,12 @@ float FEED_MOTOR_RETURN_DISTANCE = 0.0;
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************
 //* ************************************************************************
-unsigned long TA_SIGNAL_DURATION = 1000;
-float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
+// (Transfer arm parameters moved to config.cpp)
 
 //* ************************************************************************
 //* ************************ [⏱️] GENERAL TIMING ***************************
 //* ************************************************************************
-unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;
+// (General timing parameters moved to config.cpp)
 
 //* ************************************************************************
 //* ************************ [📐] PRE-CALCULATED STEPS *********************

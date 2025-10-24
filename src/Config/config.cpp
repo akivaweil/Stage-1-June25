@@ -14,11 +14,40 @@ const int CONFIG_OFFSET = 0; // Configuration starts at beginning of extended EE
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS ******************************
 //* ************************************************************************
-// SENSOR_STABILIZATION_DELAY_MS moved to Motor_Config.cpp
+unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;
 const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100; // Delay between clamp extending/retracting and feed motor movement
 const unsigned long FEED_CLAMP_DELAY_MS = 300; // Delay after extending feed clamp and retracting secure clamp
 const unsigned long CYLINDER_ACTION_DELAY_MS = 150; // Delay for cylinder actions
 const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30; // 30ms sensor stabilization delay
+
+//* ************************************************************************
+//* ************************ [⚙️] ROTATION SERVO **************************
+//* ************************************************************************
+int ROTATION_SERVO_HOME_POSITION = 27;
+int ROTATION_SERVO_ACTIVE_POSITION = 120;
+unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;
+unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
+unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;
+float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;
+
+//* ************************************************************************
+//* ************************ [🔧] ROTATION CLAMP **************************
+//* ************************************************************************
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;
+float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;
+
+//* ************************************************************************
+//* ************************ [🔄] CUT MOTOR TIMING *************************
+//* ************************************************************************
+unsigned long CUT_HOME_TIMEOUT = 5000;
+unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;
+unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;
+
+//* ************************************************************************
+//* ************************ [🤖] TRANSFER ARM *****************************
+//* ************************************************************************
+unsigned long TA_SIGNAL_DURATION = 1000;
+float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;
 
 //* ************************************************************************
 //* ************************ ERROR RECOVERY CONSTANTS *********************

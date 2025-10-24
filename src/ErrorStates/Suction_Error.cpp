@@ -33,13 +33,31 @@ void handleSuctionErrorState() {
     static bool hasHomedCutMotor = false;
     static unsigned long lastSuctionErrorBlinkTime = 0;
     static bool suctionErrorBlinkState = false;
+    static bool waitingForSensorClear = true;
+    static bool sensorCleared = false;
+    static unsigned long sensorClearedTime = 0;
+    static const unsigned long WAIT_AFTER_CLEAR_MS = 3000; // 3 second wait
 
-    // Step 1: Home cut motor immediately when entering this state (only once)
+    // Step 1: Wait for sensor to clear, then wait 3 seconds before homing cut motor
     if (!hasHomedCutMotor) {
-        //serial.println("SUCTION ERROR: Automatically homing cut motor for safety...");
-        homeCutMotorBlocking(cutHomingSwitch, 10000); // 10 second timeout
-        hasHomedCutMotor = true;
-        //serial.println("Cut motor homing complete. Now monitoring for user reset.");
+        Bounce* suctionSensor = getSuctionSensorBounce();
+        
+        if (waitingForSensorClear) {
+            // Update sensor and check if it has cleared (HIGH)
+            if (suctionSensor) {
+                suctionSensor->update();
+                if (suctionSensor->read() == HIGH) {
+                    // Sensor cleared - start 3 second timer
+                    sensorCleared = true;
+                    sensorClearedTime = millis();
+                    waitingForSensorClear = false;
+                }
+            }
+        } else if (sensorCleared && (millis() - sensorClearedTime >= WAIT_AFTER_CLEAR_MS)) {
+            // 3 seconds have passed since sensor cleared - now home the motor
+            homeCutMotorBlocking(cutHomingSwitch, 10000); // 10 second timeout
+            hasHomedCutMotor = true;
+        }
     }
 
     // Step 2: Blink STATUS_LED_RED using defined suction error timing interval
@@ -61,8 +79,11 @@ void handleSuctionErrorState() {
         
         setContinuousModeActive(false); // Ensure continuous mode is off
         
-        // Reset the homing flag for next time this state is entered
+        // Reset all flags for next time this state is entered
         hasHomedCutMotor = false;
+        waitingForSensorClear = true;
+        sensorCleared = false;
+        sensorClearedTime = 0;
         
         changeState(HOMING);        // Go to HOMING to re-initialize using proper StateManager method
     }

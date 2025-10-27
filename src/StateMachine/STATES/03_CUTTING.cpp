@@ -27,6 +27,8 @@ static bool transferArmSignalSentThisCycle = false;
 static unsigned long servoHomeWaitStartTime = 0;
 static bool waitingForServoHome = false;
 static unsigned long cuttingLastDebugTime = 0;
+static bool servoReturnStarted = false;
+static unsigned long servoReturnStartTime = 0;
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔧 HELPER FUNCTIONS                                                  ║
@@ -170,13 +172,23 @@ void handleCuttingStep0() {
     //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)
     if (isWoodProperlyGrabbed()) {
         extern bool rotationServoIsActiveAndTiming;
-        handleRotationServoReturn();
-        //! Verification delay: Allow servo to start rotating before cut motor moves
-        delay(100); // 100ms delay to ensure servo has started rotating back to home
+        if (!servoReturnStarted) {
+            handleRotationServoReturn();
+            servoReturnStarted = true;
+            servoReturnStartTime = millis();
+            Serial.println("Rotation servo return command sent - waiting for servo to start");
+        }
+        
+        //! Check flag: Wait for servo to start rotating before allowing cut motor to move
+        const unsigned long SERVO_START_DELAY_MS = 100;
+        if (millis() - servoReturnStartTime < SERVO_START_DELAY_MS) {
+            return; // Still waiting for servo to start rotating
+        }
+        
         if (rotationServoIsActiveAndTiming) {
-            Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
+            Serial.println("Rotation servo started returning - wood properly grabbed by transfer arm");
         } else {
-            Serial.println("Rotation servo homed for first cut cycle - wood properly grabbed by transfer arm");
+            Serial.println("Rotation servo started returning for first cut cycle - wood properly grabbed by transfer arm");
         }
     }
 
@@ -321,4 +333,6 @@ void resetCuttingSteps() {
     transferArmSignalSentThisCycle = false;
     servoHomeWaitStartTime = 0;
     waitingForServoHome = false;
+    servoReturnStarted = false;
+    servoReturnStartTime = 0;
 }

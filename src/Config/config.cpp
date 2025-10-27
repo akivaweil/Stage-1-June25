@@ -30,6 +30,7 @@ int ROTATION_SERVO_ACTIVE_POSITION = 120;                        // Servo active
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;        // Wait duration at home position
+unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 500;     // Wait time after suction detected before returning
 float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;       // Early activation offset distance
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗

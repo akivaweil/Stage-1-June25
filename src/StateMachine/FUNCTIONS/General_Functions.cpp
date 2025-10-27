@@ -617,11 +617,14 @@ void activateRotationServo() {
 }
 
 void handleRotationServoReturn() {
-    // Move rotation servo to home position
+    // Move rotation servo to home position with fast return - send command multiple times rapidly
     Servo* servo = getRotationServo();
     if (servo) {
-        // Force servo write with robust control - no attach checks, just send the command
-        servo->write(ROTATION_SERVO_HOME_POSITION);
+        // Send multiple rapid commands to ensure fast return to home
+        for (int i = 0; i < 5; i++) {
+            servo->write(ROTATION_SERVO_HOME_POSITION);
+            delayMicroseconds(100); // Small delay between rapid writes
+        }
         //Serial.printf("FORCED Servo command sent: %d degrees (attach status ignored)\n", ROTATION_SERVO_HOME_POSITION);
     }
     

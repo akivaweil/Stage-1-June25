@@ -7,6 +7,7 @@
 #include "ErrorStates/Suction_Error.h"
 #include "ErrorStates/Cut_Motor_Error.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
+#include "Config/Config.h"
 
 // External references to Bounce objects from main.cpp
 extern Bounce cutHomingSwitch;
@@ -447,10 +448,10 @@ void handleCommonOperations() {
         // Using debounced reading with 15ms debounce time
         if (suctionSensorBounce.read() == HIGH && !rotationServoReturnCompleted) {
             if (!waitingForSuctionDelay) {
-                // First time detecting HIGH - start 3 second timer
+                // First time detecting HIGH - start timer
                 suctionHighDetectedTime = millis();
                 waitingForSuctionDelay = true;
-                String message = "Transfer Arm suction grabbed wood - waiting 3 seconds before returning servo to home.";
+                String message = "Transfer Arm suction grabbed wood - waiting before returning servo to home.";
                 addSerialLog(message);
             } else {
                 // Check every second if sensor went LOW and reset timer if it did
@@ -466,9 +467,9 @@ void handleCommonOperations() {
                     lastCheckTime = millis();
                 }
                 
-                // Check if 3 seconds have passed
-                if (millis() - suctionHighDetectedTime >= 3000) {
-                    // 3 seconds have passed continuously - return servo to home
+                // Check if wait duration has passed (faster return after transfer arm grabs wood)
+                if (millis() - suctionHighDetectedTime >= ROTATION_SERVO_SUCTION_HOLD_DURATION_MS) {
+                    // Wait duration has passed continuously - return servo to home
                     String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
                     addSerialLog(message);
                     handleRotationServoReturn();

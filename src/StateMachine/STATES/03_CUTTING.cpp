@@ -171,6 +171,8 @@ void handleCuttingStep0() {
     if (isWoodProperlyGrabbed()) {
         extern bool rotationServoIsActiveAndTiming;
         handleRotationServoReturn();
+        //! Verification delay: Allow servo to start rotating before cut motor moves
+        delay(100); // 100ms delay to ensure servo has started rotating back to home
         if (rotationServoIsActiveAndTiming) {
             Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
         } else {

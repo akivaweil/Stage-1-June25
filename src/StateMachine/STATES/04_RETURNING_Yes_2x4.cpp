@@ -9,7 +9,7 @@
 #include "../../../include/WebSocketDashboard/websocket_dashboard.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ✅ RETURNING YES 2X4 STATE                                          ║
+//║ ✅ RETURNING YES 2X4 STATE                                           ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Handles the simultaneous return sequence when wood sensor detects lumber.
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
@@ -33,7 +33,7 @@ void executeReturningYes2x4State() {
 
 void onEnterReturningYes2x4State() {
     //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-    //║ STEP 1: START CUT MOTOR RETURN (SECURE CLAMP REMAINS EXTENDED)     ║
+    //║ STEP 1: START CUT MOTOR RETURN (SECURE CLAMP REMAINS EXTENDED)       ║
     //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
     
     // Increment consecutive yeswood counter

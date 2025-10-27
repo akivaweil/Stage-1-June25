@@ -4,20 +4,20 @@
 #include <WiFi.h>
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🚀 STARTUP STATE                                                   ║
+//║ 🚀 STARTUP STATE                                                     ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Function-based startup state handling.
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 1: TURN ON BLUE LED TO INDICATE STARTUP/HOMING                 ║
+//║ STEP 1: TURN ON BLUE LED TO INDICATE STARTUP/HOMING                  ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 2: DISPLAY IP ADDRESS ON SERIAL MONITOR                       ║
+//║ STEP 2: DISPLAY IP ADDRESS ON SERIAL MONITOR                         ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 3: TRANSITION TO HOMING STATE                                  ║
+//║ STEP 3: TRANSITION TO HOMING STATE                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 void executeStartupState() {

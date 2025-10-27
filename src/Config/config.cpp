@@ -8,13 +8,13 @@
 //═══════════════════════════════════════════════════════════════════════════
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 💾 EEPROM STORAGE CONFIGURATION                               ║
+//║ 💾 EEPROM STORAGE CONFIGURATION                              ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 const int CONFIG_EEPROM_SIZE = 2048;  // EEPROM size for configuration storage
 const int CONFIG_OFFSET = 0;          // Configuration starts at beginning of extended EEPROM
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⏱️ TIMING & DELAY CONSTANTS                                   ║
+//║ ⏱️ TIMING & DELAY CONSTANTS                                  ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;     // Sensor reading stabilization delay
 const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100;   // Delay between clamp and feed motor movement
@@ -33,7 +33,7 @@ unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;        // Wait duratio
 float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;       // Early activation offset distance
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 ROTATION CLAMP CONFIGURATION                               ║
+//║ 🔧 ROTATION CLAMP CONFIGURATION                              ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for clamp to fully extend
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;       // Early activation offset distance
@@ -52,7 +52,7 @@ unsigned long TA_SIGNAL_DURATION = 1000;                         // Transfer arm
 float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;          // Early activation offset distance
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚠️ ERROR RECOVERY CONSTANTS                                   ║
+//║ ⚠️ ERROR RECOVERY CONSTANTS                                  ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 const unsigned long CUT_MOTOR_HOME_RECOVERY_TIMEOUT_MS = 5000;   // Maximum recovery time (5 seconds)
 const float CUT_MOTOR_HOME_RECOVERY_SPEED = 1000;                // Recovery speed (same as homing speed)

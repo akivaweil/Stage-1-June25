@@ -421,7 +421,13 @@ void handleCommonOperations() {
     // After cooldown period, monitor suction sensor for Transfer Arm grabbing wood
     // Transfer Arm is a separate machine that grabs the cut wood diamond and transfers it to Stage 2
     // The suction sensor detects when the Transfer Arm suction has grabbed (HIGH) or released (LOW) the wood
-    if (rotationServoIsActiveAndTiming && millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS) {
+    // Only monitor suction sensor when in active cutting/returning states (not in error states)
+    if (rotationServoIsActiveAndTiming && 
+        millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS &&
+        currentState != SUCTION_ERROR && 
+        currentState != ERROR && 
+        currentState != ERROR_RESET &&
+        currentState != Cut_Motor_Homing_Error) {
         extern const int WOOD_SUCTION_CONFIRM_SENSOR; // This is in main.cpp
         
         static unsigned long suctionHighDetectedTime = 0;

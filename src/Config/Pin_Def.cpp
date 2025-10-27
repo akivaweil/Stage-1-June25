@@ -1,13 +1,13 @@
 #include "Config/Pin_Def.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 📌 PIN DEFINITIONS                                             ║
+//║ 📌 PIN DEFINITIONS                                           ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 // Hardware pin assignments for the Automated Table Saw - Stage 1
 // ESP32-S3 based system with stepper motors, servo, sensors, and switches
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ MOTOR PINS                                                 ║
+//║ ⚙️ MOTOR PINS                                                ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 // Stepper motor control pins
 const int CUT_MOTOR_STEP_PIN = 12;         // Step pulse signal for cutting motor

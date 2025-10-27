@@ -1,21 +1,21 @@
 #include "Config/Motor_Config.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ MOTOR CONFIGURATION                                        ║
+//║ ⚙️ MOTOR CONFIGURATION                                       ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ ROTATION SERVO                                             ║
+//║ ⚙️ ROTATION SERVO                                            ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 // (Servo parameters moved to config.cpp)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 ROTATION CLAMP                                             ║
+//║ 🔧 ROTATION CLAMP                                            ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 // (Rotation clamp parameters moved to config.cpp)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔄 CUT MOTOR                                                  ║
+//║ 🔄 CUT MOTOR                                                 ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 float CUT_MOTOR_STEPS_PER_INCH = 500.0;
 const int CUT_HOMING_DIRECTION = -1;
@@ -30,7 +30,7 @@ float CUT_MOTOR_HOMING_SPEED = 1500;
 // Distances & Movement
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
 float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
-float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.1;
+float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.8;
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚡ FEED MOTOR                                                 ║

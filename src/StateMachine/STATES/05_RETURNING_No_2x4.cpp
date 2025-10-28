@@ -76,8 +76,8 @@ static bool waitingForCylinder = false;
 // Static variables for LED wave pattern
 static unsigned long ledOnTime[4] = {0, 0, 0, 0}; // When each LED turned on (0 = off)
 static unsigned long ledTurnOnTime[4] = {0, 0, 0, 0}; // When each LED should next turn on
-const unsigned long LED_WAVE_INTERVAL = 200; // 200ms between each LED turning on
-const unsigned long LED_ON_DURATION = 600; // Each LED stays on for 600ms
+const unsigned long LED_WAVE_INTERVAL = 170; // 170ms between each LED turning on (15% faster)
+const unsigned long LED_ON_DURATION = 510; // Each LED stays on for 510ms (15% faster)
 
 
 void executeReturningNo2x4State() {

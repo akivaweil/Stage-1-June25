@@ -21,14 +21,12 @@
 // Static variables for returning yes 2x4 state tracking
 static int returningYes2x4SubStep = 0;
 static int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
+static bool feedWoodMoveStarted = false; // Track if feed wood move has started
 
 // Cut motor homing recovery timing
 static unsigned long cutMotorHomingAttemptStartTime = 0;
 static bool cutMotorHomingAttemptInProgress = false;
 static float cutMotorIncrementalMoveTotalInches = 0.0;
-
-// Feed wood movement sequence tracking
-static int feedMotorHomingSubStep = 0;
 
 // Feed clamp extension variables (no delay needed)
 
@@ -54,10 +52,10 @@ void onEnterReturningYes2x4State() {
     // Initialize step tracking
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
+    feedWoodMoveStarted = false;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
-    feedMotorHomingSubStep = 0;
 }
 
 void onExitReturningYes2x4State() {
@@ -151,7 +149,20 @@ void handleReturningYes2x4Sequence() {
             break;
             
         case 3: // Execute feed wood movement to configured distance
-            handleFeedWoodMovement();
+            if (!feedWoodMoveStarted) {
+                //! ************************************************************************
+                //! STEP 4: START FEED WOOD MOVEMENT
+                //! ************************************************************************
+                configureFeedMotorForNormalOperation();
+                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+                feedWoodMoveStarted = true;
+            }
+            
+            if (feedMotor && !feedMotor->isRunning() && feedWoodMoveStarted) {
+                // Movement complete
+                extend2x4SecureClamp();
+                returningYes2x4SubStep = 4;
+            }
             break;
             
         case 4: // Complete sequence - check for continuous operation or return to IDLE
@@ -159,7 +170,6 @@ void handleReturningYes2x4Sequence() {
                 //! ************************************************************************
                 //! STEP 5: SEQUENCE COMPLETE - CHECK FOR CONTINUOUS OPERATION OR RETURN TO IDLE
                 //! ************************************************************************
-                extend2x4SecureClamp();
                 turnYellowLedOff();
                 incrementCuttingCycleCounter();
                 setCuttingCycleInProgress(false);
@@ -237,46 +247,14 @@ void handleFeedMotorReturnSequence() {
 }
 
 //* ************************************************************************
-//* ****************** FEED WOOD MOVEMENT SEQUENCE *************************
-//* ************************************************************************
-// Handles the feed wood movement to configured distance with feed clamp extended
-
-void handleFeedWoodMovement() {
-    FastAccelStepper* feedMotor = getFeedMotor();
-    
-    // Non-blocking feed wood movement to configured distance
-    switch (feedMotorHomingSubStep) {
-        case 0: // Start feed wood movement to configured distance
-            if (feedMotor) {
-                configureFeedMotorForNormalOperation();
-                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-            }
-            feedMotorHomingSubStep = 1;
-            break;
-            
-        case 1: // Wait for movement to complete
-            if (feedMotor && !feedMotor->isRunning()) {
-                // Movement complete - proceed directly to next step without waiting for wood sensor
-                feedMotorHomingSubStep = 2;
-            }
-            break;
-            
-        case 2: // Movement complete - transition to final step
-            extend2x4SecureClamp();
-            returningYes2x4SubStep = 4; // Move to final completion step
-            break;
-    }
-}
-
-//* ************************************************************************
 //* ************************ UTILITY FUNCTIONS ****************************
 //* ************************************************************************
 
 void resetReturningYes2x4Steps() {
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
+    feedWoodMoveStarted = false;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
-    feedMotorHomingSubStep = 0;
 } 

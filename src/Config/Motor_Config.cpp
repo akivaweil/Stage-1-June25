@@ -37,7 +37,7 @@ float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.8;
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 float FEED_MOTOR_STEPS_PER_INCH = 1000.0;
 const int FEED_HOMING_DIRECTION = 1;
-const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.1;
+const float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.3;
 
 // Speeds
 float FEED_MOTOR_NORMAL_SPEED = 22000;

@@ -119,8 +119,7 @@ void handleReturningYes2x4Sequence() {
                     if (cutMotor) cutMotor->setCurrentPosition(0);
                     cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
                     
-                    configureFeedMotorForNormalOperation();
-                    moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                    // Advance to feed wood movement sequence - it will handle the motor config and move
                     returningYes2x4SubStep = 3;
                 } else {
                     // Home switch not detected - try incremental move recovery

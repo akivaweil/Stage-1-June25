@@ -25,7 +25,7 @@ const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30; // Sensor verification st
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚙️ ROTATION SERVO SETTINGS                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-int ROTATION_SERVO_HOME_POSITION = 27;                           // Servo home position angle
+int ROTATION_SERVO_HOME_POSITION = 28;                           // Servo home position angle
 int ROTATION_SERVO_ACTIVE_POSITION = 120;                        // Servo active rotation angle
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home

@@ -73,6 +73,12 @@ static int returningNo2x4Step = 0;
 static unsigned long cylinderActionTime = 0;
 static bool waitingForCylinder = false;
 
+// Static variables for LED wave pattern
+static unsigned long ledOnTime[4] = {0, 0, 0, 0}; // When each LED turned on (0 = off)
+static unsigned long ledTurnOnTime[4] = {0, 0, 0, 0}; // When each LED should next turn on
+const unsigned long LED_WAVE_INTERVAL = 200; // 200ms between each LED turning on
+const unsigned long LED_ON_DURATION = 600; // Each LED stays on for 600ms
+
 
 void executeReturningNo2x4State() {
     handleReturningNo2x4Sequence(); 
@@ -91,16 +97,27 @@ void onEnterReturningNo2x4State() {
     // Cut motor already started in CUTTING state
     configureFeedMotorForNormalOperation();
 
-    // Turn on all 4 LEDs
-    digitalWrite(STATUS_LED_RED, HIGH);
-    digitalWrite(STATUS_LED_YELLOW, HIGH);
-    digitalWrite(STATUS_LED_GREEN, HIGH);
-    digitalWrite(STATUS_LED_BLUE, HIGH);
+    // Turn off all LEDs initially
+    digitalWrite(STATUS_LED_RED, LOW);
+    digitalWrite(STATUS_LED_YELLOW, LOW);
+    digitalWrite(STATUS_LED_GREEN, LOW);
+    digitalWrite(STATUS_LED_BLUE, LOW);
     
     // Initialize step tracking
     returningNo2x4Step = 0;
     cylinderActionTime = 0;
     waitingForCylinder = false;
+    
+    // Initialize LED wave timestamps (start each LED progressively)
+    unsigned long now = millis();
+    ledTurnOnTime[0] = now; // Red starts immediately
+    ledTurnOnTime[1] = now + LED_WAVE_INTERVAL; // Yellow starts after red
+    ledTurnOnTime[2] = now + (LED_WAVE_INTERVAL * 2); // Green starts after yellow
+    ledTurnOnTime[3] = now + (LED_WAVE_INTERVAL * 3); // Blue starts after green
+    ledOnTime[0] = 0;
+    ledOnTime[1] = 0;
+    ledOnTime[2] = 0;
+    ledOnTime[3] = 0;
 }
 
 void onExitReturningNo2x4State() {
@@ -111,6 +128,38 @@ void handleReturningNo2x4Sequence() {
     // RETURNING_NO_2x4 sequence logic
     FastAccelStepper* feedMotor = getFeedMotor();
     const unsigned long CYLINDER_ACTION_DELAY_MS = 150;
+    
+    // Handle LED wave pattern: overlapping red -> yellow -> green -> blue
+    unsigned long now = millis();
+    for (int i = 0; i < 4; i++) {
+        // Check if LED should turn on
+        if (now >= ledTurnOnTime[i] && ledOnTime[i] == 0) {
+            // Turn on this LED
+            switch (i) {
+                case 0: digitalWrite(STATUS_LED_RED, HIGH); break;
+                case 1: digitalWrite(STATUS_LED_YELLOW, HIGH); break;
+                case 2: digitalWrite(STATUS_LED_GREEN, HIGH); break;
+                case 3: digitalWrite(STATUS_LED_BLUE, HIGH); break;
+            }
+            // Record when this LED turned on
+            ledOnTime[i] = now;
+            // Schedule next turn on (continuous wave)
+            ledTurnOnTime[i] = now + LED_ON_DURATION + (LED_WAVE_INTERVAL * 3);
+        }
+        
+        // Check if LED should turn off (after being on for LED_ON_DURATION)
+        if (ledOnTime[i] > 0 && now - ledOnTime[i] >= LED_ON_DURATION) {
+            // Turn off this LED
+            switch (i) {
+                case 0: digitalWrite(STATUS_LED_RED, LOW); break;
+                case 1: digitalWrite(STATUS_LED_YELLOW, LOW); break;
+                case 2: digitalWrite(STATUS_LED_GREEN, LOW); break;
+                case 3: digitalWrite(STATUS_LED_BLUE, LOW); break;
+            }
+            // Reset on time (waiting for next turn on)
+            ledOnTime[i] = 0;
+        }
+    }
     
     if (returningNo2x4Step == STEP_INITIALIZE) { // First time entering this specific RETURNING_NO_2x4 logic path
         retract2x4SecureClamp();

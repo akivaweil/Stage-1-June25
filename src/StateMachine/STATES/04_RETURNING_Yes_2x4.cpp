@@ -21,7 +21,6 @@
 // Static variables for returning yes 2x4 state tracking
 static int returningYes2x4SubStep = 0;
 static int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
-static bool feedWoodMoveStarted = false; // Track if feed wood move has started
 
 // Cut motor homing recovery timing
 static unsigned long cutMotorHomingAttemptStartTime = 0;
@@ -52,7 +51,6 @@ void onEnterReturningYes2x4State() {
     // Initialize step tracking
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
-    feedWoodMoveStarted = false;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
@@ -80,10 +78,8 @@ void handleReturningYes2x4Sequence() {
         case 1: // Wait for feed motor to complete return movement (no homing)
             if (feedMotor && !feedMotor->isRunning()) {
                 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-                //║ STEP 2: FEED MOTOR RETURN COMPLETE - RETRACT SECURE CLAMP AND EXTEND FEED CLAMP ║
+                //║ STEP 2: FEED MOTOR RETURN COMPLETE - PROCEED TO CUT MOTOR WAIT ║
                 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
-                retract2x4SecureClamp();
-                extendFeedClamp();
                 returningYes2x4SubStep = 2;
             }
             break;
@@ -112,12 +108,12 @@ void handleReturningYes2x4Sequence() {
                 
                 if (sensorDetectedHome) {
                 //! ************************************************************************
-                //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED WITH FEED WOOD MOVEMENT
+                //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED TO COMPLETION
                 //! ************************************************************************
                     if (cutMotor) cutMotor->setCurrentPosition(0);
                     cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
                     
-                    // Advance to feed wood movement sequence - it will handle the motor config and move
+                    // Feed motor already at travel distance from return sequence, proceed to completion
                     returningYes2x4SubStep = 3;
                 } else {
                     // Home switch not detected - try incremental move recovery
@@ -148,21 +144,12 @@ void handleReturningYes2x4Sequence() {
             }
             break;
             
-        case 3: // Execute feed wood movement to configured distance
-            if (!feedWoodMoveStarted) {
-                //! ************************************************************************
-                //! STEP 4: START FEED WOOD MOVEMENT
-                //! ************************************************************************
-                configureFeedMotorForNormalOperation();
-                feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-                feedWoodMoveStarted = true;
-            }
-            
-            if (feedMotor && !feedMotor->isRunning() && feedWoodMoveStarted) {
-                // Movement complete
-                extend2x4SecureClamp();
-                returningYes2x4SubStep = 4;
-            }
+        case 3: // Feed motor already at travel distance - extend secure clamp
+            //! ************************************************************************
+            //! STEP 4: EXTEND SECURE CLAMP AFTER FEED WOOD MOVEMENT COMPLETE
+            //! ************************************************************************
+            extend2x4SecureClamp();
+            returningYes2x4SubStep = 4;
             break;
             
         case 4: // Complete sequence - check for continuous operation or return to IDLE
@@ -214,37 +201,36 @@ void handleFeedMotorReturnSequence() {
             feedMotorReturnSubStep = 1;
             break;
             
-        case 1: // Move feed motor back by the same distance it will later move forward
-            //! ************************************************************************
-            //! STEP 7: MOVE FEED MOTOR RETURN DISTANCE
-            //! ************************************************************************
-            configureFeedMotorForNormalOperation();
-            if (feedMotor) {
-                feedMotor->move(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-            }
-            feedMotorReturnSubStep = 2;
-            break;
-            
-        case 2: // Wait for move completion
+        case 1: // Move feed motor to zero (home position)
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 8: FEED MOTOR RETURN MOVE COMPLETE
+                //! STEP 7: MOVE FEED MOTOR TO ZERO
                 //! ************************************************************************
+                configureFeedMotorForNormalOperation();
+                moveFeedMotorToHome();
+                feedMotorReturnSubStep = 2;
+            }
+            break;
+            
+        case 2: // Wait for move to zero completion, then extend feed clamp and retract secure clamp
+            if (feedMotor && !feedMotor->isRunning()) {
+                //! ************************************************************************
+                //! STEP 8: EXTEND FEED CLAMP AND RETRACT SECURE CLAMP
+                //! ************************************************************************
+                extendFeedClamp();
+                retract2x4SecureClamp();
                 feedMotorReturnSubStep = 3;
             }
             break;
             
-        case 3: // Start feed motor return to home
-            //! ************************************************************************
-            //! STEP 9: RETURN FEED MOTOR TO HOME POSITION
-            //! ************************************************************************
-            if (feedMotor) {
-                // Configure for normal speed before moving to home to prevent stalling
-                configureFeedMotorForNormalOperation();
-                // Use relative move instead of absolute to position 0 to avoid large position jumps
-                feedMotor->move(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+        case 3: // Move to travel distance
+            if (feedMotor && !feedMotor->isRunning()) {
+                //! ************************************************************************
+                //! STEP 9: MOVE TO TRAVEL DISTANCE
+                //! ************************************************************************
+                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
+                returningYes2x4SubStep = 1;
             }
-            returningYes2x4SubStep = 1;
             break;
     }
 }
@@ -256,7 +242,6 @@ void handleFeedMotorReturnSequence() {
 void resetReturningYes2x4Steps() {
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
-    feedWoodMoveStarted = false;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;

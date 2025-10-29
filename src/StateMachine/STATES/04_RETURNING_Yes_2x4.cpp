@@ -21,6 +21,7 @@
 // Static variables for returning yes 2x4 state tracking
 static int returningYes2x4SubStep = 0;
 static int feedMotorReturnSubStep = 0; // For initial feed motor return sequence
+static unsigned long stepStartTime = 0; // For 200ms delay
 
 // Cut motor homing recovery timing
 static unsigned long cutMotorHomingAttemptStartTime = 0;
@@ -51,6 +52,7 @@ void onEnterReturningYes2x4State() {
     // Initialize step tracking
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
+    stepStartTime = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
@@ -215,23 +217,40 @@ void handleFeedMotorReturnSequence() {
         case 2: // Wait for move to zero completion, then extend feed clamp and retract secure clamp
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 8: EXTEND FEED CLAMP AND RETRACT SECURE CLAMP
+                //! STEP 8: EXTEND FEED CLAMP AND RETRACT SECURE CLAMP WITH 200MS DELAY
                 //! ************************************************************************
                 extendFeedClamp();
                 retract2x4SecureClamp();
+                stepStartTime = millis();
                 feedMotorReturnSubStep = 3;
             }
             break;
             
-        case 3: // Move to travel distance
+        case 3: // Wait 200ms before moving to travel distance
+            if (millis() - stepStartTime >= 200) {
+                feedMotorReturnSubStep = 4;
+            }
+            break;
+            
+        case 4: // Move to travel distance (with safety check for cut motor home)
+            // Safety check: Ensure cut motor is home before moving feed motor forward
+            getCutHomingSwitch()->update();
+            bool cutMotorIsHome = (getCutHomingSwitch()->read() == HIGH);
+            
+            if (!cutMotorIsHome) {
+                // Cut motor not home yet, wait for it
+                return;
+            }
+            
             if (feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 9: MOVE TO TRAVEL DISTANCE
+                //! STEP 9: MOVE TO TRAVEL DISTANCE (CUT MOTOR HOME VERIFIED)
                 //! ************************************************************************
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                 returningYes2x4SubStep = 1;
             }
             break;
+            
     }
 }
 
@@ -242,6 +261,7 @@ void handleFeedMotorReturnSequence() {
 void resetReturningYes2x4Steps() {
     returningYes2x4SubStep = 0;
     feedMotorReturnSubStep = 0;
+    stepStartTime = 0;
     cutMotorHomingAttemptStartTime = 0;
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;

@@ -18,17 +18,23 @@
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 📊 STATE VARIABLES                                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
-static int cuttingStep = 0;
-static unsigned long stepStartTime = 0;
-static bool homePositionErrorDetected = false;
-static bool rotationClampActivatedThisCycle = false;
-static bool rotationServoActivatedThisCycle = false;
-static bool transferArmSignalSentThisCycle = false;
-static unsigned long servoHomeWaitStartTime = 0;
-static bool waitingForServoHome = false;
-static unsigned long cuttingLastDebugTime = 0;
-static bool servoReturnStarted = false;
-static unsigned long servoReturnStartTime = 0;
+-namespace {
+    struct CuttingStateContext {
+        int step = 0;
+        bool rotationClampActivated = false;
+        bool rotationServoActivated = false;
+        bool transferArmSignalSent = false;
+        bool waitingForServoHome = false;
+        bool servoReturnStarted = false;
+        unsigned long servoHomeWaitStartedAt = 0;
+        unsigned long servoReturnStartedAt = 0;
+    };
+
+    constexpr unsigned long SERVO_START_DELAY_MS = 100UL;
+
+    CuttingStateContext cuttingContext;
+    bool homePositionErrorDetected = false;
+}
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔧 HELPER FUNCTIONS                                                  ║
@@ -62,35 +68,72 @@ bool isWoodPresent() {
 // Waits for rotation servo to return home before starting cut
 bool waitForServoHomeIfNeeded() {
     if (!isWoodProperlyGrabbed()) {
-        Serial.println("WARNING: Wood not properly grabbed by transfer arm - skipping servo wait for safety");
-        return false; // Don't wait, proceed immediately
+        cuttingContext.waitingForServoHome = false;
+        return false;
     }
-    
+
     extern bool rotationServoIsActiveAndTiming;
-    
-    if (rotationServoIsActiveAndTiming && !waitingForServoHome) {
-        waitingForServoHome = true;
-        servoHomeWaitStartTime = millis();
-        Serial.println("Waiting for rotation servo to return home before starting cut...");
-        return true; // Need to wait
+
+    if (rotationServoIsActiveAndTiming && !cuttingContext.waitingForServoHome) {
+        cuttingContext.waitingForServoHome = true;
+        cuttingContext.servoHomeWaitStartedAt = millis();
+        return true;
     }
-    
-    if (waitingForServoHome) {
-        if (millis() - servoHomeWaitStartTime < ROTATION_SERVO_HOME_WAIT_DURATION_MS) {
-            return true; // Still waiting
+
+    if (cuttingContext.waitingForServoHome) {
+        if (millis() - cuttingContext.servoHomeWaitStartedAt < ROTATION_SERVO_HOME_WAIT_DURATION_MS) {
+            return true;
         }
-        Serial.print("Servo home wait complete (");
-        Serial.print(millis() - servoHomeWaitStartTime);
-        Serial.println("ms) - proceeding with cut");
-        waitingForServoHome = false;
+        cuttingContext.waitingForServoHome = false;
     }
-    
-    return false; // No wait needed
+
+    return false;
+}
+
+void configureCutMotorForCurrentCut() {
+    if (isWoodPresent()) {
+        configureCutMotorForCutting();
+    } else {
+        configureCutMotorForCuttingSlow();
+    }
+}
+
+void handleSuctionFailure(FastAccelStepper* cutMotor) {
+    FastAccelStepper* feedMotor = getFeedMotor();
+    if (feedMotor && feedMotor->isRunning()) {
+        feedMotor->stopMove();
+    }
+
+    if (cutMotor) {
+        configureCutMotorForReturn();
+        moveCutMotorToHome();
+    }
+
+    setCuttingCycleInProgress(false);
+    onErrorOccurred("Wood suction not confirmed");
+    changeState(SUCTION_ERROR);
+    resetCuttingSteps();
+}
+
+void startCutMotorReturnSequence() {
+    configureCutMotorForReturn();
+    moveCutMotorToHome();
+    cuttingContext.transferArmSignalSent = false;
+}
+
+void updateLedsForReturnState(bool no2x4Detected) {
+    if (no2x4Detected) {
+        showBlueLed();
+        turnYellowLedOff();
+    } else {
+        showYellowLed();
+        turnBlueLedOff();
+    }
 }
 
 // Activates a component when cut motor reaches specified position
 void activateComponentAtPosition(bool& activatedFlag, float activationOffsetInches, 
-                                 const char* componentName, void (*activationFunction)()) {
+                                 void (*activationFunction)()) {
     if (activatedFlag) return;
     
     FastAccelStepper* cutMotor = getCutMotor();
@@ -102,29 +145,6 @@ void activateComponentAtPosition(bool& activatedFlag, float activationOffsetInch
     if (cutMotor->getCurrentPosition() >= activationSteps) {
         activationFunction();
         activatedFlag = true;
-        Serial.print(componentName);
-        Serial.print(" activated at ");
-        Serial.print((float)activationSteps / CUT_MOTOR_STEPS_PER_INCH, 2);
-        Serial.println(" inches");
-    }
-}
-
-// Outputs debug information about cut motor position
-void outputCutMotorDebug() {
-    if (millis() - cuttingLastDebugTime >= 1000) {
-        FastAccelStepper* cutMotor = getCutMotor();
-        if (cutMotor) {
-            long currentPosition = cutMotor->getCurrentPosition();
-            float currentPositionInches = (float)currentPosition / CUT_MOTOR_STEPS_PER_INCH;
-            Serial.print("Cut position: ");
-            Serial.print(currentPositionInches, 2);
-            Serial.print("/");
-            extern float getCutTravelDistance();
-            Serial.print(getCutTravelDistance());
-            Serial.print(" inches, Running: ");
-            Serial.println(cutMotor->isRunning() ? "YES" : "NO");
-        }
-        cuttingLastDebugTime = millis();
     }
 }
 
@@ -144,7 +164,7 @@ void executeCuttingState() {
         return;
     }
 
-    switch (cuttingStep) {
+    switch (cuttingContext.step) {
         case 0: 
             handleCuttingStep0();
             break;
@@ -154,6 +174,9 @@ void executeCuttingState() {
         case 2: 
             handleCuttingStep2();
             break;
+        default:
+            cuttingContext.step = 0;
+            break;
     }
 }
 
@@ -162,8 +185,6 @@ void handleCuttingStep0() {
     if (waitForServoHomeIfNeeded()) {
         return; // Still waiting, exit and check again next cycle
     }
-    
-    Serial.println("Starting cut motion");
         
     //! Extend clamps to secure wood
     extend2x4SecureClamp();
@@ -172,122 +193,77 @@ void handleCuttingStep0() {
     //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)
     if (isWoodProperlyGrabbed()) {
         extern bool rotationServoIsActiveAndTiming;
-        if (!servoReturnStarted) {
+        if (!cuttingContext.servoReturnStarted) {
             handleRotationServoReturn();
-            servoReturnStarted = true;
-            servoReturnStartTime = millis();
-            Serial.println("Rotation servo return command sent - waiting for servo to start");
+            cuttingContext.servoReturnStarted = true;
+            cuttingContext.servoReturnStartedAt = millis();
         }
         
-        //! Check flag: Wait for servo to start rotating before allowing cut motor to move
-        const unsigned long SERVO_START_DELAY_MS = 100;
-        if (millis() - servoReturnStartTime < SERVO_START_DELAY_MS) {
-            return; // Still waiting for servo to start rotating
-        }
-        
-        if (rotationServoIsActiveAndTiming) {
-            Serial.println("Rotation servo started returning - wood properly grabbed by transfer arm");
-        } else {
-            Serial.println("Rotation servo started returning for first cut cycle - wood properly grabbed by transfer arm");
+        //! Wait for servo to start rotating before allowing cut motor to move
+        if (millis() - cuttingContext.servoReturnStartedAt < SERVO_START_DELAY_MS) {
+            return;
         }
     }
 
     //! Configure cut motor speed based on wood detection
-    if (!isWoodPresent()) {
-        configureCutMotorForCuttingSlow();
-        Serial.println("No wood detected - cutting at 60% speed");
-    } else {
-        configureCutMotorForCutting();
-    }
+    configureCutMotorForCurrentCut();
     moveCutMotorToCut();
-    
-    rotationClampActivatedThisCycle = false;
-    cuttingStep = 1;
+
+    cuttingContext.rotationClampActivated = false;
+    cuttingContext.rotationServoActivated = false;
+    cuttingContext.transferArmSignalSent = false;
+    cuttingContext.step = 1;
 }
 
 void handleCuttingStep1() {
-    if (stepStartTime == 0) {
-        stepStartTime = millis();
-    }
-
     //! Update LED based on wood present sensor
     updateWoodPresentLed();
 
     //! Check suction sensor when cut motor reaches check distance
     FastAccelStepper* cutMotor = getCutMotor();
-    if (cutMotor && cutMotor->getCurrentPosition() >= SUCTION_SENSOR_CHECK_DISTANCE_STEPS) {
-        Bounce* suctionSensor = getSuctionSensorBounce();
-        if (suctionSensor && suctionSensor->read() == LOW) {
-            //! No suction detected - error condition
-            FastAccelStepper* feedMotor = getFeedMotor();
-            
-            if (feedMotor && feedMotor->isRunning()) {
-                feedMotor->stopMove();
-            }
-            
-            if (cutMotor) {
-                configureCutMotorForReturn();
-                moveCutMotorToHome();
-            }
-            
-            setCuttingCycleInProgress(false);
-            onErrorOccurred("Wood suction not confirmed");
-            changeState(SUCTION_ERROR);
-            stepStartTime = 0;
-            return;
-        }
-        
-        //! Suction OK - continue to step 2
-        cuttingStep = 2;
-        stepStartTime = 0;
+    if (!cutMotor) {
+        return;
     }
+
+    if (cutMotor->getCurrentPosition() < SUCTION_SENSOR_CHECK_DISTANCE_STEPS) {
+        return;
+    }
+
+    Bounce* suctionSensor = getSuctionSensorBounce();
+    if (suctionSensor && suctionSensor->read() == LOW) {
+        handleSuctionFailure(cutMotor);
+        return;
+    }
+
+    //! Suction OK - continue to step 2
+    cuttingContext.step = 2;
 }
 
 void handleCuttingStep2() {
     //! Update LED based on wood present sensor
     updateWoodPresentLed();
     
-    //! Output debug information
-    outputCutMotorDebug();
-    
     //! Activate components at their respective positions
-    activateComponentAtPosition(rotationClampActivatedThisCycle, 
+    activateComponentAtPosition(cuttingContext.rotationClampActivated, 
                                 ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES,
-                                "Rotation clamp", 
                                 extendRotationClamp);
     
-    activateComponentAtPosition(rotationServoActivatedThisCycle, 
+    activateComponentAtPosition(cuttingContext.rotationServoActivated, 
                                 ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES,
-                                "Rotation servo", 
                                 activateRotationServo);
     
-    activateComponentAtPosition(transferArmSignalSentThisCycle, 
+    activateComponentAtPosition(cuttingContext.transferArmSignalSent, 
                                 TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES,
-                                "TA signal", 
                                 sendSignalToTA);
     
     //! Check if cut is complete
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && !cutMotor->isRunning()) {
-        Serial.println("Cut cycle complete - transitioning to return sequence");
-        
-        //! Configure motor for return and start movement
-        configureCutMotorForReturn();
-        moveCutMotorToHome();
-        transferArmSignalSentThisCycle = false;
+        startCutMotorReturnSequence();
 
-        //! Determine next state based on wood detection
-        bool no2x4Detected = !isWoodPresent();
-        
-        //! Update LED before state transition for visual feedback
-        if (no2x4Detected) {
-            showBlueLed();
-            turnYellowLedOff();
-        } else {
-            showYellowLed();
-            turnBlueLedOff();
-        }
-        
+        const bool no2x4Detected = !isWoodPresent();
+        updateLedsForReturnState(no2x4Detected);
+
         if (no2x4Detected) {
             changeState(RETURNING_NO_2x4);
         } else {
@@ -325,14 +301,6 @@ void handleHomePositionError() {
 }
 
 void resetCuttingSteps() {
-    cuttingStep = 0;
-    stepStartTime = 0;
+    cuttingContext = CuttingStateContext{};
     homePositionErrorDetected = false;
-    rotationClampActivatedThisCycle = false;
-    rotationServoActivatedThisCycle = false;
-    transferArmSignalSentThisCycle = false;
-    servoHomeWaitStartTime = 0;
-    waitingForServoHome = false;
-    servoReturnStarted = false;
-    servoReturnStartTime = 0;
 }

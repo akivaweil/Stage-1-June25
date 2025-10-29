@@ -218,7 +218,7 @@ void handleFeedMotorReturnSequence() {
             //! ************************************************************************
             //! STEP 7: MOVE FEED MOTOR RETURN DISTANCE
             //! ************************************************************************
-            configureFeedMotorForReturn();
+            configureFeedMotorForNormalOperation();
             if (feedMotor) {
                 feedMotor->move(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
             }
@@ -239,7 +239,10 @@ void handleFeedMotorReturnSequence() {
             //! STEP 9: RETURN FEED MOTOR TO HOME POSITION
             //! ************************************************************************
             if (feedMotor) {
-                moveFeedMotorToHome();
+                // Configure for normal speed before moving to home to prevent stalling
+                configureFeedMotorForNormalOperation();
+                // Use relative move instead of absolute to position 0 to avoid large position jumps
+                feedMotor->move(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
             }
             returningYes2x4SubStep = 1;
             break;

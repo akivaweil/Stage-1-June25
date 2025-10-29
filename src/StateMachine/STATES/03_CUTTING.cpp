@@ -18,7 +18,7 @@
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 📊 STATE VARIABLES                                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
--namespace {
+namespace {
     struct CuttingStateContext {
         int step = 0;
         bool rotationClampActivated = false;

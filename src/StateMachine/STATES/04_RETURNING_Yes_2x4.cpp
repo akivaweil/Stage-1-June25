@@ -226,25 +226,18 @@ void handleFeedMotorReturnSequence() {
             }
             break;
             
-        case 3: // Wait 200ms before moving to travel distance
-            if (millis() - stepStartTime >= 200) {
-                feedMotorReturnSubStep = 4;
-            }
-            break;
+        case 3: // Wait minimum 200ms delay AND verify cut motor is home before moving to travel distance
+            // Check that minimum 200ms has elapsed since clamp extension
+            bool minDelayMet = (millis() - stepStartTime >= 200);
             
-        case 4: // Move to travel distance (with safety check for cut motor home)
             // Safety check: Ensure cut motor is home before moving feed motor forward
             getCutHomingSwitch()->update();
             bool cutMotorIsHome = (getCutHomingSwitch()->read() == HIGH);
             
-            if (!cutMotorIsHome) {
-                // Cut motor not home yet, wait for it
-                return;
-            }
-            
-            if (feedMotor && !feedMotor->isRunning()) {
+            // Both conditions must be met: minimum delay AND cut motor home
+            if (minDelayMet && cutMotorIsHome && feedMotor && !feedMotor->isRunning()) {
                 //! ************************************************************************
-                //! STEP 9: MOVE TO TRAVEL DISTANCE (CUT MOTOR HOME VERIFIED)
+                //! STEP 9: MOVE TO TRAVEL DISTANCE (200MS PASSED AND CUT MOTOR HOME VERIFIED)
                 //! ************************************************************************
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                 returningYes2x4SubStep = 1;

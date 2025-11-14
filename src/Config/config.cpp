@@ -25,8 +25,8 @@ const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30; // Sensor verification st
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚙️ ROTATION SERVO SETTINGS                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-int ROTATION_SERVO_HOME_POSITION = 28;                           // Servo home position angle
-int ROTATION_SERVO_ACTIVE_POSITION = 120;                        // Servo active rotation angle
+int ROTATION_SERVO_HOME_POSITION = 26;                           // Servo home position angle
+int ROTATION_SERVO_ACTIVE_POSITION = 118;                        // Servo active rotation angle
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;        // Wait duration at home position
@@ -36,7 +36,7 @@ float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES = 0.2;       // Early activa
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔧 ROTATION CLAMP CONFIGURATION                              ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for clamp to fully extend
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for clamp to fully extend 
 float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES = 2.7;       // Early activation offset distance
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗

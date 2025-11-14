@@ -31,7 +31,7 @@ const int ROTATION_SERVO_PIN = 14;
 // Control switches (Active HIGH - input pulldown)
 const int RELOAD_SWITCH = 6;
 const int START_CYCLE_SWITCH = 5;
-const int MANUAL_FEED_SWITCH = 41;         // Manual wood feed control
+const int MANUAL_FEED_SWITCH = 16;         // Manual wood feed control
 
 // Sensors (Active LOW - input pullup)
 const int FIRST_CUT_OR_WOOD_FWD_ONE = 10;       // Decides state: LOW = wood_fwd_one, HIGH = first_cut

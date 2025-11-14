@@ -48,7 +48,8 @@ void updateWoodPresentLed() {
         if (woodPresent) {
             showYellowLed();
         } else {
-            showBlueLed();
+            // Show LED wave pattern when no wood is present
+            handleNoWoodLedWavePattern();
         }
     }
 }
@@ -152,6 +153,7 @@ void onEnterCuttingState() {
     resetCuttingSteps();
     startCuttingCycleTimer();
     stopReloadTimer(); // Stop reload time tracking when entering cutting state
+    resetNoWoodLedWavePattern(); // Reset LED wave pattern when starting a new cutting cycle
 }
 
 void onExitCuttingState() {

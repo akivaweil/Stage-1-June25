@@ -100,6 +100,8 @@ void showBlueLed();
 void turnBlueLedOff();
 void allLedsOff();
 void handleHomingLedBlink();
+void handleNoWoodLedWavePattern();
+void resetNoWoodLedWavePattern();
 
 //* ************************************************************************
 //* *********************** MOTOR CONTROL FUNCTIONS ************************

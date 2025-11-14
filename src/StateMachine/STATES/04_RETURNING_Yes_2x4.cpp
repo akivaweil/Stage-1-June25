@@ -80,7 +80,7 @@ void handleReturningYes2x4Sequence() {
         case 1: // Wait for feed motor to complete return movement (no homing)
             if (feedMotor && !feedMotor->isRunning()) {
                 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-                //║ STEP 2: FEED MOTOR RETURN COMPLETE - PROCEED TO CUT MOTOR WAIT ║
+                //║ STEP 2: FEED MOTOR RETURN COMPLETE - PROCEED TO CUT MOTOR WAIT       ║
                 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
                 returningYes2x4SubStep = 2;
             }
@@ -89,9 +89,9 @@ void handleReturningYes2x4Sequence() {
         case 2: // Wait for cut motor completion
             // Wait for cut motor to complete return home, then execute homing sequence
             if (cutMotor && !cutMotor->isRunning() && !cutMotorHomingAttemptInProgress) {
-                //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+                //╔═══╗ ══════════════════════════════════════════════════════════════════ ╔═══╗
                 //║ STEP 3: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE ║
-                //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+                //╚═══╝ ══════════════════════════════════════════════════════════════════ ╚═══╝
                 cutMotorInReturningYes2x4Return = false;
                 
                 bool sensorDetectedHome = false;

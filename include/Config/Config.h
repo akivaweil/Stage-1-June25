@@ -24,7 +24,7 @@ extern float ROTATION_SERVO_ACTIVATION_DISTANCE;
 //* ************************ [🔧] ROTATION CLAMP **************************
 //* ************************************************************************
 extern unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
-extern float ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES;
+extern float ROTATION_CLAMP_ACTIVATION_DISTANCE;
 
 //* ************************************************************************
 //* ************************ [🔄] CUT MOTOR TIMING *************************

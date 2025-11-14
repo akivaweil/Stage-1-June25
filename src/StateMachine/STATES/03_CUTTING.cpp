@@ -264,9 +264,9 @@ void handleCuttingStep2() {
     updateWoodPresentLed();
     
     //! Activate components at their respective positions
-    activateComponentAtPosition(cuttingContext.rotationClampActivated, 
-                                ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES,
-                                extendRotationClamp);
+    activateComponentAtDistanceFromStart(cuttingContext.rotationClampActivated, 
+                                         ROTATION_CLAMP_ACTIVATION_DISTANCE,
+                                         extendRotationClamp);
     
     activateComponentAtDistanceFromStart(cuttingContext.rotationServoActivated, 
                                          ROTATION_SERVO_ACTIVATION_DISTANCE,

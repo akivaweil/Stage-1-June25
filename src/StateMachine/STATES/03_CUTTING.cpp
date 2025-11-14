@@ -269,7 +269,7 @@ void handleCuttingStep2() {
                                 extendRotationClamp);
     
     activateComponentAtDistanceFromStart(cuttingContext.rotationServoActivated, 
-                                         ROTATION_SERVO_EARLY_ACTIVATION_DISTANCE,
+                                         ROTATION_SERVO_ACTIVATION_DISTANCE,
                                          activateRotationServo);
     
     activateComponentAtPosition(cuttingContext.transferArmSignalSent, 

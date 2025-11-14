@@ -272,9 +272,9 @@ void handleCuttingStep2() {
                                          ROTATION_SERVO_ACTIVATION_DISTANCE,
                                          activateRotationServo);
     
-    activateComponentAtPosition(cuttingContext.transferArmSignalSent, 
-                                TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES,
-                                sendSignalToTA);
+    activateComponentAtDistanceFromStart(cuttingContext.transferArmSignalSent, 
+                                         TA_SIGNAL_ACTIVATION_DISTANCE,
+                                         sendSignalToTA);
     
     //! Check if cut is complete
     FastAccelStepper* cutMotor = getCutMotor();

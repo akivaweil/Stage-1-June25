@@ -50,7 +50,7 @@ unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;             // Motor state v
 //║ 🤖 TRANSFER ARM CONFIGURATION                                ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 unsigned long TA_SIGNAL_DURATION = 1000;                         // Transfer arm signal duration
-float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = 0.01;          // Early activation offset distance
+float TA_SIGNAL_ACTIVATION_DISTANCE = 0.01;                     // TA signal activation distance from start of cut (inches)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚠️ ERROR RECOVERY CONSTANTS                                  ║

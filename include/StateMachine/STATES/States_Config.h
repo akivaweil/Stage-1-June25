@@ -41,7 +41,7 @@ extern unsigned long TA_SIGNAL_DURATION;
 // Operational Constants
 extern float ROTATION_CLAMP_ACTIVATION_DISTANCE;
 extern float ROTATION_SERVO_ACTIVATION_DISTANCE;
-extern float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+extern float TA_SIGNAL_ACTIVATION_DISTANCE;
 
 // Safety Constants
 extern unsigned long ROTATION_SERVO_RETURN_DELAY_MS;

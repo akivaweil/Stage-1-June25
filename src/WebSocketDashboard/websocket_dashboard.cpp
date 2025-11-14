@@ -203,7 +203,7 @@ struct ConfigurationData {
     // Operational Constants
     float ROTATION_CLAMP_ACTIVATION_DISTANCE;
     float ROTATION_SERVO_ACTIVATION_DISTANCE;
-    float TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    float TA_SIGNAL_ACTIVATION_DISTANCE;
     
     // Safety Constants
     unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
@@ -262,7 +262,7 @@ ConfigurationData getDefaultConfiguration() {
     // Operational Constants - use Motor_Config defaults
     config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE;
     config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE;
-    config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    config.TA_SIGNAL_ACTIVATION_DISTANCE = TA_SIGNAL_ACTIVATION_DISTANCE;
 
     // Safety Constants - use Motor_Config defaults
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
@@ -314,7 +314,7 @@ void applyConfiguration(const ConfigurationData& config) {
     // Operational Constants
     ROTATION_CLAMP_ACTIVATION_DISTANCE = config.ROTATION_CLAMP_ACTIVATION_DISTANCE;
     ROTATION_SERVO_ACTIVATION_DISTANCE = config.ROTATION_SERVO_ACTIVATION_DISTANCE;
-    TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    TA_SIGNAL_ACTIVATION_DISTANCE = config.TA_SIGNAL_ACTIVATION_DISTANCE;
     
     // Safety Constants
     ROTATION_SERVO_RETURN_DELAY_MS = config.ROTATION_SERVO_RETURN_DELAY_MS;
@@ -390,8 +390,8 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
     for (size_t i = 0; i < sizeof(config.ROTATION_CLAMP_ACTIVATION_DISTANCE); i++) checksum += data[i];
     data = (const uint8_t*)&config.ROTATION_SERVO_ACTIVATION_DISTANCE;
     for (size_t i = 0; i < sizeof(config.ROTATION_SERVO_ACTIVATION_DISTANCE); i++) checksum += data[i];
-    data = (const uint8_t*)&config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
-    for (size_t i = 0; i < sizeof(config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES); i++) checksum += data[i];
+    data = (const uint8_t*)&config.TA_SIGNAL_ACTIVATION_DISTANCE;
+    for (size_t i = 0; i < sizeof(config.TA_SIGNAL_ACTIVATION_DISTANCE); i++) checksum += data[i];
     
     // Safety Constants
     data = (const uint8_t*)&config.ROTATION_SERVO_RETURN_DELAY_MS;
@@ -493,7 +493,7 @@ void saveConfiguration() {
     config.TA_SIGNAL_DURATION = TA_SIGNAL_DURATION;
     config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE;
     config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE;
-    config.TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES = TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES;
+    config.TA_SIGNAL_ACTIVATION_DISTANCE = TA_SIGNAL_ACTIVATION_DISTANCE;
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
     config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
     // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file

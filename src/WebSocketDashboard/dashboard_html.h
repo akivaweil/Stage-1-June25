@@ -618,6 +618,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         const heartbeatIntervalMs = 500; // Send ping every 0.5 seconds (more aggressive)
         const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
         
+        // Uptime smooth update variables
+        let lastUptimeMs = 0;
+        let lastUptimeUpdateTime = 0;
+        let uptimeUpdateInterval = null;
+        
         
         // Cycle timing variables (removed smooth ticking - now shows time since last cycle)
         
@@ -669,6 +674,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         function forceDisconnect() {
             isConnected = false;
+            stopUptimeUpdates();
             if (heartbeatInterval) {
                 clearInterval(heartbeatInterval);
                 heartbeatInterval = null;
@@ -742,6 +748,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                     reconnectAttempts = 0;
                     updateConnectionStatus(true, 'Connected');
                     startHeartbeat();
+                    startUptimeUpdates();
                     console.log('WebSocket connected successfully');
                     
                     
@@ -766,6 +773,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                         
                         if (data.type === 'system_status') {
                             document.getElementById('currentState').textContent = data.currentState;
+                            // Store uptime for smooth client-side updates
+                            lastUptimeMs = data.uptime;
+                            lastUptimeUpdateTime = Date.now();
                             document.getElementById('uptime').textContent = formatUptime(data.uptime);
                         }
                         
@@ -1000,6 +1010,29 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             return `${seconds}s`;
         }
         
+        function updateUptimeSmoothly() {
+            if (lastUptimeMs > 0 && lastUptimeUpdateTime > 0) {
+                const elapsedSinceUpdate = Date.now() - lastUptimeUpdateTime;
+                const currentUptime = lastUptimeMs + elapsedSinceUpdate;
+                document.getElementById('uptime').textContent = formatUptime(currentUptime);
+            }
+        }
+        
+        function startUptimeUpdates() {
+            if (uptimeUpdateInterval) {
+                clearInterval(uptimeUpdateInterval);
+            }
+            // Update uptime every second for smooth display
+            uptimeUpdateInterval = setInterval(updateUptimeSmoothly, 1000);
+        }
+        
+        function stopUptimeUpdates() {
+            if (uptimeUpdateInterval) {
+                clearInterval(uptimeUpdateInterval);
+                uptimeUpdateInterval = null;
+            }
+        }
+        
         function formatTimeSinceLastCycle(seconds) {
             if (seconds === 0) return '0s';
             
@@ -1150,6 +1183,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         console.log('Initializing dashboard...');
         console.log('Body background:', window.getComputedStyle(document.body).background);
         connect();
+        
+        // Start uptime updates immediately (will be reset when connected)
+        startUptimeUpdates();
         
         console.log('Dashboard initialized successfully');
         

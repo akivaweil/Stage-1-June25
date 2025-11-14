@@ -18,7 +18,7 @@ extern unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
 extern unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
 extern unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS;
 extern unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS;
-extern float ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES;
+extern float ROTATION_SERVO_EARLY_ACTIVATION_DISTANCE;
 
 //* ************************************************************************
 //* ************************ [🔧] ROTATION CLAMP **************************

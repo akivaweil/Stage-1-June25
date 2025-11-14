@@ -132,7 +132,8 @@ void updateLedsForReturnState(bool no2x4Detected) {
     }
 }
 
-// Activates a component when cut motor reaches specified position
+// Activates a component when cut motor reaches a position that is
+// a specified distance BEFORE the end of the cut travel
 void activateComponentAtPosition(bool& activatedFlag, float activationOffsetInches, 
                                  void (*activationFunction)()) {
     if (activatedFlag) return;
@@ -143,6 +144,23 @@ void activateComponentAtPosition(bool& activatedFlag, float activationOffsetInch
     extern float getCutTravelDistance();
     long activationSteps = (getCutTravelDistance() - activationOffsetInches) * CUT_MOTOR_STEPS_PER_INCH;
     
+    if (cutMotor->getCurrentPosition() >= activationSteps) {
+        activationFunction();
+        activatedFlag = true;
+    }
+}
+
+// Activates a component when cut motor has traveled a specified
+// distance FROM THE START (home) position
+void activateComponentAtDistanceFromStart(bool& activatedFlag, float activationDistanceInches,
+                                          void (*activationFunction)()) {
+    if (activatedFlag) return;
+
+    FastAccelStepper* cutMotor = getCutMotor();
+    if (!cutMotor) return;
+
+    long activationSteps = activationDistanceInches * CUT_MOTOR_STEPS_PER_INCH;
+
     if (cutMotor->getCurrentPosition() >= activationSteps) {
         activationFunction();
         activatedFlag = true;
@@ -250,9 +268,9 @@ void handleCuttingStep2() {
                                 ROTATION_CLAMP_EARLY_ACTIVATION_OFFSET_INCHES,
                                 extendRotationClamp);
     
-    activateComponentAtPosition(cuttingContext.rotationServoActivated, 
-                                ROTATION_SERVO_EARLY_ACTIVATION_OFFSET_INCHES,
-                                activateRotationServo);
+    activateComponentAtDistanceFromStart(cuttingContext.rotationServoActivated, 
+                                         ROTATION_SERVO_EARLY_ACTIVATION_DISTANCE,
+                                         activateRotationServo);
     
     activateComponentAtPosition(cuttingContext.transferArmSignalSent, 
                                 TA_SIGNAL_EARLY_ACTIVATION_OFFSET_INCHES,

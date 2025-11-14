@@ -162,8 +162,8 @@ void turnBlueLedOff() {
 }
 
 // LED wave pattern timing constants (adjust these to change animation speed)
-const unsigned long LED_WAVE_INTERVAL_MS = 100;    // Time between each LED starting (256ms = 1/4 second)
-const unsigned long LED_ON_DURATION_MS = 200;      // How long each LED stays on (256ms = 1/4 second)
+const unsigned long LED_WAVE_INTERVAL_MS = 200;    // Time between each LED starting (256ms = 1/4 second)
+const unsigned long LED_ON_DURATION_MS = 250;      // How long each LED stays on (256ms = 1/4 second)
 
 // Static variables for LED wave pattern (shared between states)
 static unsigned long ledWaveOnTime[4] = {0, 0, 0, 0}; // When each LED turned on (0 = off)

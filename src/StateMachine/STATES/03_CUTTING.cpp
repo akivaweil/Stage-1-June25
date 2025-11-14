@@ -172,6 +172,11 @@ void onEnterCuttingState() {
     startCuttingCycleTimer();
     stopReloadTimer(); // Stop reload time tracking when entering cutting state
     resetNoWoodLedWavePattern(); // Reset LED wave pattern when starting a new cutting cycle
+    
+    // Turn on yellow LED if wood is present (e.g., when transitioning from RETURNING_Yes_2x4)
+    if (isWoodPresent()) {
+        showYellowLed();
+    }
 }
 
 void onExitCuttingState() {

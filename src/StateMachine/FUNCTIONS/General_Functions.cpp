@@ -218,11 +218,13 @@ void handleNoWoodLedWavePattern() {
     }
 }
 
-void resetNoWoodLedWavePattern() {
+void resetNoWoodLedWavePattern(bool preserveYellowLed) {
     ledWaveInitialized = false;
     // Turn off all LEDs
     digitalWrite(STATUS_LED_RED, LOW);
-    digitalWrite(STATUS_LED_YELLOW, LOW);
+    if (!preserveYellowLed) {
+        digitalWrite(STATUS_LED_YELLOW, LOW);
+    }
     digitalWrite(STATUS_LED_GREEN, LOW);
     digitalWrite(STATUS_LED_BLUE, LOW);
 }

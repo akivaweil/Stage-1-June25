@@ -101,7 +101,7 @@ void turnBlueLedOff();
 void allLedsOff();
 void handleHomingLedBlink();
 void handleNoWoodLedWavePattern();
-void resetNoWoodLedWavePattern();
+void resetNoWoodLedWavePattern(bool preserveYellowLed = false);
 
 //* ************************************************************************
 //* *********************** MOTOR CONTROL FUNCTIONS ************************

@@ -442,35 +442,20 @@ void handleCommonOperations() {
             cooldownEntered = true;
         }
         
-        // Check if suction sensor reads HIGH (Transfer Arm suction grabbed wood)
+        // Wait for suction to RELEASE before returning rotation servo home
         // Sensor only works when servo is at active position
-        // HIGH = Transfer Arm suction grabbed wood (active), LOW = Transfer Arm suction not active
-        // Using debounced reading with 15ms debounce time
-        if (suctionSensorBounce.read() == HIGH && !rotationServoReturnCompleted) {
+        // HIGH = Transfer Arm suction grabbed wood (active), LOW = Transfer Arm suction not active (released)
+        if (suctionSensorBounce.read() == LOW && !rotationServoReturnCompleted) {
             if (!waitingForSuctionDelay) {
-                // First time detecting HIGH - start timer
+                // First time detecting LOW (release) - start timer
                 suctionHighDetectedTime = millis();
                 waitingForSuctionDelay = true;
-                String message = "Transfer Arm suction grabbed wood - waiting before returning servo to home.";
+                String message = "Transfer Arm suction released wood - waiting before returning servo to home.";
                 addSerialLog(message);
             } else {
-                // Check every second if sensor went LOW and reset timer if it did
-                static unsigned long lastCheckTime = 0;
-                if (millis() - lastCheckTime >= 1000) {
-                    suctionSensorBounce.update();
-                    if (suctionSensorBounce.read() == LOW) {
-                        // Sensor went LOW during wait - reset timer
-                        suctionHighDetectedTime = millis();
-                        String message = "Suction sensor went LOW during wait - timer reset.";
-                        addSerialLog(message);
-                    }
-                    lastCheckTime = millis();
-                }
-                
-                // Check if wait duration has passed (faster return after transfer arm grabs wood)
+                // Check if wait duration has passed after suction release before returning
                 if (millis() - suctionHighDetectedTime >= ROTATION_SERVO_SUCTION_HOLD_DURATION_MS) {
-                    // Wait duration has passed continuously - return servo to home
-                    String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
+                    String message = "Transfer Arm suction released wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
                     addSerialLog(message);
                     handleRotationServoReturn();
                     rotationServoIsActiveAndTiming = false;
@@ -479,12 +464,12 @@ void handleCommonOperations() {
                     cooldownEntered = false; // Reset for next cycle
                 }
             }
-        } else if (suctionSensorBounce.read() == LOW) {
-            // Suction sensor still reads LOW - Transfer Arm suction not active yet, continue waiting
-            waitingForSuctionDelay = false; // Reset if sensor goes LOW
+        } else if (suctionSensorBounce.read() == HIGH) {
+            // Suction sensor still reads HIGH - Transfer Arm suction still active, continue holding servo at active position
+            waitingForSuctionDelay = false; // Reset if sensor stays HIGH
             static unsigned long suctionWaitDebugTime = 0;
             if (millis() - suctionWaitDebugTime >= 500) {
-                String message = "Waiting for Transfer Arm suction to grab wood - sensor still LOW after " + String(millis() - rotationServoActiveStartTime) + "ms";
+                String message = "Waiting for Transfer Arm suction to release wood - sensor still HIGH after " + String(millis() - rotationServoActiveStartTime) + "ms";
                 addSerialLog(message);
                 suctionWaitDebugTime = millis();
             }

@@ -27,10 +27,7 @@ namespace {
         bool waitingForServoHome = false;
         bool servoReturnStarted = false;
         unsigned long servoHomeWaitStartedAt = 0;
-        unsigned long servoReturnStartedAt = 0;
     };
-
-    constexpr unsigned long SERVO_START_DELAY_MS = 100UL;
 
     CuttingStateContext cuttingContext;
     bool homePositionErrorDetected = false;
@@ -219,12 +216,6 @@ void handleCuttingStep0() {
         if (!cuttingContext.servoReturnStarted) {
             handleRotationServoReturn();
             cuttingContext.servoReturnStarted = true;
-            cuttingContext.servoReturnStartedAt = millis();
-        }
-        
-        //! Wait for servo to start rotating before allowing cut motor to move
-        if (millis() - cuttingContext.servoReturnStartedAt < SERVO_START_DELAY_MS) {
-            return;
         }
     }
 

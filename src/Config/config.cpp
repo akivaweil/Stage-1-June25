@@ -29,7 +29,7 @@ int ROTATION_SERVO_HOME_POSITION = 26;                           // Servo home p
 int ROTATION_SERVO_ACTIVE_POSITION = 118;                        // Servo active rotation angle
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
-unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;        // Wait duration at home position
+unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait duration at home position
 unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 200;     // Wait time after suction detected before returning
 float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
 

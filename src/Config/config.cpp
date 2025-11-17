@@ -31,12 +31,12 @@ unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to 
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 500;        // Wait duration at home position
 unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 200;     // Wait time after suction detected before returning
-float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.5;                  // Servo activation distance from start of cut (inches)
+float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔧 ROTATION CLAMP CONFIGURATION                              ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2250;          // Time for clamp to fully extend 
+unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for clamp to fully extend 
 float ROTATION_CLAMP_ACTIVATION_DISTANCE = 6.0;                  // Clamp activation distance from start of cut (inches)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗

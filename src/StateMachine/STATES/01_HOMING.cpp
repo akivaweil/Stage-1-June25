@@ -7,6 +7,9 @@
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Handles the homing sequence for all motors.
 
+// Configuration Settings
+unsigned long CUT_HOME_TIMEOUT = 5000; // Cut motor homing timeout
+
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ STEP 1: BLINK BLUE LED TO INDICATE HOMING IN PROGRESS               ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
@@ -77,7 +80,6 @@ void executeHomingState() {
 
     if (!cutMotorHomed) {
         //serial.println("Starting cut motor homing phase (blocking)...");
-        extern const unsigned long CUT_HOME_TIMEOUT; // This is in main.cpp
         homeCutMotorBlocking(*getCutHomingSwitch(), CUT_HOME_TIMEOUT);
         if (getCutMotor() && getCutMotor()->getCurrentPosition() == 0) { // Check if homing was successful
             cutMotorHomed = true;

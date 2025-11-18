@@ -18,58 +18,5 @@ const int CONFIG_OFFSET = 0;          // Configuration starts at beginning of ex
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;     // Sensor reading stabilization delay
 const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100;   // Delay between clamp and feed motor movement
-const unsigned long FEED_CLAMP_DELAY_MS = 300;        // Delay after extending feed clamp
 const unsigned long CYLINDER_ACTION_DELAY_MS = 150;    // Delay for cylinder actions
 const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30; // Sensor verification stabilization delay
-
-//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ ROTATION SERVO SETTINGS                                   ║
-//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-int ROTATION_SERVO_HOME_POSITION = 26;                           // Servo home position angle
-int ROTATION_SERVO_ACTIVE_POSITION = 118;                        // Servo active rotation angle
-unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
-unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
-unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait duration at home position
-unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 200;     // Wait time after suction detected before returning
-float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
-
-//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 ROTATION CLAMP CONFIGURATION                              ║
-//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for clamp to fully extend 
-float ROTATION_CLAMP_ACTIVATION_DISTANCE = 6.0;                  // Clamp activation distance from start of cut (inches)
-
-//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔄 CUT MOTOR TIMING SETTINGS                                 ║
-//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-unsigned long CUT_HOME_TIMEOUT = 5000;                           // Cut motor homing timeout
-unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;              // Recovery operation timeout
-unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;             // Motor state verification delay
-
-//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🤖 TRANSFER ARM CONFIGURATION                                ║
-//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-unsigned long TA_SIGNAL_DURATION = 1000;                         // Transfer arm signal duration
-float TA_SIGNAL_ACTIVATION_DISTANCE = 8.5;                     // TA signal activation distance from start of cut (inches)
-
-//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚠️ ERROR RECOVERY CONSTANTS                                  ║
-//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-const unsigned long CUT_MOTOR_HOME_RECOVERY_TIMEOUT_MS = 5000;   // Maximum recovery time (5 seconds)
-const float CUT_MOTOR_HOME_RECOVERY_SPEED = 1000;                // Recovery speed (same as homing speed)
-const float DECELERATION_DISTANCE_INCHES = 0.2;                  // Maximum deceleration distance
-
-//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🎯 STATE OPERATION CONFIGURATION                             ║
-//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6;                   // Speed reduction for NO_2x4 returning sequence
-const float FEED_MOTOR_2ND_POSITION = -1.2;                      // Position for 2nd position movement
-const float FEED_MOTOR_HOME_POSITION = 1.0;                      // Home position
-const float FEED_MOTOR_FINAL_POSITION = -1.2;                    // Final position
-
-const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2;          // First run start position (inches)
-const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4;             // First run end position (inches)
-const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2;         // Second run start position (inches)
-const float FEED_MOTOR_SECOND_RUN_END_POSITION = 2.1;            // Second run end position (inches)
-
-const unsigned long FEED_HOME_TIMEOUT = 30000;                   // Feed motor homing timeout (30 seconds)

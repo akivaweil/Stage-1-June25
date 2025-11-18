@@ -13,6 +13,9 @@ extern FastAccelStepper* cutMotor;
 extern FastAccelStepper* feedMotor;
 extern Bounce cutHomingSwitch;
 
+// Configuration Constants
+const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
+
 //* ************************************************************************
 //* *********************** SIGNALING FUNCTIONS ****************************
 //* ************************************************************************
@@ -417,7 +420,6 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
 
     // Add timeout for feed motor homing
     unsigned long startTime = millis();
-    const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
 
     while (homingSwitch.read() != LOW) {
         homingSwitch.update();
@@ -495,7 +497,6 @@ bool homeFeedMotorNonBlocking(Bounce& homingSwitch) {
     }
     
     // Check for timeout
-    const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
     if (millis() - feedMotorHomingStartTime > FEED_HOME_TIMEOUT) {
         feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
         feedMotorHomingInProgress = false;

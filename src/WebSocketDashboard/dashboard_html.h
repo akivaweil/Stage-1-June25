@@ -15,8 +15,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
     <style>
         :root {
             /* Lighter Dark Theme (Slate 800/700) */
-            --bg-main: #1e293b;   /* Slate 800 - Lighter than previous #030712 */
-            --bg-card: #334155;   /* Slate 700 - Lighter than previous #0f172a */
+            --bg-main: #1e293b;   /* Slate 800 */
+            --bg-card: #334155;   /* Slate 700 */
+            --bg-card-gradient: linear-gradient(145deg, #334155 0%, #273548 100%);
             --bg-card-hover: #475569; /* Slate 600 */
             
             --accent-primary: #60a5fa;   /* Lighter Blue */
@@ -29,10 +30,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             --text-muted: #cbd5e1;    /* Slate 300 */
             --text-dim: #94a3b8;      /* Slate 400 */
             
-            --border-subtle: rgba(255, 255, 255, 0.1);
-            --border-active: rgba(255, 255, 255, 0.2);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-active: rgba(255, 255, 255, 0.25);
             
-            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
             --shadow-glow: 0 0 20px rgba(96, 165, 250, 0.15);
             
             --radius-lg: 24px;
@@ -81,26 +83,37 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             font-weight: 700;
             letter-spacing: -0.02em;
             color: var(--text-main);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         /* Cards */
         .card {
-            background: var(--bg-card);
+            background: var(--bg-card-gradient);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-lg);
             padding: 1.5rem;
             position: relative;
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy but subtle */
             box-shadow: var(--shadow-card);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
+        /* Top highlight for depth */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            opacity: 0.6;
+        }
+
         .card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px) scale(1.01);
             border-color: var(--border-active);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-hover);
+            z-index: 10;
         }
 
         .card-header {
@@ -129,10 +142,15 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             font-size: 0.85rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .status-badge:hover { background: rgba(255, 255, 255, 0.1); }
+        .status-badge:hover { 
+            background: rgba(255, 255, 255, 0.1); 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
         
         .status-dot {
             width: 8px; height: 8px;
@@ -159,6 +177,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             letter-spacing: -0.03em;
             color: var(--text-main);
             font-variant-numeric: tabular-nums;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
         .value-large {
@@ -182,13 +201,15 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .state-display {
             text-align: center;
             padding: 2rem 0;
-            background: radial-gradient(circle at center, rgba(96, 165, 250, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle at center, rgba(96, 165, 250, 0.08) 0%, transparent 70%);
+            border-radius: var(--radius-md);
+            margin: -0.5rem -0.5rem 0.5rem -0.5rem;
         }
         .state-value {
             font-size: 2rem;
             font-weight: 800;
             color: var(--accent-primary);
-            text-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+            text-shadow: 0 0 25px rgba(96, 165, 250, 0.4);
             margin-bottom: 0.5rem;
         }
 
@@ -207,12 +228,19 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             align-items: center;
             justify-content: space-between;
             border: 1px solid transparent;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .sensor-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            transform: translateY(-1px);
         }
 
         .sensor-item.active {
             background: rgba(52, 211, 153, 0.1);
             border-color: rgba(52, 211, 153, 0.3);
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.1);
         }
 
         .sensor-label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); }
@@ -251,6 +279,12 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             border-radius: var(--radius-sm);
             padding: 0.75rem 0.5rem;
             text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .mini-chart-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.05);
         }
 
         /* Errors */
@@ -262,6 +296,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             background: rgba(248, 113, 113, 0.1);
             border-radius: var(--radius-md);
             color: var(--accent-danger);
+            border: 1px solid rgba(248, 113, 113, 0.1);
+            transition: all 0.2s;
+        }
+        
+        .error-stat:hover {
+            background: rgba(248, 113, 113, 0.15);
+            border-color: rgba(248, 113, 113, 0.3);
         }
 
         /* Config Inputs */
@@ -279,10 +320,16 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             width: 100%;
             font-family: 'Space Mono', monospace;
             font-size: 0.9rem;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
         
-        input:focus { outline: none; border-color: var(--accent-primary); background: rgba(0, 0, 0, 0.5); }
+        input:focus { 
+            outline: none; 
+            border-color: var(--accent-primary); 
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
 
         button.btn {
             background: var(--bg-card-hover);
@@ -299,7 +346,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             background: var(--accent-primary);
             color: white;
             border-color: transparent;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
         }
+        
+        button.btn:active { transform: translateY(0); }
 
         /* Logs */
         .log-terminal {
@@ -312,6 +363,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             overflow-y: auto;
             border: 1px solid var(--border-subtle);
             color: #f1f5f9;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .log-line {

@@ -102,6 +102,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             font-size: 0.75rem;
         }
 
+        .dimmed {
+            color: var(--text-dim) !important;
+            opacity: 0.5;
+        }
+
         /* Layout */
         .dashboard-grid {
             display: grid;
@@ -495,19 +500,19 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                     <div class="label-sm" style="margin-bottom: 0.5rem">CYCLES / MIN (AVG)</div>
                     <div class="mini-charts">
                         <div class="mini-chart-card">
-                            <div class="value-large" id="avgCycles1Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="value-large dimmed" id="avgCycles1Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">1M</div>
                         </div>
                         <div class="mini-chart-card">
-                            <div class="value-large" id="avgCycles3Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="value-large dimmed" id="avgCycles3Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">3M</div>
                         </div>
                         <div class="mini-chart-card">
-                            <div class="value-large" id="avgCycles5Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="value-large dimmed" id="avgCycles5Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">5M</div>
                         </div>
                         <div class="mini-chart-card">
-                            <div class="value-large" id="avgCycles15Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="value-large dimmed" id="avgCycles15Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">15M</div>
                         </div>
                     </div>
@@ -835,7 +840,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         function updateMetric(id, val) {
             const el = document.getElementById(id);
-            el.textContent = typeof val === 'number' ? (val % 1 === 0 ? val : val.toFixed(1)) : '0.0';
+            if (typeof val === 'number' && val >= 0) {
+                el.textContent = (val % 1 === 0 ? val : val.toFixed(1));
+                el.classList.remove('dimmed');
+            } else {
+                el.textContent = '0.0';
+                el.classList.add('dimmed');
+            }
         }
 
         function updateLog(id, items, isSerial = false) {

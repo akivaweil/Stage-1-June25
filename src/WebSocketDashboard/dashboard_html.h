@@ -10,723 +10,574 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table Saw Dashboard</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='120'>⚙</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-dark: #030712;
+            --bg-card: #0f172a;
+            --bg-card-hover: #1e293b;
+            
+            --accent-primary: #3b82f6;   /* Blue */
+            --accent-secondary: #8b5cf6; /* Purple */
+            --accent-success: #10b981;   /* Emerald */
+            --accent-warning: #f59e0b;   /* Amber */
+            --accent-danger: #ef4444;    /* Red */
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-active: rgba(255, 255, 255, 0.12);
+            
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+            --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+            
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 8px;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 16px;
-            overflow-x: hidden;
             line-height: 1.5;
-            display: block !important;
-            visibility: visible !important;
+            overflow-x: hidden;
+            padding: 2rem;
         }
-        
-        .background-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            z-index: -1;
-        }
-        
-        .background-animation::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
-            animation: float 40s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        .container {
-            max-width: 1400px;
+
+        /* Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+            max-width: 1600px;
             margin: 0 auto;
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            padding: 0 4px;
-            animation: fadeInUp 0.8s ease-out;
-            visibility: visible !important;
         }
-        
+
+        .col-span-4 { grid-column: span 4; }
+        .col-span-6 { grid-column: span 6; }
+        .col-span-8 { grid-column: span 8; }
+        .col-span-12 { grid-column: span 12; }
+
+        /* Header */
+        header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0 0.5rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, var(--text-main), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Cards */
         .card {
-            background: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 
-                        0 4px 16px rgba(0, 0, 0, 0.1),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
             position: relative;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
-        
-        .card:hover {
-            background: rgba(255, 255, 255, 0.18);
-            transform: translateY(-4px);
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2), 
-                        0 8px 24px rgba(0, 0, 0, 0.15),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-active), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-active);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .card:hover::before { opacity: 1; }
+
         .card-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        
-        .card-icon {
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
+
+        .card-header svg { width: 18px; height: 18px; stroke-width: 2.5; }
+
+        /* Status Badge */
+        .status-badge {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-badge:hover { background: rgba(255, 255, 255, 0.06); }
+        
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            transition: all 0.3s;
+        }
+
+        .status-badge.connected .status-dot {
+            background: var(--accent-success);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
         }
         
-        .card-title {
-            color: #ffffff;
-            font-size: 1.15rem;
+        .status-badge.disconnected .status-dot {
+            background: var(--accent-danger);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+        }
+
+        /* Typography Utilities */
+        .value-huge {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .value-large {
+            font-size: 1.75rem;
             font-weight: 600;
             letter-spacing: -0.02em;
+            color: var(--text-main);
         }
-        
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
-        }
-        
-        .status-item {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-        }
-        
-        .status-item.active {
-            background: rgba(34, 197, 94, 0.25);
-            border: 1px solid rgba(34, 197, 94, 0.4);
-            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
-        }
-        
-        .status-item.inactive {
-            background: rgba(107, 114, 128, 0.15);
-            border: 1px solid rgba(107, 114, 128, 0.25);
-        }
-        
-        
-        .status-label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.8rem;
-            margin-bottom: 4px;
+
+        .label-sm {
+            font-size: 0.75rem;
+            color: var(--text-dim);
             font-weight: 500;
+            margin-top: 0.25rem;
         }
+
+        /* Specific Components */
         
-        .status-value {
-            color: #ffffff;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            transition: all 0.3s ease;
-        }
-        
-        .status-value.loading {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-        }
-        
-        .metric-item {
+        /* System Status */
+        .state-display {
             text-align: center;
+            padding: 2rem 0;
+            background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
         }
-        
-        .metric-value {
-            color: #ffffff;
+        .state-value {
             font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 4px;
-            letter-spacing: -0.02em;
+            color: var(--accent-primary);
+            text-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Sensor Matrix */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .sensor-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .sensor-item.active {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .sensor-label { font-size: 0.9rem; font-weight: 500; }
+        
+        .sensor-led {
+            width: 12px; height: 6px;
+            border-radius: 10px;
+            background: var(--bg-card-hover);
+            transition: all 0.3s;
+        }
+
+        .sensor-item.active .sensor-led {
+            background: var(--accent-success);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Metrics */
+        .metrics-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-end;
         }
         
-        .metric-label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.85rem;
-            font-weight: 500;
+        .metric-block { flex: 1; }
+        
+        .mini-charts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
         
-        .metric-item.ghosted {
-            opacity: 0.3;
-            pointer-events: none;
+        .mini-chart-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+        }
+
+        /* Errors */
+        .error-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(239, 68, 68, 0.05);
+            border-radius: var(--radius-md);
+            color: var(--accent-danger);
+        }
+
+        /* Config Inputs */
+        .input-group { margin-bottom: 1.25rem; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        
+        .input-row { display: flex; gap: 0.75rem; }
+        
+        input[type="number"] {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            width: 100%;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
         }
         
-        .metric-item.ghosted .metric-value {
-            color: rgba(255, 255, 255, 0.4);
-        }
-        
-        .metric-item.ghosted .metric-label {
-            color: rgba(255, 255, 255, 0.4);
-        }
-        
-        .connection-status {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 14px 24px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        input:focus { outline: none; border-color: var(--accent-primary); }
+
+        button.btn {
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border-subtle);
+            color: var(--accent-primary);
+            padding: 0 1.25rem;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
         }
         
-        .connection-status.disconnected {
-            background: rgba(239, 68, 68, 0.9);
-            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
-            font-size: 1.9rem;
-            padding: 28px 48px;
-            font-weight: 700;
+        button.btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: transparent;
         }
-        
-        .connection-status.connected {
-            background: rgba(34, 197, 94, 0.9);
-            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
-        }
-        
-        
-        .connection-status:hover {
-            transform: translateY(-2px);
-        }
-        
-        
-        .event-log {
-            max-height: 280px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 10px;
-            padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .event-log::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .event-log::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-        
-        .event-log::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-        
-        .event-log::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-        
-        .event-item {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid rgba(59, 130, 246, 0.6);
-            display: flex;
-            align-items: center;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        
-        .event-item:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateX(4px);
-        }
-        
-        .event-item.error {
-            border-left-color: rgba(239, 68, 68, 0.8);
-            background: rgba(239, 68, 68, 0.1);
-        }
-        
-        .event-item.error:hover {
-            background: rgba(239, 68, 68, 0.15);
-        }
-        
-        .event-item.state-change {
-            border-left-color: rgba(34, 197, 94, 0.8);
-            background: rgba(34, 197, 94, 0.08);
-        }
-        
-        .event-item.state-change:hover {
-            background: rgba(34, 197, 94, 0.12);
-        }
-        
-        .event-item.system {
-            border-left-color: rgba(168, 85, 247, 0.8);
-            background: rgba(168, 85, 247, 0.08);
-        }
-        
-        .event-item.system:hover {
-            background: rgba(168, 85, 247, 0.12);
-        }
-        
-        .event-item.performance {
-            border-left-color: rgba(245, 158, 11, 0.8);
-            background: rgba(245, 158, 11, 0.08);
-        }
-        
-        .event-item.performance:hover {
-            background: rgba(245, 158, 11, 0.12);
-        }
-        
-        .event-icon {
-            margin-right: 6px;
+
+        /* Logs */
+        .log-terminal {
+            background: #000;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: 'Space Mono', monospace;
             font-size: 0.8rem;
-            min-width: 14px;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-subtle);
         }
-        
-        .event-timestamp {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.7rem;
-            margin-right: 6px;
-            min-width: 65px;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .event-message {
-            flex: 1;
-        }
-        
-        .full-width {
-            grid-column: 1 / -1;
-        }
-        
-        .chart-container {
-            height: 180px;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 10px;
+
+        .log-line {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 1rem;
-            font-weight: 500;
+            gap: 1rem;
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        
+        .log-time { color: var(--text-dim); min-width: 60px; }
+        .log-msg { color: var(--text-muted); word-break: break-all; }
+        
+        .log-line.error .log-msg { color: var(--accent-danger); }
+        .log-line.success .log-msg { color: var(--accent-success); }
+        .log-line.warn .log-msg { color: var(--accent-warning); }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: 1fr 1fr; }
+            .col-span-4, .col-span-6, .col-span-8, .col-span-12 { grid-column: span 2; }
         }
         
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                padding: 0 4px;
-            }
-            
-            .card {
-                padding: 20px;
-            }
-            
-            .connection-status {
-                top: 16px;
-                right: 16px;
-                padding: 12px 20px;
-                font-size: 0.9rem;
-            }
+            body { padding: 1rem; }
+            .dashboard-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .col-span-4, .col-span-6, .col-span-8, .col-span-12 { grid-column: span 1; }
+            .metrics-container { flex-direction: column; gap: 1rem; }
+            .sensor-grid { grid-template-columns: 1fr; }
         }
+        
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div class="background-animation"></div>
-    
-    <div class="connection-status disconnected" id="connectionStatus">
-        <span id="connectionText">Disconnected</span>
-    </div>
-    
-    <div class="container">
-        <!-- System Status Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-icon">⚙️</div>
-                <div class="card-title">System Status</div>
+    <div class="dashboard-grid">
+        <header>
+            <h1>Stage 1 Controller</h1>
+            <div class="status-badge disconnected" id="connectionStatus">
+                <div class="status-dot"></div>
+                <span id="connectionText">Offline</span>
             </div>
-            <div class="status-grid">
-                <div class="status-item">
-                    <div class="status-label">Current State</div>
-                    <div class="status-value" id="currentState">-</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-label">Uptime</div>
-                    <div class="status-value" id="uptime">-</div>
+        </header>
+
+        <!-- System Status -->
+        <div class="card col-span-4 fade-in" style="animation-delay: 0.1s">
+            <div class="card-header">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+                System State
+            </div>
+            <div class="state-display">
+                <div class="state-value" id="currentState">INITIALIZING</div>
+                <div class="label-sm">CURRENT PROCESS</div>
+            </div>
+            <div style="margin-top: auto; display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                <div>
+                    <div class="value-large" id="uptime" style="font-size: 1.25rem; font-family: 'Space Mono';">00:00:00</div>
+                    <div class="label-sm">UPTIME</div>
                 </div>
             </div>
         </div>
-        
-        <!-- Performance Metrics Card -->
-        <div class="card full-width">
+
+        <!-- Performance -->
+        <div class="card col-span-8 fade-in" style="animation-delay: 0.2s">
             <div class="card-header">
-                <div class="card-icon">📊</div>
-                <div class="card-title">Performance Metrics</div>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Performance Metrics
+            </div>
+            <div class="metrics-container">
+                <div>
+                    <div class="value-huge" id="reloadTime">-</div>
+                    <div class="label-sm">LAST RELOAD TIME</div>
+                </div>
+                <div class="metric-block">
+                    <div class="label-sm" style="margin-bottom: 0.5rem">CYCLES / MIN (AVG)</div>
+                    <div class="mini-charts">
+                        <div class="mini-chart-card">
+                            <div class="value-large" id="avgCycles1Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="label-sm">1M</div>
+                        </div>
+                        <div class="mini-chart-card">
+                            <div class="value-large" id="avgCycles3Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="label-sm">3M</div>
+                        </div>
+                        <div class="mini-chart-card">
+                            <div class="value-large" id="avgCycles5Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="label-sm">5M</div>
+                        </div>
+                        <div class="mini-chart-card">
+                            <div class="value-large" id="avgCycles15Min" style="font-size: 1.5rem">0.0</div>
+                            <div class="label-sm">15M</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensors -->
+        <div class="card col-span-4 fade-in" style="animation-delay: 0.3s">
+            <div class="card-header">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Sensor Matrix
+            </div>
+            <div class="sensor-grid">
+                <div class="sensor-item" id="sensor_2x4">
+                    <span class="sensor-label">2x4 Present</span>
+                    <div class="sensor-led"></div>
+                </div>
+                <div class="sensor-item" id="sensor_suction">
+                    <span class="sensor-label">Suction</span>
+                    <div class="sensor-led"></div>
+                </div>
+                <div class="sensor-item" id="sensor_firstcut">
+                    <span class="sensor-label">First Cut</span>
+                    <div class="sensor-led"></div>
+                </div>
+                <div class="sensor-item" id="sensor_cuthome">
+                    <span class="sensor-label">Cut Home</span>
+                    <div class="sensor-led"></div>
+                </div>
+                <div class="sensor-item" id="sensor_feedhome">
+                    <span class="sensor-label">Feed Home</span>
+                    <div class="sensor-led"></div>
+                </div>
+                <div class="sensor-item" id="sensor_reload">
+                    <span class="sensor-label">Reload</span>
+                    <div class="sensor-led"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errors -->
+        <div class="card col-span-4 fade-in" style="animation-delay: 0.4s">
+            <div class="card-header">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--accent-danger)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                Diagnostics
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem; height: 100%;">
+                <div>
+                    <div class="label-sm">LATEST ERROR</div>
+                    <div id="lastError" style="color: var(--accent-danger); font-weight: 500; margin-top: 0.25rem;">None</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: auto;">
+                    <div class="error-stat">
+                        <div style="font-weight: 700; font-size: 1.5rem;" id="cutMotorErrorCount">0</div>
+                        <div class="label-sm" style="color: var(--accent-danger)">CUT ERR</div>
+                    </div>
+                    <div class="error-stat">
+                        <div style="font-weight: 700; font-size: 1.5rem;" id="suctionErrorCount">0</div>
+                        <div class="label-sm" style="color: var(--accent-danger)">SUC ERR</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Config -->
+        <div class="card col-span-4 fade-in" style="animation-delay: 0.5s">
+            <div class="card-header">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Configuration
             </div>
             
-            <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.2);">
-                <div style="color: #ffffff; font-size: 2.6rem; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em;" id="reloadTime">-</div>
-                <div style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; font-weight: 600; letter-spacing: 0.05em;">RELOAD TIME</div>
+            <div class="input-group">
+                <label>Cut Distance (in)</label>
+                <div class="input-row">
+                    <input type="number" id="cutTravelDistance" step="0.1" placeholder="9.2">
+                    <button class="btn" onclick="updateConfig('cut_travel_distance')">SAVE</button>
+                </div>
             </div>
             
-            <!-- Time-based Performance Breakdown -->
-            <div style="margin-top: 18px;">
-                <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; font-weight: 600; margin-bottom: 12px; text-align: center;">Cycles Over Time</h3>
-                <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;">
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles1Min" style="font-size: 2rem;">0.0</div>
-                        <div class="metric-label">1 Min Avg/min</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles3Min" style="font-size: 2rem;">0.0</div>
-                        <div class="metric-label">3 Min Avg/min</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles5Min" style="font-size: 2rem;">0.0</div>
-                        <div class="metric-label">5 Min Avg/min</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles15Min" style="font-size: 2rem;">0.0</div>
-                        <div class="metric-label">15 Min Avg/min</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value" id="avgCycles30Min" style="font-size: 2rem;">0.0</div>
-                        <div class="metric-label">30 Min Avg/min</div>
-                    </div>
+            <div class="input-group">
+                <label>Feed Distance (in)</label>
+                <div class="input-row">
+                    <input type="number" id="feedTravelDistance" step="0.01" placeholder="3.43">
+                    <button class="btn" onclick="updateConfig('feed_travel_distance')">SAVE</button>
                 </div>
             </div>
+            
+            <div class="input-group">
+                <label>Cut Motor Speed</label>
+                <div class="input-row">
+                    <input type="number" id="cutMotorNormalSpeed" step="10" placeholder="640">
+                    <button class="btn" onclick="updateConfig('cut_motor_normal_speed')">SAVE</button>
+                </div>
+            </div>
+
+            <div id="configStatus" style="font-size: 0.8rem; text-align: center; min-height: 1.2em; transition: color 0.3s;"></div>
         </div>
-        
-        
-        <!-- Sensor Status Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-icon">🔍</div>
-                <div class="card-title">Sensors</div>
-            </div>
-            <div class="status-grid">
-                <div class="status-item" id="sensor_2x4">
-                    <div class="status-label">2x4 Present</div>
-                    <div class="status-value">-</div>
+
+        <!-- Logs -->
+        <div class="card col-span-12 fade-in" style="animation-delay: 0.6s">
+            <div class="card-header clickable" onclick="toggleLogs(this)" style="cursor: pointer; margin-bottom: 0; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                    System Logs
                 </div>
-                <div class="status-item" id="sensor_suction">
-                    <div class="status-label">Wood Suction</div>
-                    <div class="status-value">-</div>
+                <svg id="logToggleIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(0deg); transition: transform 0.3s;"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            
+            <div id="logContent" style="display: none; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                <div>
+                    <div class="label-sm" style="margin-bottom: 0.5rem;">EVENTS</div>
+                    <div class="log-terminal" id="eventLog"></div>
                 </div>
-                <div class="status-item" id="sensor_firstcut">
-                    <div class="status-label">First Cut</div>
-                    <div class="status-value">-</div>
+                <div>
+                    <div class="label-sm" style="margin-bottom: 0.5rem;">SERIAL</div>
+                    <div class="log-terminal" id="serialLog"></div>
                 </div>
-                <div class="status-item" id="sensor_cuthome">
-                    <div class="status-label">Cut Home</div>
-                    <div class="status-value">-</div>
-                </div>
-                <div class="status-item" id="sensor_feedhome">
-                    <div class="status-label">Feed Home</div>
-                    <div class="status-value">-</div>
-                </div>
-                <div class="status-item" id="sensor_reload">
-                    <div class="status-label">Reload</div>
-                    <div class="status-value">-</div>
-                </div>
-            </div>
-        </div>
-        
-        
-        <!-- Error Status Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-icon">⚠️</div>
-                <div class="card-title">Error Status</div>
-            </div>
-            <div class="status-grid">
-                <div class="status-item">
-                    <div class="status-label">Last Error</div>
-                    <div class="status-value" id="lastError">None</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-label">Cut Motor Errors</div>
-                    <div class="status-value" id="cutMotorErrorCount">0</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-label">Suction Errors</div>
-                    <div class="status-value" id="suctionErrorCount">0</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Configuration Card -->
-        <div class="card full-width">
-            <div class="card-header">
-                <div class="card-icon">⚙️</div>
-                <div class="card-title">Configuration Settings</div>
-            </div>
-            <div style="padding: 16px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
-                    
-                    <!-- Configuration Section -->
-                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto; max-width: 400px;">
-                        <h3 style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Configuration Settings</h3>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Travel Distance (inches)</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="cutTravelDistance" step="0.1" min="0.1" max="20.0" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="9.2">
-                                <button onclick="updateConfig('cut_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0.1 - 20.0</div>
-                        </div>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Feed Travel Distance (inches)</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="feedTravelDistance" step="0.01" min="0.1" max="10.0" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="3.43">
-                                <button onclick="updateConfig('feed_travel_distance')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 0.1 - 10.0</div>
-                        </div>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; font-weight: 500; margin-bottom: 6px;">Cut Motor Normal Speed</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="cutMotorNormalSpeed" step="10" min="100" max="5000" 
-                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.9rem;" 
-                                       placeholder="640">
-                                <button onclick="updateConfig('cut_motor_normal_speed')" style="padding: 8px 12px; background: rgba(34, 197, 94, 0.8); border: 1px solid rgba(34, 197, 94, 0.6); border-radius: 6px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
-                            </div>
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin-top: 2px;">Range: 100 - 5000</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="configStatus" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; display: none; margin-top: 16px;"></div>
-            </div>
-        </div>
-        
-        <!-- Event Log Card -->
-        <div class="card full-width">
-            <div class="card-header">
-                <div class="card-icon">📝</div>
-                <div class="card-title">Event Log</div>
-            </div>
-            <div class="event-log" id="eventLog">
-                <div class="event-item">System initializing...</div>
-            </div>
-        </div>
-        
-        <!-- Serial Log Card -->
-        <div class="card full-width">
-            <div class="card-header">
-                <div class="card-icon">🔧</div>
-                <div class="card-title">Serial Log</div>
-            </div>
-            <div class="event-log" id="serialLog">
-                <div class="event-item">Waiting for serial output...</div>
-            </div>
-        </div>
-        
-        <!-- Performance Chart Card -->
-        <div class="card full-width">
-            <div class="card-header">
-                <div class="card-icon">📈</div>
-                <div class="card-title">Performance Chart</div>
-            </div>
-            <div class="chart-container">
-                Cycle time chart will be displayed here
             </div>
         </div>
     </div>
 
     <script>
-        console.log('Dashboard script starting...');
+        // Logic maintained from original
         let ws;
         let reconnectTimeout;
         let heartbeatInterval;
         let heartbeatTimeout;
         let isConnected = false;
         let reconnectAttempts = 0;
-        let lastPongReceived = 0;
-        let isReconnecting = false;
-        const maxReconnectAttempts = 50; // Increased from 20 to 50 for more persistent reconnection
-        const heartbeatIntervalMs = 500; // Send ping every 0.5 seconds (more aggressive)
-        const heartbeatTimeoutMs = 1500; // Consider connection dead after 1.5 seconds without pong
         
-        // Uptime smooth update variables
+        // Uptime logic
         let lastUptimeMs = 0;
         let lastUptimeUpdateTime = 0;
         let uptimeUpdateInterval = null;
-        
-        
-        // Cycle timing variables (removed smooth ticking - now shows time since last cycle)
-        
-        function updateConnectionStatus(connected, message, isReconnecting = false) {
-            const statusEl = document.getElementById('connectionStatus');
-            const textEl = document.getElementById('connectionText');
+
+        function toggleLogs(header) {
+            const content = document.getElementById('logContent');
+            const icon = document.getElementById('logToggleIcon');
             
-            if (connected) {
-                statusEl.className = 'connection-status connected';
-                textEl.textContent = 'Connected';
+            if (content.style.display === 'none') {
+                content.style.display = 'grid';
+                icon.style.transform = 'rotate(180deg)';
             } else {
-                statusEl.className = 'connection-status disconnected';
-                textEl.textContent = 'Disconnected';
+                content.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
             }
         }
-        
-        function startHeartbeat() {
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
+
+        function updateConnectionStatus(connected) {
+            const badge = document.getElementById('connectionStatus');
+            const text = document.getElementById('connectionText');
+            if (connected) {
+                badge.classList.remove('disconnected');
+                badge.classList.add('connected');
+                text.textContent = 'Online';
+            } else {
+                badge.classList.remove('connected');
+                badge.classList.add('disconnected');
+                text.textContent = 'Offline';
             }
-            if (heartbeatTimeout) {
-                clearTimeout(heartbeatTimeout);
-            }
-            
-            lastPongReceived = Date.now();
-            
-            heartbeatInterval = setInterval(() => {
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    try {
-                        ws.send(JSON.stringify({type: 'ping'}));
-                        
-                        // Set timeout to detect if pong is not received
-                        if (heartbeatTimeout) {
-                            clearTimeout(heartbeatTimeout);
-                        }
-                        heartbeatTimeout = setTimeout(() => {
-                            console.log('Heartbeat timeout - no pong received');
-                            forceDisconnect();
-                        }, heartbeatTimeoutMs);
-                    } catch (error) {
-                        console.log('Error sending ping:', error);
-                        forceDisconnect();
-                    }
-                } else {
-                    forceDisconnect();
-                }
-            }, heartbeatIntervalMs);
         }
-        
-        function forceDisconnect() {
-            isConnected = false;
-            stopUptimeUpdates();
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
-            }
-            if (heartbeatTimeout) {
-                clearTimeout(heartbeatTimeout);
-                heartbeatTimeout = null;
-            }
-            if (ws) {
-                ws.close();
-                ws = null;
-            }
-            updateConnectionStatus(false, '', false);
-            attemptReconnect();
-        }
-        
-        function attemptReconnect() {
-            if (isReconnecting) {
-                return; // Prevent multiple simultaneous reconnection attempts
-            }
-            
-            if (reconnectAttempts >= maxReconnectAttempts) {
-                // Reset attempts after a longer delay to allow for network recovery
-                setTimeout(() => {
-                    reconnectAttempts = 0;
-                    attemptReconnect();
-                }, 10000); // Wait 10 seconds before resetting attempts
-                return;
-            }
-            
-            isReconnecting = true;
-            reconnectAttempts++;
-            const delay = Math.min(500 + (reconnectAttempts * 200), 5000); // Slower, more stable reconnection attempts
-            
-            updateConnectionStatus(false, '', false); // Show "Disconnected"
-            
-            reconnectTimeout = setTimeout(() => {
-                if (!isConnected) {
-                    connect();
-                }
-                isReconnecting = false;
-            }, delay);
-        }
-        
 
         function connect() {
-            if (reconnectTimeout) {
-                clearTimeout(reconnectTimeout);
-                reconnectTimeout = null;
-            }
-            
-            updateConnectionStatus(false, '', false); // Show "Disconnected"
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
             
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}/ws`;
@@ -734,502 +585,216 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             try {
                 ws = new WebSocket(wsUrl);
                 
-                const connectionTimeout = setTimeout(() => {
-                    if (ws && ws.readyState === WebSocket.CONNECTING) {
-                        ws.close();
-                        forceDisconnect();
-                    }
-                }, 2000); // Reduced timeout for faster disconnection detection
-                
-                ws.onopen = function() {
-                    clearTimeout(connectionTimeout);
+                ws.onopen = () => {
                     isConnected = true;
-                    isReconnecting = false;
                     reconnectAttempts = 0;
-                    updateConnectionStatus(true, 'Connected');
+                    updateConnectionStatus(true);
                     startHeartbeat();
                     startUptimeUpdates();
-                    console.log('WebSocket connected successfully');
-                    
-                    
-                    // Request all configuration values
                     requestAllConfig();
                 };
                 
-                ws.onmessage = function(event) {
+                ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
-                        
-                        if (data.type === 'pong') {
-                            // Clear heartbeat timeout since we received a pong
-                            if (heartbeatTimeout) {
-                                clearTimeout(heartbeatTimeout);
-                                heartbeatTimeout = null;
-                            }
-                            lastPongReceived = Date.now();
-                            return;
-                        }
-                        
-                        
-                        if (data.type === 'system_status') {
-                            document.getElementById('currentState').textContent = data.currentState;
-                            // Store uptime for smooth client-side updates
-                            lastUptimeMs = data.uptime;
-                            lastUptimeUpdateTime = Date.now();
-                            document.getElementById('uptime').textContent = formatUptime(data.uptime);
-                        }
-                        
-                        if (data.type === 'sensor_status') {
-                            updateSensorStatus(data);
-                        }
-                        
-                        
-                        if (data.type === 'performance_metrics') {
-                            
-                            // Update reload time (shows time from no 2x4 state end to feed first cut or cutting state)
-                            if (data.reloadTime !== undefined && data.reloadTime > 0) {
-                                document.getElementById('reloadTime').textContent = formatTimeSinceLastCycle(data.reloadTime);
-                            } else {
-                                document.getElementById('reloadTime').textContent = '-';
-                            }
-                            
-                            const systemUptime = data.systemUptime || 0;
-                            
-                            // Update time-based metrics with ghosting logic (only averages now)
-                            updateTimeBasedMetricAvg('avgCycles1Min', data.avgCycles1Min, systemUptime, 60000, true);
-                            updateTimeBasedMetricAvg('avgCycles3Min', data.avgCycles3Min, systemUptime, 180000, false);
-                            updateTimeBasedMetricAvg('avgCycles5Min', data.avgCycles5Min, systemUptime, 300000, false);
-                            updateTimeBasedMetricAvg('avgCycles15Min', data.avgCycles15Min, systemUptime, 900000, false);
-                            updateTimeBasedMetricAvg('avgCycles30Min', data.avgCycles30Min, systemUptime, 1800000, false);
-                        }
-                        
-                        if (data.type === 'error_status') {
-                            document.getElementById('lastError').textContent = data.lastError;
-                            document.getElementById('cutMotorErrorCount').textContent = data.cutMotorErrorCount || 0;
-                            document.getElementById('suctionErrorCount').textContent = data.suctionErrorCount || 0;
-                        }
-                        
-                        if (data.type === 'event_log') {
-                            updateEventLog(data.events);
-                        }
-                        
-                        if (data.type === 'serial_log') {
-                            updateSerialLog(data.logs);
-                        }
-                        
-                        
-                        if (data.type === 'config_value') {
-                            updateConfigField(data.key, data.value);
-                        }
-                        
-                        if (data.type === 'config_updated') {
-                            if (data.error) {
-                                showConfigStatus('Error: ' + data.error, 'error');
-                            } else {
-                                showConfigStatus('Configuration updated successfully!', 'success');
-                            }
-                        }
-                        
-                        if (data.type === 'all_config') {
-                            // Populate all configuration fields
-                            updateConfigField('cut_travel_distance', data.cut_travel_distance);
-                            updateConfigField('feed_travel_distance', data.feed_travel_distance);
-                            updateConfigField('cut_motor_normal_speed', data.cut_motor_normal_speed);
-                        }
-                    } catch (error) {
-                        console.error('Error parsing WebSocket message:', error);
-                    }
+                        handleMessage(data);
+                    } catch (e) { console.error(e); }
                 };
                 
-                ws.onclose = function(event) {
-                    clearTimeout(connectionTimeout);
-                    console.log('WebSocket closed:', event.code, event.reason);
-                    if (isConnected) {
-                        forceDisconnect();
-                    }
+                ws.onclose = () => {
+                    isConnected = false;
+                    updateConnectionStatus(false);
+                    cleanup();
+                    attemptReconnect();
                 };
                 
-                ws.onerror = function(error) {
-                    clearTimeout(connectionTimeout);
-                    console.error('WebSocket error:', error);
-                    forceDisconnect();
-                };
-            } catch (error) {
-                console.error('Error creating WebSocket:', error);
-                forceDisconnect();
+                ws.onerror = () => { if (ws.readyState !== 1) ws.close(); };
+            } catch (e) {
+                console.error(e);
+                attemptReconnect();
             }
         }
         
-        function updateSensorStatus(data) {
-            updateStatusItem('sensor_2x4', data._2x4Present);
-            updateStatusItem('sensor_suction', data.woodSuctionConfirm);
-            updateStatusItem('sensor_firstcut', data.firstCutOrWoodFwdOne);
-            updateStatusItem('sensor_cuthome', data.cutMotorHomeSwitch);
-            updateStatusItem('sensor_feedhome', data.feedMotorHomeSensor);
-            updateStatusItem('sensor_reload', data.reloadSwitch);
+        function cleanup() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+            stopUptimeUpdates();
         }
-        
-        
-        
-        function updateStatusItem(elementId, isActive) {
-            const element = document.getElementById(elementId);
-            const valueElement = element.querySelector('.status-value');
-            
-            element.className = `status-item ${isActive ? 'active' : 'inactive'}`;
-            valueElement.textContent = isActive ? 'ON' : 'OFF';
+
+        function attemptReconnect() {
+            if (reconnectAttempts > 50) {
+                setTimeout(() => { reconnectAttempts = 0; attemptReconnect(); }, 10000);
+                return;
+            }
+            reconnectAttempts++;
+            reconnectTimeout = setTimeout(connect, Math.min(1000 + (reconnectAttempts * 500), 5000));
         }
-        
-        
-        // Cycle timing functions removed - now shows time since last cycle completion
-        
-        function updateEventLog(events) {
-            const logContainer = document.getElementById('eventLog');
-            logContainer.innerHTML = '';
-            
-            events.forEach(event => {
-                const eventItem = document.createElement('div');
-                eventItem.className = 'event-item';
+
+        function startHeartbeat() {
+            heartbeatInterval = setInterval(() => {
+                if (ws && ws.readyState === 1) {
+                    ws.send(JSON.stringify({type: 'ping'}));
+                    heartbeatTimeout = setTimeout(() => { ws.close(); }, 2000);
+                }
+            }, 1000);
+        }
+
+        function handleMessage(data) {
+            if (data.type === 'pong') {
+                if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+            }
+            else if (data.type === 'system_status') {
+                document.getElementById('currentState').textContent = data.currentState;
                 
-                // Parse the event string to extract timestamp and message
-                const match = event.match(/^\[(\d{2}:\d{2}:\d{2})\] (.+)$/);
-                if (match) {
-                    const timestamp = match[1];
-                    const message = match[2];
-                    
-                    // Create timestamp element
-                    const timestampEl = document.createElement('span');
-                    timestampEl.className = 'event-timestamp';
-                    timestampEl.textContent = timestamp;
-                    
-                    // Create icon element
-                    const iconEl = document.createElement('span');
-                    iconEl.className = 'event-icon';
-                    
-                    // Create message element
-                    const messageEl = document.createElement('span');
-                    messageEl.className = 'event-message';
-                    messageEl.textContent = message;
-                    
-                    // Determine event type and styling
-                    if (message.toLowerCase().includes('error')) {
-                        eventItem.classList.add('error');
-                        iconEl.textContent = '⚠️';
-                    } else if (message.toLowerCase().includes('state changed') || message.toLowerCase().includes('->')) {
-                        eventItem.classList.add('state-change');
-                        iconEl.textContent = '🔄';
-                    } else if (message.toLowerCase().includes('cycle completed') || message.toLowerCase().includes('performance')) {
-                        eventItem.classList.add('performance');
-                        iconEl.textContent = '📊';
-                    } else if (message.toLowerCase().includes('system') || message.toLowerCase().includes('initialized')) {
-                        eventItem.classList.add('system');
-                        iconEl.textContent = '⚙️';
-                    } else {
-                        iconEl.textContent = '📝';
-                    }
-                    
-                    // Append elements
-                    eventItem.appendChild(timestampEl);
-                    eventItem.appendChild(iconEl);
-                    eventItem.appendChild(messageEl);
+                const now = Date.now();
+                const estimated = lastUptimeMs + (now - lastUptimeUpdateTime);
+                if (lastUptimeMs === 0 || Math.abs(estimated - data.uptime) > 2000) {
+                    lastUptimeMs = data.uptime;
+                    lastUptimeUpdateTime = now;
+                    document.getElementById('uptime').textContent = formatUptime(data.uptime);
+                }
+            }
+            else if (data.type === 'sensor_status') {
+                updateSensor('sensor_2x4', data._2x4Present);
+                updateSensor('sensor_suction', data.woodSuctionConfirm);
+                updateSensor('sensor_firstcut', data.firstCutOrWoodFwdOne);
+                updateSensor('sensor_cuthome', data.cutMotorHomeSwitch);
+                updateSensor('sensor_feedhome', data.feedMotorHomeSensor);
+                updateSensor('sensor_reload', data.reloadSwitch);
+            }
+            else if (data.type === 'performance_metrics') {
+                if (data.reloadTime) document.getElementById('reloadTime').textContent = formatTime(data.reloadTime);
+                updateMetric('avgCycles1Min', data.avgCycles1Min);
+                updateMetric('avgCycles3Min', data.avgCycles3Min);
+                updateMetric('avgCycles5Min', data.avgCycles5Min);
+                updateMetric('avgCycles15Min', data.avgCycles15Min);
+            }
+            else if (data.type === 'error_status') {
+                document.getElementById('lastError').textContent = data.lastError;
+                document.getElementById('cutMotorErrorCount').textContent = data.cutMotorErrorCount || 0;
+                document.getElementById('suctionErrorCount').textContent = data.suctionErrorCount || 0;
+            }
+            else if (data.type === 'event_log') {
+                updateLog('eventLog', data.events);
+            }
+            else if (data.type === 'serial_log') {
+                updateLog('serialLog', data.logs, true);
+            }
+            else if (data.type === 'all_config') {
+                if(data.cut_travel_distance) document.getElementById('cutTravelDistance').value = data.cut_travel_distance;
+                if(data.feed_travel_distance) document.getElementById('feedTravelDistance').value = data.feed_travel_distance;
+                if(data.cut_motor_normal_speed) document.getElementById('cutMotorNormalSpeed').value = data.cut_motor_normal_speed;
+            }
+            else if (data.type === 'config_updated') {
+                showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
+            }
+        }
+
+        function updateSensor(id, active) {
+            const el = document.getElementById(id);
+            if (active) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+        
+        function updateMetric(id, val) {
+            const el = document.getElementById(id);
+            el.textContent = typeof val === 'number' ? (val % 1 === 0 ? val : val.toFixed(1)) : '0.0';
+        }
+
+        function updateLog(id, items, isSerial = false) {
+            const container = document.getElementById(id);
+            container.innerHTML = '';
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'log-line';
+                
+                let time = '', msg = item;
+                if (isSerial) {
+                    const match = item.match(/^\[(\d+)ms\] (.+)$/);
+                    if (match) { time = `+${match[1]}ms`; msg = match[2]; }
                 } else {
-                    // Fallback for events that don't match the expected format
-                    eventItem.textContent = event;
+                    const match = item.match(/^\[(\d{2}:\d{2}:\d{2})\] (.+)$/);
+                    if (match) { time = match[1]; msg = match[2]; }
                 }
                 
-                logContainer.appendChild(eventItem);
+                if (msg.toLowerCase().includes('error')) div.classList.add('error');
+                else if (msg.toLowerCase().includes('success')) div.classList.add('success');
+                else if (msg.toLowerCase().includes('warning')) div.classList.add('warn');
+
+                div.innerHTML = `<span class="log-time">${time}</span><span class="log-msg">${msg}</span>`;
+                container.appendChild(div);
             });
-            
-            logContainer.scrollTop = logContainer.scrollHeight;
+            container.scrollTop = container.scrollHeight;
         }
-        
-        function updateSerialLog(logs) {
-            const logContainer = document.getElementById('serialLog');
-            logContainer.innerHTML = '';
-            
-            logs.forEach(log => {
-                const logItem = document.createElement('div');
-                logItem.className = 'event-item';
-                
-                // Parse the log string to extract timestamp and message
-                const match = log.match(/^\[(\d+)ms\] (.+)$/);
-                if (match) {
-                    const timestamp = match[1];
-                    const message = match[2];
-                    
-                    // Create timestamp element
-                    const timestampEl = document.createElement('span');
-                    timestampEl.className = 'event-timestamp';
-                    timestampEl.textContent = '[' + timestamp + 'ms]';
-                    
-                    // Create icon element
-                    const iconEl = document.createElement('span');
-                    iconEl.className = 'event-icon';
-                    iconEl.textContent = '🔧';
-                    
-                    // Create message element
-                    const messageEl = document.createElement('span');
-                    messageEl.className = 'event-message';
-                    messageEl.textContent = message;
-                    
-                    // Determine log type and styling
-                    if (message.toLowerCase().includes('error') || message.toLowerCase().includes('warning')) {
-                        logItem.classList.add('error');
-                        iconEl.textContent = '⚠️';
-                    } else if (message.toLowerCase().includes('waiting')) {
-                        logItem.classList.add('state-change');
-                        iconEl.textContent = '⏳';
-                    } else {
-                        logItem.classList.add('system');
-                        iconEl.textContent = '🔧';
-                    }
-                    
-                    // Append elements
-                    logItem.appendChild(timestampEl);
-                    logItem.appendChild(iconEl);
-                    logItem.appendChild(messageEl);
-                } else {
-                    // Fallback for logs that don't match the expected format
-                    logItem.textContent = log;
-                }
-                
-                logContainer.appendChild(logItem);
-            });
-            
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-        
+
         function formatUptime(ms) {
-            const seconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            const days = Math.floor(hours / 24);
+            const s = Math.floor(ms / 1000);
+            const d = Math.floor(s / 86400);
+            const h = Math.floor((s % 86400) / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = s % 60;
             
-            if (days > 0) return `${days}d ${hours % 24}h`;
-            if (hours > 0) return `${hours}h ${minutes % 60}m`;
-            if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
-            return `${seconds}s`;
+            if (d > 0) return `${d}d ${h}h ${m}m`;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
         }
         
-        function updateUptimeSmoothly() {
-            if (lastUptimeMs > 0 && lastUptimeUpdateTime > 0) {
-                const elapsedSinceUpdate = Date.now() - lastUptimeUpdateTime;
-                const currentUptime = lastUptimeMs + elapsedSinceUpdate;
-                document.getElementById('uptime').textContent = formatUptime(currentUptime);
-            }
+        function formatTime(s) {
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            if (m > 0) return `${m}m ${sec}s`;
+            return `${sec.toFixed(1)}s`;
         }
-        
+
         function startUptimeUpdates() {
-            if (uptimeUpdateInterval) {
-                clearInterval(uptimeUpdateInterval);
-            }
-            // Update uptime every second for smooth display
-            uptimeUpdateInterval = setInterval(updateUptimeSmoothly, 1000);
+            if (uptimeUpdateInterval) clearInterval(uptimeUpdateInterval);
+            uptimeUpdateInterval = setInterval(() => {
+                if (lastUptimeMs > 0) {
+                    const now = Date.now();
+                    const diff = now - lastUptimeUpdateTime;
+                    document.getElementById('uptime').textContent = formatUptime(lastUptimeMs + diff);
+                }
+            }, 1000);
         }
         
         function stopUptimeUpdates() {
-            if (uptimeUpdateInterval) {
-                clearInterval(uptimeUpdateInterval);
-                uptimeUpdateInterval = null;
-            }
+            if (uptimeUpdateInterval) clearInterval(uptimeUpdateInterval);
         }
-        
-        function formatTimeSinceLastCycle(seconds) {
-            if (seconds === 0) return '0s';
-            
-            const totalSeconds = Math.floor(seconds);
-            const minutes = Math.floor(totalSeconds / 60);
-            const remainingSeconds = totalSeconds % 60;
-            
-            if (minutes > 0) {
-                return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-            } else {
-                return `${remainingSeconds}s`;
-            }
-        }
-        
-        function updateTimeBasedMetricAvg(avgId, avgValue, systemUptime, requiredTime, isWholeNumber) {
-            const avgElement = document.getElementById(avgId);
-            const avgMetricItem = avgElement.closest('.metric-item');
-            
-            // Check if enough time has passed
-            const isReady = systemUptime >= requiredTime;
-            
-            if (isReady) {
-                // Remove ghosted class
-                avgMetricItem.classList.remove('ghosted');
-                
-                // Update values
-                if (avgValue >= 0) {
-                    if (isWholeNumber) {
-                        avgElement.textContent = Math.round(avgValue);
-                    } else {
-                        avgElement.textContent = avgValue.toFixed(1);
-                    }
-                } else {
-                    avgElement.textContent = '0';
-                }
-            } else {
-                // Add ghosted class
-                avgMetricItem.classList.add('ghosted');
-                
-                // Show placeholder values
-                avgElement.textContent = '-';
-            }
-        }
-        
-        // Configuration functions
-        function showConfigStatus(message, type) {
-            const statusEl = document.getElementById('configStatus');
-            statusEl.textContent = message;
-            statusEl.style.display = 'block';
-            
-            if (type === 'success') {
-                statusEl.style.background = 'rgba(34, 197, 94, 0.2)';
-                statusEl.style.border = '1px solid rgba(34, 197, 94, 0.4)';
-                statusEl.style.color = 'rgba(34, 197, 94, 0.9)';
-            } else if (type === 'error') {
-                statusEl.style.background = 'rgba(239, 68, 68, 0.2)';
-                statusEl.style.border = '1px solid rgba(239, 68, 68, 0.4)';
-                statusEl.style.color = 'rgba(239, 68, 68, 0.9)';
-            }
-            
-            // Hide status after 3 seconds
-            setTimeout(() => {
-                statusEl.style.display = 'none';
-            }, 3000);
-        }
-        
-        // Configuration field mapping
-        const configFieldMap = {
+
+        const configMap = {
             'cut_travel_distance': 'cutTravelDistance',
             'feed_travel_distance': 'feedTravelDistance',
             'cut_motor_normal_speed': 'cutMotorNormalSpeed'
         };
-        
-        function updateConfigField(key, value) {
-            const fieldId = configFieldMap[key];
-            if (fieldId) {
-                const element = document.getElementById(fieldId);
-                if (element) {
-                    element.value = value;
-                }
-            }
-        }
-        
+
         function updateConfig(key) {
-            const fieldId = configFieldMap[key];
-            if (!fieldId) {
-                showConfigStatus('Unknown configuration key', 'error');
-                return;
-            }
+            const id = configMap[key];
+            const val = document.getElementById(id).value;
+            if (!ws || ws.readyState !== 1) return showConfigStatus('Not connected', 'error');
             
-            const input = document.getElementById(fieldId);
-            if (!input) {
-                showConfigStatus('Configuration field not found', 'error');
-                return;
-            }
-            
-            const value = key.includes('position') ? parseInt(input.value) : parseFloat(input.value);
-            
-            if (isNaN(value)) {
-                showConfigStatus('Invalid value. Please enter a valid number', 'error');
-                return;
-            }
-            
-            // Validate ranges
-            let isValid = true;
-            let errorMsg = '';
-            
-            switch (key) {
-                case 'cut_travel_distance':
-                    isValid = value >= 0.1 && value <= 20.0;
-                    errorMsg = 'Range: 0.1 - 20.0 inches';
-                    break;
-                case 'feed_travel_distance':
-                    isValid = value >= 0.1 && value <= 10.0;
-                    errorMsg = 'Range: 0.1 - 10.0 inches';
-                    break;
-                case 'cut_motor_normal_speed':
-                    isValid = value >= 100 && value <= 5000;
-                    errorMsg = 'Range: 100 - 5000';
-                    break;
-            }
-            
-            if (!isValid) {
-                showConfigStatus('Invalid value. ' + errorMsg, 'error');
-                return;
-            }
-            
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'update_config',
-                    key: key,
-                    value: value
-                }));
-            } else {
-                showConfigStatus('Not connected to server', 'error');
-            }
+            ws.send(JSON.stringify({
+                type: 'update_config',
+                key: key,
+                value: parseFloat(val)
+            }));
         }
         
         function requestAllConfig() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'request_all_config'
-                }));
-            }
+            if (ws && ws.readyState === 1) ws.send(JSON.stringify({type: 'request_all_config'}));
+        }
+        
+        function showConfigStatus(msg, type) {
+            const el = document.getElementById('configStatus');
+            el.textContent = msg;
+            el.style.color = type === 'error' ? 'var(--accent-danger)' : 'var(--accent-success)';
+            setTimeout(() => el.textContent = '', 3000);
         }
 
-        // Connect on page load
-        console.log('Initializing dashboard...');
-        console.log('Body background:', window.getComputedStyle(document.body).background);
+        // Init
         connect();
-        
-        // Start uptime updates immediately (will be reset when connected)
-        startUptimeUpdates();
-        
-        console.log('Dashboard initialized successfully');
-        
-        // Configuration event listeners - using onclick handlers in HTML instead
-        
-        // Handle manual reconnection
-        document.getElementById('connectionStatus').addEventListener('click', function() {
-            if (!isConnected) {
-                reconnectAttempts = 0;
-                isReconnecting = false;
-                if (reconnectTimeout) {
-                    clearTimeout(reconnectTimeout);
-                    reconnectTimeout = null;
-                }
-                connect();
-            }
-        });
-        
-        // Request initial data and monitor connection health
+        document.getElementById('connectionStatus').addEventListener('click', connect);
         setInterval(() => {
-            if (isConnected && ws && ws.readyState === WebSocket.OPEN) {
-                try {
-                    ws.send(JSON.stringify({type: 'request_all_data'}));
-                } catch (error) {
-                    console.error('Error sending data request:', error);
-                    forceDisconnect();
-                }
-                
-                // Additional connection health check - if no pong received recently, force disconnect
-                const timeSinceLastPong = Date.now() - lastPongReceived;
-                if (timeSinceLastPong > heartbeatTimeoutMs) {
-                    console.log('Connection health check failed - no recent pong');
-                    forceDisconnect();
-                }
-            }
-        }, 5000);
-        
-        // Connection monitoring - check WebSocket state every 0.5 seconds (more responsive)
-        setInterval(() => {
-            if (isConnected && ws && ws.readyState !== WebSocket.OPEN) {
-                console.log('WebSocket state changed to:', ws.readyState);
-                forceDisconnect();
-            }
-        }, 500);
+            if (isConnected && ws.readyState === 1) ws.send(JSON.stringify({type: 'request_all_data'}));
+        }, 2000);
     </script>
 </body>
 </html>

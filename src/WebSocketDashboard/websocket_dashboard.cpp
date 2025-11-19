@@ -25,7 +25,7 @@ unsigned long lastStateChangeTime = 0;
 unsigned long reloadTimeStart = 0;
 float reloadTimeSeconds = 0.0;
 bool reloadTimeActive = false;
-float reloadTimes[5] = {0.0, 0.0, 0.0, 0.0, 0.0}; // Store last 5 reload times
+float reloadTimes[10] = {0.0}; // Store last 10 reload times
 int reloadTimeIndex = 0; // Index for circular buffer
 int reloadTimeCount = 0; // Number of reload times recorded
 
@@ -482,6 +482,49 @@ float getCutTravelDistance() {
     return CUT_TRAVEL_DISTANCE;
 }
 
+// Calculate estimated cut cycle duration based on motor parameters
+float calculateCutCycleDuration(float cutDistance, float feedDistance, float cutMotorSpeed) {
+    // Motor configuration constants
+    const float STEPS_PER_INCH = 500.0; // CUT_MOTOR_STEPS_PER_INCH
+    const float CUT_MOTOR_RETURN_SPEED = 20000.0; // steps/sec
+    const float FEED_MOTOR_NORMAL_SPEED = 22000.0; // steps/sec
+    const float FEED_MOTOR_STEPS_PER_INCH = 1000.0;
+    
+    // Fixed delays (in seconds)
+    const float ROTATION_SERVO_ACTIVE_HOLD = 2.0; // 2000ms
+    const float ROTATION_SERVO_HOME_WAIT = 0.3; // 300ms
+    const float ROTATION_CLAMP_EXTEND = 2.2; // 2200ms
+    const float CLAMP_DELAY = 0.2; // 200ms typical clamp delay
+    const float FEED_MOTOR_RETURN_DELAY = 0.2; // 200ms delay between feed operations
+    
+    // Calculate cut motor forward time (seconds)
+    float cutSteps = cutDistance * STEPS_PER_INCH;
+    float cutMotorForwardTime = cutSteps / cutMotorSpeed;
+    
+    // Calculate cut motor return time (seconds)
+    float cutMotorReturnTime = cutSteps / CUT_MOTOR_RETURN_SPEED;
+    
+    // Calculate feed motor operations time (simplified - assumes feed distance movement)
+    float feedSteps = feedDistance * FEED_MOTOR_STEPS_PER_INCH;
+    float feedMotorTime = feedSteps / FEED_MOTOR_NORMAL_SPEED;
+    
+    // Add acceleration overhead (rough estimate: 10% of movement time)
+    float accelerationOverhead = (cutMotorForwardTime + cutMotorReturnTime + feedMotorTime) * 0.1;
+    
+    // Total estimated cycle duration
+    float totalTime = cutMotorForwardTime 
+                    + cutMotorReturnTime 
+                    + feedMotorTime 
+                    + ROTATION_SERVO_ACTIVE_HOLD
+                    + ROTATION_SERVO_HOME_WAIT
+                    + ROTATION_CLAMP_EXTEND
+                    + (CLAMP_DELAY * 3) // Multiple clamp operations
+                    + FEED_MOTOR_RETURN_DELAY
+                    + accelerationOverhead;
+    
+    return totalTime;
+}
+
 void setFeedTravelDistance(float value) {
     if (value >= 0.1 && value <= 10.0) {
         FEED_TRAVEL_DISTANCE = value;
@@ -861,6 +904,13 @@ void broadcastPerformanceMetrics() {
             doc["type"] = "performance_metrics";
             doc["reloadTime"] = currentReloadTime;
             
+            // Add reload history
+            JsonArray reloadHist = doc["reloadHistory"].to<JsonArray>();
+            for (int i = 0; i < reloadTimeCount; i++) {
+                int idx = (reloadTimeIndex - 1 - i + 10) % 10;
+                reloadHist.add(reloadTimes[idx]);
+            }
+            
             // Time-based averages (cycles per minute)
             doc["avgCycles1Min"] = performanceMetrics.avgCycles1Min;
             doc["avgCycles3Min"] = performanceMetrics.avgCycles3Min;
@@ -1234,8 +1284,8 @@ void stopReloadTimer() {
         
         // Store in circular buffer
         reloadTimes[reloadTimeIndex] = reloadTimeSeconds;
-        reloadTimeIndex = (reloadTimeIndex + 1) % 5;
-        if (reloadTimeCount < 5) {
+        reloadTimeIndex = (reloadTimeIndex + 1) % 10;
+        if (reloadTimeCount < 10) {
             reloadTimeCount++;
         }
         
@@ -1244,20 +1294,13 @@ void stopReloadTimer() {
     }
 }
 
-// Get current reload time (either active timer or average of last 5 completed times)
+// Get current reload time (either active timer or last completed time)
 float getReloadTime() {
     if (reloadTimeActive) {
         return (float)(millis() - reloadTimeStart) / 1000.0;
     } else {
-        // Calculate average of last 5 reload times
-        if (reloadTimeCount == 0) {
-            return 0.0;
-        }
-        float sum = 0.0;
-        for (int i = 0; i < reloadTimeCount; i++) {
-            sum += reloadTimes[i];
-        }
-        return sum / (float)reloadTimeCount;
+        // Return the last recorded reload time
+        return reloadTimeSeconds;
     }
 }
 

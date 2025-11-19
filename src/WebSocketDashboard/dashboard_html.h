@@ -54,6 +54,54 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             padding: 2rem;
         }
 
+        /* Dropdown Styles */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-card);
+            min-width: 220px;
+            box-shadow: var(--shadow-hover);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            z-index: 100;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .history-header {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0.25rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .history-item {
+            padding: 0.5rem;
+            color: var(--text-main);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .history-index {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+
         /* Layout */
         .dashboard-grid {
             display: grid;
@@ -93,20 +141,20 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             border-radius: var(--radius-lg);
             padding: 1.5rem;
             position: relative;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy but subtle */
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: var(--shadow-card);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible; /* Changed to visible for dropdown */
         }
 
-        /* Top highlight for depth */
         .card::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; height: 1px;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
             opacity: 0.6;
+            pointer-events: none;
         }
 
         .card:hover {
@@ -434,9 +482,14 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 Performance Metrics
             </div>
             <div class="metrics-container">
-                <div>
+                <div id="reloadTimeContainer" style="position: relative; cursor: pointer;" onclick="toggleReloadHistory()">
                     <div class="value-huge" id="reloadTime">-</div>
-                    <div class="label-sm">LAST RELOAD TIME</div>
+                    <div class="label-sm">LAST RELOAD TIME <span style="font-size: 0.8em; opacity: 0.7;">▼</span></div>
+                    
+                    <div id="reloadHistoryDropdown" class="dropdown-content" onclick="event.stopPropagation()">
+                        <div class="history-header">HISTORY (LAST 10)</div>
+                        <div id="reloadHistoryList"></div>
+                    </div>
                 </div>
                 <div class="metric-block">
                     <div class="label-sm" style="margin-bottom: 0.5rem">CYCLES / MIN (AVG)</div>
@@ -604,6 +657,25 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             }
         }
 
+        function toggleReloadHistory() {
+            const dd = document.getElementById('reloadHistoryDropdown');
+            if (dd.style.display === 'block') {
+                dd.style.display = 'none';
+            } else {
+                dd.style.display = 'block';
+            }
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dd = document.getElementById('reloadHistoryDropdown');
+            const trigger = document.getElementById('reloadTimeContainer');
+            
+            if (dd.style.display === 'block' && !trigger.contains(event.target)) {
+                dd.style.display = 'none';
+            }
+        });
+
         function updateConnectionStatus(connected) {
             const badge = document.getElementById('connectionStatus');
             const text = document.getElementById('connectionText');
@@ -706,6 +778,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             }
             else if (data.type === 'performance_metrics') {
                 if (data.reloadTime) document.getElementById('reloadTime').textContent = formatTime(data.reloadTime);
+                
+                if (data.reloadHistory) {
+                    updateReloadHistoryList(data.reloadHistory);
+                }
+
                 updateMetric('avgCycles1Min', data.avgCycles1Min);
                 updateMetric('avgCycles3Min', data.avgCycles3Min);
                 updateMetric('avgCycles5Min', data.avgCycles5Min);
@@ -730,6 +807,24 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
             }
+        }
+
+        function updateReloadHistoryList(history) {
+            const list = document.getElementById('reloadHistoryList');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            if (!history || history.length === 0) {
+                list.innerHTML = '<div class="history-item" style="justify-content: center; color: var(--text-dim);">No history</div>';
+                return;
+            }
+            
+            history.forEach((time, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<span class="history-index">#${index + 1}</span> <span class="history-value">${formatTime(time)}</span>`;
+                list.appendChild(div);
+            });
         }
 
         function updateSensor(id, active) {
@@ -782,9 +877,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         function formatTime(s) {
             const m = Math.floor(s / 60);
-            const sec = Math.floor(s % 60);
-            if (m > 0) return `${m}m ${sec}s`;
-            return `${sec.toFixed(1)}s`;
+            if (m > 0) {
+                const sec = Math.floor(s % 60);
+                return `${m}m ${sec}s`;
+            }
+            return `${s.toFixed(1)}s`;
         }
 
         function startUptimeUpdates() {
@@ -843,3 +940,4 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
 )rawliteral";
 
 #endif // DASHBOARD_HTML_H
+

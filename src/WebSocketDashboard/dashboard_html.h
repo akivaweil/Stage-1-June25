@@ -469,13 +469,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 System State
             </div>
             <div class="state-display">
-                <div class="state-value" id="currentState">INITIALIZING</div>
-                <div class="label-sm">CURRENT PROCESS</div>
+                <div class="value-large" id="uptime" style="font-size: 3rem; font-weight: 700; font-family: 'Space Mono'; color: var(--text-main);">00:00:00</div>
+                <div class="label-sm">UPTIME</div>
             </div>
             <div style="margin-top: auto; display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
                 <div>
-                    <div class="value-large" id="uptime" style="font-size: 1.25rem; font-family: 'Space Mono';">00:00:00</div>
-                    <div class="label-sm">UPTIME</div>
+                    <div class="state-value" id="currentState" style="font-size: 1rem; text-shadow: none; margin-bottom: 0.25rem;">INITIALIZING</div>
+                    <div class="label-sm">CURRENT PROCESS</div>
                 </div>
             </div>
         </div>

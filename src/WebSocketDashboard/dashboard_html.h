@@ -14,26 +14,26 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Bright / Clean Theme */
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
-            --bg-card-hover: #f1f5f9;
+            /* Lighter Dark Theme (Slate 800/700) */
+            --bg-main: #1e293b;   /* Slate 800 - Lighter than previous #030712 */
+            --bg-card: #334155;   /* Slate 700 - Lighter than previous #0f172a */
+            --bg-card-hover: #475569; /* Slate 600 */
             
-            --accent-primary: #2563eb;   /* Bright Blue */
-            --accent-secondary: #7c3aed; /* Bright Purple */
-            --accent-success: #059669;   /* Emerald */
-            --accent-warning: #d97706;   /* Amber */
-            --accent-danger: #dc2626;    /* Red */
+            --accent-primary: #60a5fa;   /* Lighter Blue */
+            --accent-secondary: #a78bfa; /* Lighter Purple */
+            --accent-success: #34d399;   /* Emerald 400 */
+            --accent-warning: #fbbf24;   /* Amber 400 */
+            --accent-danger: #f87171;    /* Red 400 */
             
-            --text-main: #0f172a;
-            --text-muted: #475569;
-            --text-dim: #94a3b8;
+            --text-main: #f8fafc;     /* Slate 50 */
+            --text-muted: #cbd5e1;    /* Slate 300 */
+            --text-dim: #94a3b8;      /* Slate 400 */
             
-            --border-subtle: #e2e8f0;
-            --border-active: #cbd5e1;
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            --border-active: rgba(255, 255, 255, 0.2);
             
-            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.1);
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+            --shadow-glow: 0 0 20px rgba(96, 165, 250, 0.15);
             
             --radius-lg: 24px;
             --radius-md: 16px;
@@ -100,7 +100,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .card:hover {
             transform: translateY(-2px);
             border-color: var(--border-active);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
 
         .card-header {
@@ -123,17 +123,16 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 1rem;
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-subtle);
             border-radius: 100px;
             font-size: 0.85rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: var(--shadow-card);
         }
 
-        .status-badge:hover { background: var(--bg-card-hover); }
+        .status-badge:hover { background: rgba(255, 255, 255, 0.1); }
         
         .status-dot {
             width: 8px; height: 8px;
@@ -144,12 +143,12 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
 
         .status-badge.connected .status-dot {
             background: var(--accent-success);
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
         }
         
         .status-badge.disconnected .status-dot {
             background: var(--accent-danger);
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
         }
 
         /* Typography Utilities */
@@ -183,12 +182,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .state-display {
             text-align: center;
             padding: 2rem 0;
-            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
+            background: radial-gradient(circle at center, rgba(96, 165, 250, 0.1) 0%, transparent 70%);
         }
         .state-value {
             font-size: 2rem;
             font-weight: 800;
             color: var(--accent-primary);
+            text-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
             margin-bottom: 0.5rem;
         }
 
@@ -200,34 +200,34 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         }
 
         .sensor-item {
-            background: var(--bg-main);
+            background: rgba(0, 0, 0, 0.2);
             padding: 1rem;
             border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid var(--border-subtle);
+            border: 1px solid transparent;
             transition: all 0.3s;
         }
 
         .sensor-item.active {
-            background: #ecfdf5; /* Light emerald bg */
-            border-color: #a7f3d0;
+            background: rgba(52, 211, 153, 0.1);
+            border-color: rgba(52, 211, 153, 0.3);
         }
 
         .sensor-label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); }
-        .sensor-item.active .sensor-label { color: var(--accent-success); font-weight: 600; }
+        .sensor-item.active .sensor-label { color: var(--text-main); font-weight: 600; }
         
         .sensor-led {
             width: 12px; height: 6px;
             border-radius: 10px;
-            background: #cbd5e1;
+            background: var(--bg-card-hover);
             transition: all 0.3s;
         }
 
         .sensor-item.active .sensor-led {
             background: var(--accent-success);
-            box-shadow: 0 0 8px rgba(5, 150, 105, 0.4);
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
         }
 
         /* Metrics */
@@ -247,8 +247,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         }
         
         .mini-chart-card {
-            background: var(--bg-main);
-            border: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: var(--radius-sm);
             padding: 0.75rem 0.5rem;
             text-align: center;
@@ -260,8 +259,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             align-items: baseline;
             gap: 0.5rem;
             padding: 0.75rem;
-            background: #fef2f2; /* Light red bg */
-            border: 1px solid #fecaca;
+            background: rgba(248, 113, 113, 0.1);
             border-radius: var(--radius-md);
             color: var(--accent-danger);
         }
@@ -273,7 +271,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .input-row { display: flex; gap: 0.75rem; }
         
         input[type="number"] {
-            background: var(--bg-main);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border-subtle);
             color: var(--text-main);
             padding: 0.75rem 1rem;
@@ -284,10 +282,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             transition: border-color 0.2s;
         }
         
-        input:focus { outline: none; border-color: var(--accent-primary); background: white; }
+        input:focus { outline: none; border-color: var(--accent-primary); background: rgba(0, 0, 0, 0.5); }
 
         button.btn {
-            background: white;
+            background: var(--bg-card-hover);
             border: 1px solid var(--border-subtle);
             color: var(--accent-primary);
             padding: 0 1.25rem;
@@ -301,12 +299,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             background: var(--accent-primary);
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
         }
 
-        /* Logs - Keeping dark for contrast but cleaner */
+        /* Logs */
         .log-terminal {
-            background: #1e293b; /* Slate 800 */
+            background: #0f172a; /* Darker than card for contrast */
             border-radius: var(--radius-md);
             padding: 1rem;
             font-family: 'Space Mono', monospace;
@@ -327,9 +324,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .log-time { color: #64748b; min-width: 60px; }
         .log-msg { color: #e2e8f0; word-break: break-all; }
         
-        .log-line.error .log-msg { color: #f87171; }
-        .log-line.success .log-msg { color: #4ade80; }
-        .log-line.warn .log-msg { color: #fbbf24; }
+        .log-line.error .log-msg { color: var(--accent-danger); }
+        .log-line.success .log-msg { color: var(--accent-success); }
+        .log-line.warn .log-msg { color: var(--accent-warning); }
 
         /* Responsive */
         @media (max-width: 1024px) {

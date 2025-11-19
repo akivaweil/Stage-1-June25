@@ -887,12 +887,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         }
         
         function formatTime(s) {
-            const m = Math.floor(s / 60);
+            const val = Math.round(s);
+            const m = Math.floor(val / 60);
             if (m > 0) {
-                const sec = Math.floor(s % 60);
+                const sec = val % 60;
                 return `${m}m ${sec}s`;
             }
-            return `${s.toFixed(1)}s`;
+            return `${val}s`;
         }
 
         function startUptimeUpdates() {

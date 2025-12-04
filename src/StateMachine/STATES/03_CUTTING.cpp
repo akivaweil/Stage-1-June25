@@ -17,12 +17,12 @@
 
 // Configuration Settings
 // Rotation Servo Settings
-int ROTATION_SERVO_HOME_POSITION = 26;                           // Servo home position angle
-int ROTATION_SERVO_ACTIVE_POSITION = 118;                        // Servo active rotation angle
+int ROTATION_SERVO_HOME_POSITION = 22;                           // Servo home position angle
+int ROTATION_SERVO_ACTIVE_POSITION = 115;                        // Servo active rotation angle
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait duration at home position
-unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 200;     // Wait time after suction detected before returning
+unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 25;     // Wait time after suction detected before returning
 float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
 
 // Rotation Clamp Configuration
@@ -330,7 +330,7 @@ void handleHomePositionError() {
     
     if (getReloadSwitch()->rose()) {
         homePositionErrorDetected = false;
-        onErrorOccurred("Home position error - acknowledged");
+        addEventToLog("Home position error - acknowledged");
         changeState(ERROR_RESET);
         setErrorAcknowledged(true);
     }

@@ -186,7 +186,10 @@ void setup() {
   rotationServo.attach(ROTATION_SERVO_PIN, 544, 2400);  // Standard servo range
   
   // Final forced attach
-  rotationServo.attach(ROTATION_SERVO_PIN);
+  rotationServo.attach(ROTATION_SERVO_PIN, 544, 2400);
+  
+  // Set maximum PWM frequency (100Hz) for maximum responsiveness
+  rotationServo.setPeriodHertz(100);
   
   //Serial.println("✓ Servo attachment completed - Commands will be sent regardless of attach status");
   

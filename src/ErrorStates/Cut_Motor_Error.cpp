@@ -37,7 +37,7 @@ void handleCutMotorErrorState() {
     
     // Wait for reload switch to acknowledge error using StateManager
     if (getErrorAcknowledged()) {
-        onErrorOccurred("Cut motor homing error - acknowledged");
+        addEventToLog("Cut motor homing error - acknowledged");
         changeState(ERROR_RESET);
         //serial.println("Cut motor error acknowledged. Transitioning to ERROR_RESET.");
     }

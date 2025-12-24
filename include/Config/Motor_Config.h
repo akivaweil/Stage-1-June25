@@ -31,7 +31,6 @@ extern float CUT_MOTOR_HOMING_SPEED;
 // Distances & Movement (defaults - can be modified via dashboard)
 extern float CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
 extern float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
-extern float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
 
 //* ************************************************************************
 //* ************************ [⚡] FEED MOTOR *******************************
@@ -63,6 +62,5 @@ extern float FEED_MOTOR_RETURN_DISTANCE;
 //* ************************************************************************
 //* ************************ [📐] PRE-CALCULATED STEPS *********************
 //* ************************************************************************
-extern const long SUCTION_SENSOR_CHECK_DISTANCE_STEPS;
 
 #endif // MOTOR_CONFIG_H

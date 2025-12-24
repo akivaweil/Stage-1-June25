@@ -54,6 +54,7 @@ void saveConfiguration();
 float getFeedTravelDistance();
 void setFeedTravelDistance(float value);
 float getCutTravelDistance();
+float calculateCutCycleDuration(float cutDistance, float feedDistance, float cutMotorSpeed);
 
 // Global variables
 extern AsyncWebServer server;

@@ -216,7 +216,6 @@ struct ConfigurationData {
     unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS;
     unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
     unsigned long SENSOR_STABILIZATION_DELAY_MS;
-    float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
     
     // Version and checksum
     uint32_t version;
@@ -275,7 +274,6 @@ ConfigurationData getDefaultConfiguration() {
     config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
     config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
     config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
-    config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES = SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
     
     config.version = 1;
     config.checksum = 0; // Will be calculated
@@ -284,7 +282,7 @@ ConfigurationData getDefaultConfiguration() {
 }
 
 // Apply configuration to global variables
-// NOTE: EEPROM is only used for three parameters:
+// NOTE: EEPROM is only used for these parameters:
 //  - CUT_TRAVEL_DISTANCE (inches)
 //  - FEED_TRAVEL_DISTANCE (inches)
 //  - CUT_MOTOR_NORMAL_SPEED
@@ -372,8 +370,6 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
     for (size_t i = 0; i < sizeof(config.CUT_MOTOR_VERIFICATION_DELAY_MS); i++) checksum += data[i];
     data = (const uint8_t*)&config.SENSOR_STABILIZATION_DELAY_MS;
     for (size_t i = 0; i < sizeof(config.SENSOR_STABILIZATION_DELAY_MS); i++) checksum += data[i];
-    data = (const uint8_t*)&config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
-    for (size_t i = 0; i < sizeof(config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES); i++) checksum += data[i];
     
     // Version
     data = (const uint8_t*)&config.version;
@@ -464,7 +460,6 @@ void saveConfiguration() {
     config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
     config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
     config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
-    config.SUCTION_SENSOR_CHECK_DISTANCE_INCHES = SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
     
     config.version = 1;
     config.checksum = calculateChecksum(config);

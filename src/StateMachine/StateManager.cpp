@@ -454,17 +454,12 @@ void handleCommonOperations() {
                 String message = "Transfer Arm suction grabbed wood - waiting before returning servo to home.";
                 addSerialLog(message);
             } else {
-                // Check every second if sensor went LOW and reset timer if it did
-                static unsigned long lastCheckTime = 0;
-                if (millis() - lastCheckTime >= 1000) {
-                    suctionSensorBounce.update();
-                    if (suctionSensorBounce.read() == LOW) {
-                        // Sensor went LOW during wait - reset timer
-                        suctionHighDetectedTime = millis();
-                        String message = "Suction sensor went LOW during wait - timer reset.";
-                        addSerialLog(message);
-                    }
-                    lastCheckTime = millis();
+                // Continuously check that sensor remains HIGH - reset timer if it goes LOW
+                if (suctionSensorBounce.read() == LOW) {
+                    // Sensor went LOW during wait - reset timer
+                    suctionHighDetectedTime = millis();
+                    String message = "Suction sensor went LOW during wait - timer reset.";
+                    addSerialLog(message);
                 }
                 
                 // Check if wait duration has passed (faster return after transfer arm grabs wood)

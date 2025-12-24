@@ -61,12 +61,10 @@ extern const float FEED_MOTOR_OFFSET_FROM_SENSOR;  // Hardcoded offset - not adj
 extern unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS;
 extern unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
 extern unsigned long SENSOR_STABILIZATION_DELAY_MS;
-extern float SUCTION_SENSOR_CHECK_DISTANCE_INCHES;
 
 //* ************************************************************************
 //* ******************** PRE-CALCULATED STEP VALUES ***********************
 //* ************************************************************************
 // Pre-calculated step values for cutting state to avoid repeated calculations
-extern const long SUCTION_SENSOR_CHECK_DISTANCE_STEPS;
 
 #endif // STATES_CONFIG_H 

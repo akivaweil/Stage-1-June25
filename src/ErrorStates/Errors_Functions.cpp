@@ -369,6 +369,9 @@ void executeCutMotorErrorStateTransition(
     currentState = ERROR;
     errorStartTime = millis();
     
+    //! Log error occurrence for dashboard tracking
+    onErrorOccurred("Cut motor home position error");
+    
     //! RESET ALL STATE MACHINE COUNTERS - Clean slate for restart
     cuttingStep = 0;
     cuttingSubStep7 = 0;

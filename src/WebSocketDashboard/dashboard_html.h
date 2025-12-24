@@ -339,6 +339,24 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             background: rgba(255, 255, 255, 0.05);
             transform: scale(1.05);
         }
+        
+        .mini-chart-card.status-red {
+            background: rgba(248, 113, 113, 0.15);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.4);
+        }
+        
+        .mini-chart-card.status-yellow {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+        }
+        
+        .mini-chart-card.status-green {
+            background: rgba(52, 211, 153, 0.15);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+        }
 
         /* Errors */
         .error-stat {
@@ -503,15 +521,15 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                             <div class="value-large dimmed" id="avgCycles1Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">1M</div>
                         </div>
-                        <div class="mini-chart-card">
+                        <div class="mini-chart-card" id="card-avgCycles3Min">
                             <div class="value-large dimmed" id="avgCycles3Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">3M</div>
                         </div>
-                        <div class="mini-chart-card">
+                        <div class="mini-chart-card" id="card-avgCycles5Min">
                             <div class="value-large dimmed" id="avgCycles5Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">5M</div>
                         </div>
-                        <div class="mini-chart-card">
+                        <div class="mini-chart-card" id="card-avgCycles15Min">
                             <div class="value-large dimmed" id="avgCycles15Min" style="font-size: 1.5rem">0.0</div>
                             <div class="label-sm">15M</div>
                         </div>
@@ -792,6 +810,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 updateMetric('avgCycles3Min', data.avgCycles3Min);
                 updateMetric('avgCycles5Min', data.avgCycles5Min);
                 updateMetric('avgCycles15Min', data.avgCycles15Min);
+                
+                // Apply conditional styling to 3M, 5M, and 15M cards
+                updateMetricCardStatus('avgCycles3Min', data.avgCycles3Min);
+                updateMetricCardStatus('avgCycles5Min', data.avgCycles5Min);
+                updateMetricCardStatus('avgCycles15Min', data.avgCycles15Min);
             }
             else if (data.type === 'error_status') {
                 document.getElementById('lastError').textContent = data.lastError;
@@ -846,6 +869,26 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             } else {
                 el.textContent = '0.0';
                 el.classList.add('dimmed');
+            }
+        }
+        
+        function updateMetricCardStatus(id, val) {
+            const cardId = 'card-' + id;
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            
+            // Remove all status classes
+            card.classList.remove('status-red', 'status-yellow', 'status-green');
+            
+            // Apply status based on value
+            if (typeof val === 'number' && val >= 0) {
+                if (val < 4.5) {
+                    card.classList.add('status-red');
+                } else if (val < 5) {
+                    card.classList.add('status-yellow');
+                } else {
+                    card.classList.add('status-green');
+                }
             }
         }
 

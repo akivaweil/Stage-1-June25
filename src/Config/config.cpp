@@ -16,7 +16,7 @@ const int CONFIG_OFFSET = 0;          // Configuration starts at beginning of ex
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⏱️ TIMING & DELAY CONSTANTS                                  ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-unsigned long SENSOR_STABILIZATION_DELAY_MS = 30;     // Sensor reading stabilization delay
+unsigned long SENSOR_STABILIZATION_DELAY_MS = 20;     // Sensor reading stabilization delay
 const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100;   // Delay between clamp and feed motor movement
 const unsigned long CYLINDER_ACTION_DELAY_MS = 150;    // Delay for cylinder actions
 const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30; // Sensor verification stabilization delay

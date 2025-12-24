@@ -30,7 +30,6 @@ float CUT_MOTOR_HOMING_SPEED = 1500;
 // Distances & Movement
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
 float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
-float SUCTION_SENSOR_CHECK_DISTANCE_INCHES = 0.8;
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚡ FEED MOTOR                                                 ║
@@ -62,4 +61,3 @@ float FEED_MOTOR_RETURN_DISTANCE = 0.0;
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ 📐 PRE-CALCULATED STEPS                                      ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-const long SUCTION_SENSOR_CHECK_DISTANCE_STEPS = SUCTION_SENSOR_CHECK_DISTANCE_INCHES * CUT_MOTOR_STEPS_PER_INCH;

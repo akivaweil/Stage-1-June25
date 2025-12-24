@@ -666,6 +666,12 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         let lastUptimeMs = 0;
         let lastUptimeUpdateTime = 0;
         let uptimeUpdateInterval = null;
+        
+        // Reload time logic for smooth updates
+        let lastReloadTimeSeconds = 0;
+        let lastReloadTimeUpdateTime = 0;
+        let reloadTimeUpdateInterval = null;
+        let reloadTimeActive = false;
 
         function toggleLogs(header) {
             const content = document.getElementById('logContent');
@@ -756,6 +762,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             if (heartbeatInterval) clearInterval(heartbeatInterval);
             if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
             stopUptimeUpdates();
+            stopReloadTimeUpdates();
         }
 
         function attemptReconnect() {
@@ -800,7 +807,35 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 updateSensor('sensor_reload', data.reloadSwitch);
             }
             else if (data.type === 'performance_metrics') {
-                if (data.reloadTime) document.getElementById('reloadTime').textContent = formatTime(data.reloadTime);
+                if (data.reloadTime !== undefined) {
+                    const newReloadTime = data.reloadTime;
+                    const now = Date.now();
+                    
+                    // Check if reload timer is active (counting up)
+                    // If new time is greater than previous (with small tolerance for float comparison), timer is active
+                    if (newReloadTime > (lastReloadTimeSeconds + 0.1)) {
+                        // Timer is active - start smooth updates
+                        if (!reloadTimeActive) {
+                            reloadTimeActive = true;
+                            lastReloadTimeSeconds = newReloadTime;
+                            lastReloadTimeUpdateTime = now;
+                            startReloadTimeUpdates();
+                        } else {
+                            // Update base time if server sent a new value (resync)
+                            lastReloadTimeSeconds = newReloadTime;
+                            lastReloadTimeUpdateTime = now;
+                        }
+                    } else if (reloadTimeActive && newReloadTime <= lastReloadTimeSeconds) {
+                        // Timer stopped - stop smooth updates and show final value
+                        stopReloadTimeUpdates();
+                        lastReloadTimeSeconds = newReloadTime;
+                        document.getElementById('reloadTime').textContent = formatTime(newReloadTime);
+                    } else if (!reloadTimeActive) {
+                        // Timer not active, just display the value
+                        lastReloadTimeSeconds = newReloadTime;
+                        document.getElementById('reloadTime').textContent = formatTime(newReloadTime);
+                    }
+                }
                 
                 if (data.reloadHistory) {
                     updateReloadHistoryList(data.reloadHistory);
@@ -952,6 +987,23 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         
         function stopUptimeUpdates() {
             if (uptimeUpdateInterval) clearInterval(uptimeUpdateInterval);
+        }
+        
+        function startReloadTimeUpdates() {
+            if (reloadTimeUpdateInterval) clearInterval(reloadTimeUpdateInterval);
+            reloadTimeUpdateInterval = setInterval(() => {
+                if (reloadTimeActive && lastReloadTimeSeconds >= 0) {
+                    const now = Date.now();
+                    const diffSeconds = (now - lastReloadTimeUpdateTime) / 1000;
+                    const currentTime = lastReloadTimeSeconds + diffSeconds;
+                    document.getElementById('reloadTime').textContent = formatTime(currentTime);
+                }
+            }, 100); // Update every 100ms for smooth counting
+        }
+        
+        function stopReloadTimeUpdates() {
+            if (reloadTimeUpdateInterval) clearInterval(reloadTimeUpdateInterval);
+            reloadTimeActive = false;
         }
 
         const configMap = {

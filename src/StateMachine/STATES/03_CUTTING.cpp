@@ -37,6 +37,9 @@ float TA_SIGNAL_ACTIVATION_DISTANCE = 8.5;                       // TA signal ac
 unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;              // Recovery operation timeout
 unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;              // Motor state verification delay
 
+// Suction Sensor Configuration
+unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout for waiting for suction sensor to go HIGH (ms)
+
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 📊 STATE VARIABLES                                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
@@ -49,6 +52,8 @@ namespace {
         bool waitingForServoHome = false;
         bool servoReturnStarted = false;
         unsigned long servoHomeWaitStartedAt = 0;
+        bool waitingForSuction = false;
+        unsigned long suctionWaitStartTime = 0;
     };
 
     CuttingStateContext cuttingContext;
@@ -231,6 +236,38 @@ void handleCuttingStep0() {
     //! Extend clamps to secure wood
     extend2x4SecureClamp();
     extendFeedClamp();
+
+    //! Check suction sensor before starting cut motor
+    if (!isWoodProperlyGrabbed()) {
+        // Check if servo is home - if so, ignore suction error and proceed
+        if (!getRotationServoIsActiveAndTiming()) {
+            // Clear waiting flags
+            cuttingContext.waitingForSuction = false;
+            cuttingContext.suctionWaitStartTime = 0;
+            // Proceed to next block (skip return)
+        } else {
+            // Sensor is LOW - start waiting if not already waiting
+            if (!cuttingContext.waitingForSuction) {
+                cuttingContext.waitingForSuction = true;
+                cuttingContext.suctionWaitStartTime = millis();
+            }
+            
+            // Check if timeout has expired
+            if (millis() - cuttingContext.suctionWaitStartTime >= SUCTION_WAIT_TIMEOUT_MS) {
+                // Timeout expired - transition to suction error
+                FastAccelStepper* cutMotor = getCutMotor();
+                handleSuctionFailure(cutMotor);
+                return;
+            }
+            
+            // Still within timeout - stay in Step 0 and keep checking
+            return;
+        }
+    }
+    
+    //! Sensor is HIGH (or went HIGH during wait) - clear waiting flags and proceed
+    cuttingContext.waitingForSuction = false;
+    cuttingContext.suctionWaitStartTime = 0;
 
     //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)
     if (isWoodProperlyGrabbed()) {

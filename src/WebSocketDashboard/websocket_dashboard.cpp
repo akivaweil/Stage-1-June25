@@ -210,7 +210,7 @@ struct ConfigurationData {
     
     // Motor Control Constants
     float FEED_MOTOR_RETURN_DISTANCE;
-    // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
+    float FEED_MOTOR_OFFSET_FROM_SENSOR;
     
     // Timing Constants
     unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS;
@@ -268,7 +268,7 @@ ConfigurationData getDefaultConfiguration() {
 
     // Motor Control Constants - use Motor_Config defaults
     config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
-    // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
+    config.FEED_MOTOR_OFFSET_FROM_SENSOR = FEED_MOTOR_OFFSET_FROM_SENSOR;
 
     // Timing Constants - use Motor_Config defaults
     config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
@@ -286,10 +286,12 @@ ConfigurationData getDefaultConfiguration() {
 //  - CUT_TRAVEL_DISTANCE (inches)
 //  - FEED_TRAVEL_DISTANCE (inches)
 //  - CUT_MOTOR_NORMAL_SPEED
+//  - FEED_MOTOR_OFFSET_FROM_SENSOR (inches)
 void applyConfiguration(const ConfigurationData& config) {
     CUT_TRAVEL_DISTANCE = config.CUT_TRAVEL_DISTANCE;
     FEED_TRAVEL_DISTANCE = config.FEED_TRAVEL_DISTANCE;
     CUT_MOTOR_NORMAL_SPEED = config.CUT_MOTOR_NORMAL_SPEED;
+    FEED_MOTOR_OFFSET_FROM_SENSOR = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
 }
 
 // Calculate checksum for configuration - only checksum the actual data fields, not padding
@@ -362,6 +364,8 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
     // Motor Control Constants
     data = (const uint8_t*)&config.FEED_MOTOR_RETURN_DISTANCE;
     for (size_t i = 0; i < sizeof(config.FEED_MOTOR_RETURN_DISTANCE); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_MOTOR_OFFSET_FROM_SENSOR;
+    for (size_t i = 0; i < sizeof(config.FEED_MOTOR_OFFSET_FROM_SENSOR); i++) checksum += data[i];
     
     // Timing Constants
     data = (const uint8_t*)&config.CUT_MOTOR_RECOVERY_TIMEOUT_MS;
@@ -413,6 +417,11 @@ void loadConfiguration() {
         Serial.println("FEED_TRAVEL_DISTANCE out of range, using defaults");
     }
     
+    if (config.FEED_MOTOR_OFFSET_FROM_SENSOR < 0.01 || config.FEED_MOTOR_OFFSET_FROM_SENSOR > 1.0) {
+        isValid = false;
+        Serial.println("FEED_MOTOR_OFFSET_FROM_SENSOR out of range, using defaults");
+    }
+    
     if (!isValid) {
         config = getDefaultConfiguration();
         saveConfiguration();
@@ -456,7 +465,7 @@ void saveConfiguration() {
     config.TA_SIGNAL_ACTIVATION_DISTANCE = TA_SIGNAL_ACTIVATION_DISTANCE;
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
     config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
-    // FEED_MOTOR_OFFSET_FROM_SENSOR removed - now hardcoded in config file
+    config.FEED_MOTOR_OFFSET_FROM_SENSOR = FEED_MOTOR_OFFSET_FROM_SENSOR;
     config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
     config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
     config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
@@ -1160,6 +1169,16 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (0.1-10.0)";
                             }
+                        } else if (configKey == "feed_motor_offset_from_sensor") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.01 && newValue <= 1.0) {
+                                FEED_MOTOR_OFFSET_FROM_SENSOR = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: FEED_MOTOR_OFFSET_FROM_SENSOR = " + String(newValue));
+                            } else {
+                                response["error"] = "Value out of range (0.01-1.0)";
+                            }
                         } else if (configKey == "cut_motor_normal_speed") {
                             float newValue = doc["value"];
                             if (newValue >= 100 && newValue <= 5000) {
@@ -1189,6 +1208,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             response["value"] = CUT_TRAVEL_DISTANCE;
                         } else if (configKey == "feed_travel_distance") {
                             response["value"] = FEED_TRAVEL_DISTANCE;
+                        } else if (configKey == "feed_motor_offset_from_sensor") {
+                            response["value"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                         } else if (configKey == "cut_motor_normal_speed") {
                             response["value"] = CUT_MOTOR_NORMAL_SPEED;
                         } else {
@@ -1205,6 +1226,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["type"] = "all_config";
                         response["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
                         response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
+                        response["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                         response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
                         
                         String message;

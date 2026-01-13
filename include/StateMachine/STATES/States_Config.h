@@ -52,7 +52,7 @@ extern unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS;
 //* ************************************************************************
 // Position and movement constants
 extern float FEED_MOTOR_RETURN_DISTANCE;
-extern const float FEED_MOTOR_OFFSET_FROM_SENSOR;  // Hardcoded offset - not adjustable via dashboard
+extern float FEED_MOTOR_OFFSET_FROM_SENSOR;
 
 //* ************************************************************************
 //* ************************ TIMING CONSTANTS *****************************

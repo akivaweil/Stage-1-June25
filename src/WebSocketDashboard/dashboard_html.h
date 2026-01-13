@@ -620,6 +620,14 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
             
             <div class="input-group">
+                <label>Feed Motor Offset from Sensor (in)</label>
+                <div class="input-row">
+                    <input type="number" id="feedMotorOffsetFromSensor" step="0.01" placeholder="0.15">
+                    <button class="btn" onclick="updateConfig('feed_motor_offset_from_sensor')">SAVE</button>
+                </div>
+            </div>
+            
+            <div class="input-group">
                 <label>Cut Motor Speed</label>
                 <div class="input-row">
                     <input type="number" id="cutMotorNormalSpeed" step="10" placeholder="640">
@@ -865,6 +873,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             else if (data.type === 'all_config') {
                 if(data.cut_travel_distance) document.getElementById('cutTravelDistance').value = data.cut_travel_distance;
                 if(data.feed_travel_distance) document.getElementById('feedTravelDistance').value = data.feed_travel_distance;
+                if(data.feed_motor_offset_from_sensor) document.getElementById('feedMotorOffsetFromSensor').value = data.feed_motor_offset_from_sensor;
                 if(data.cut_motor_normal_speed) document.getElementById('cutMotorNormalSpeed').value = data.cut_motor_normal_speed;
             }
             else if (data.type === 'config_updated') {
@@ -1009,6 +1018,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         const configMap = {
             'cut_travel_distance': 'cutTravelDistance',
             'feed_travel_distance': 'feedTravelDistance',
+            'feed_motor_offset_from_sensor': 'feedMotorOffsetFromSensor',
             'cut_motor_normal_speed': 'cutMotorNormalSpeed'
         };
 

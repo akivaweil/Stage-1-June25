@@ -37,7 +37,7 @@ extern float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
 //* ************************************************************************
 extern float FEED_MOTOR_STEPS_PER_INCH;
 extern const int FEED_HOMING_DIRECTION;
-extern const float FEED_MOTOR_OFFSET_FROM_SENSOR;
+extern float FEED_MOTOR_OFFSET_FROM_SENSOR;
 
 // Speeds (defaults - can be modified via dashboard)
 extern float FEED_MOTOR_NORMAL_SPEED;

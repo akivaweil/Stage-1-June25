@@ -486,10 +486,10 @@ void handleCommonOperations() {
         }
     }
 
-    // Handle Rotation Clamp retraction after configured duration (500ms later for NO_2x4 state)
+    // Handle Rotation Clamp retraction after configured duration (2000ms later for NO_2x4 state)
     unsigned long rotationClampRetractDelay = ROTATION_CLAMP_EXTEND_DURATION_MS;
     if (currentState == RETURNING_NO_2x4) {
-        rotationClampRetractDelay += 500; // Add 500ms delay for NO_2x4 state
+        rotationClampRetractDelay += 2000; // Add 2000ms delay for NO_2x4 state
     }
     
     if (rotationClampIsExtended && (millis() - rotationClampExtendTime >= rotationClampRetractDelay)) {

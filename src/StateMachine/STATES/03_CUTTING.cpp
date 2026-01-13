@@ -3,6 +3,7 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "StateMachine/STATES/States_Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
+#include "OTAUpdater/ota_updater.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚔️ CUTTING STATE                                                     ║
@@ -17,11 +18,11 @@
 
 // Configuration Settings
 // Rotation Servo Settings
-int ROTATION_SERVO_HOME_POSITION = 14-12;                           // Servo home position angle
-int ROTATION_SERVO_ACTIVE_POSITION = 108-5;                        // Servo active rotation angle
+int ROTATION_SERVO_HOME_POSITION = 14-10;                           // Servo home position angle
+int ROTATION_SERVO_ACTIVE_POSITION = 108-15;                        // Servo active rotation angle
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
-unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait duration at home position
+unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait dration at home position
 unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 50;     // Wait time after suction detected before returning
 float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
 
@@ -228,6 +229,9 @@ void executeCuttingState() {
 }
 
 void handleCuttingStep0() {
+    //! Check for OTA upload at the beginning of cutting state
+    handleOTA();
+    
     //! Wait for rotation servo to return home if needed
     if (waitForServoHomeIfNeeded()) {
         return; // Still waiting, exit and check again next cycle
@@ -359,4 +363,8 @@ void handleHomePositionError() {
 void resetCuttingSteps() {
     cuttingContext = CuttingStateContext{};
     homePositionErrorDetected = false;
+}
+
+bool isCuttingStateStep0() {
+    return cuttingContext.step == 0;
 }

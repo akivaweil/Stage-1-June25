@@ -27,18 +27,22 @@ void otaUpdateProgressLEDs(unsigned int progress, unsigned int total) {
   // Turn off all LEDs first
   otaAllLedsOff();
   
-  // Light appropriate LED based on progress
-  if (percentage < 25.0) {
-    // 0-25%: Red LED
-    digitalWrite(STATUS_LED_RED, HIGH);
-  } else if (percentage < 50.0) {
-    // 25-50%: Yellow LED
+  // Light LEDs progressively to show upload progress (like a progress bar)
+  // 0-25%: Red LED
+  digitalWrite(STATUS_LED_RED, HIGH);
+  
+  if (percentage >= 25.0) {
+    // 25-50%: Red + Yellow LEDs
     digitalWrite(STATUS_LED_YELLOW, HIGH);
-  } else if (percentage < 75.0) {
-    // 50-75%: Green LED
+  }
+  
+  if (percentage >= 50.0) {
+    // 50-75%: Red + Yellow + Green LEDs
     digitalWrite(STATUS_LED_GREEN, HIGH);
-  } else {
-    // 75-100%: Blue LED
+  }
+  
+  if (percentage >= 75.0) {
+    // 75-100%: All 4 LEDs (Red + Yellow + Green + Blue)
     digitalWrite(STATUS_LED_BLUE, HIGH);
   }
 }
@@ -76,8 +80,20 @@ void setupOTA() {
       }
       // NOTE: if updating SPIFFS, ensure SPIFFS is mounted via SPIFFS.begin()
       //serial.println("Start updating " + type);
-      otaAllLedsOff(); // Clear all LEDs at start
-      digitalWrite(STATUS_LED_RED, HIGH); // Start with red LED
+      
+      // Flash all LEDs 3 times to clearly indicate upload start
+      for(int i = 0; i < 3; i++) {
+        digitalWrite(STATUS_LED_RED, HIGH);
+        digitalWrite(STATUS_LED_YELLOW, HIGH);
+        digitalWrite(STATUS_LED_GREEN, HIGH);
+        digitalWrite(STATUS_LED_BLUE, HIGH);
+        delay(100);
+        otaAllLedsOff();
+        delay(100);
+      }
+      
+      // Start with red LED for 0% progress
+      digitalWrite(STATUS_LED_RED, HIGH);
       //serial.println("OTA Upload started - LED progress indication active");
     })
     .onEnd([]() {

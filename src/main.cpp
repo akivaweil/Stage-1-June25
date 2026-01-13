@@ -9,6 +9,7 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "ErrorStates/Errors_Functions.h"
 #include "StateMachine/StateManager.h"
+#include "StateMachine/03_CUTTING.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
 //* ************************************************************************
@@ -209,8 +210,15 @@ void setup() {
 }
 
 void loop() {
-  // Handle OTA requests when in IDLE, HOMING, or RELOAD states for safety
-  if (currentState == IDLE || currentState == HOMING || currentState == RELOAD) {
+  // Handle OTA requests when in IDLE, HOMING, RELOAD states, or at the beginning of CUTTING state (step 0)
+  bool allowOTA = (currentState == IDLE || currentState == HOMING || currentState == RELOAD);
+  
+  // Also allow OTA at the beginning of cutting state (step 0 only)
+  if (currentState == CUTTING) {
+    allowOTA = isCuttingStateStep0();
+  }
+  
+  if (allowOTA) {
     handleOTA();
   }
 

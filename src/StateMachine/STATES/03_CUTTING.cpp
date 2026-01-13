@@ -17,8 +17,8 @@
 
 // Configuration Settings
 // Rotation Servo Settings
-int ROTATION_SERVO_HOME_POSITION = 14-8;                           // Servo home position angle
-int ROTATION_SERVO_ACTIVE_POSITION = 108-8;                        // Servo active rotation angle
+int ROTATION_SERVO_HOME_POSITION = 14-12;                           // Servo home position angle
+int ROTATION_SERVO_ACTIVE_POSITION = 108-5;                        // Servo active rotation angle
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait duration at home position
@@ -30,7 +30,7 @@ unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for cla
 float ROTATION_CLAMP_ACTIVATION_DISTANCE = 6.0;                  // Clamp activation distance from start of cut (inches)
 
 // Transfer Arm Configuration
-unsigned long TA_SIGNAL_DURATION = 1000;                         // Transfer arm signal duration
+unsigned long TA_SIGNAL_DURATION = 5000;                         // Transfer arm signal duration
 float TA_SIGNAL_ACTIVATION_DISTANCE = 8.5;                       // TA signal activation distance from start of cut (inches)
 
 // Cut Motor Timing & Recovery
@@ -320,7 +320,6 @@ void handleCuttingStep2() {
 
         const bool no2x4Detected = !isWoodPresent();
         updateLedsForReturnState(no2x4Detected);
-
         if (no2x4Detected) {
             changeState(RETURNING_NO_2x4);
         } else {

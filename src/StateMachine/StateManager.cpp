@@ -486,8 +486,13 @@ void handleCommonOperations() {
         }
     }
 
-    // Handle Rotation Clamp retraction after 1 second
-    if (rotationClampIsExtended && (millis() - rotationClampExtendTime >= ROTATION_CLAMP_EXTEND_DURATION_MS)) {
+    // Handle Rotation Clamp retraction after configured duration (500ms later for NO_2x4 state)
+    unsigned long rotationClampRetractDelay = ROTATION_CLAMP_EXTEND_DURATION_MS;
+    if (currentState == RETURNING_NO_2x4) {
+        rotationClampRetractDelay += 500; // Add 500ms delay for NO_2x4 state
+    }
+    
+    if (rotationClampIsExtended && (millis() - rotationClampExtendTime >= rotationClampRetractDelay)) {
         retractRotationClamp();
         //serial.println("Rotation Clamp retracted after 1 second.");
     }

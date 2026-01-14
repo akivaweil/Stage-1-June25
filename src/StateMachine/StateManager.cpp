@@ -494,7 +494,8 @@ void handleCommonOperations() {
         
         // Add extra delay if no wood detected (applies during CUTTING and RETURNING_NO_2x4)
         if (!get2x4Present()) {
-            rotationClampRetractDelay += 2000; // Extra time for NO_2x4 scenario
+            extern unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS; // From 05_RETURNING_No_2x4.cpp
+            rotationClampRetractDelay += ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS; // Extra time for NO_2x4 scenario
         }
         
         if (millis() - rotationClampExtendTime >= rotationClampRetractDelay) {

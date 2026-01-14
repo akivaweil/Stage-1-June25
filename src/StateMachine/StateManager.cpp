@@ -486,15 +486,21 @@ void handleCommonOperations() {
         }
     }
 
-    // Handle Rotation Clamp retraction after configured duration (2200ms later for NO_2x4 state)
-    unsigned long rotationClampRetractDelay = ROTATION_CLAMP_EXTEND_DURATION_MS;
-    if (currentState == RETURNING_NO_2x4) {
-        rotationClampRetractDelay += 2200; // Add 2200ms delay for NO_2x4 state
-    }
-    
-    if (rotationClampIsExtended && (millis() - rotationClampExtendTime >= rotationClampRetractDelay)) {
-        retractRotationClamp();
-        //serial.println("Rotation Clamp retracted after 1 second.");
+    // Handle Rotation Clamp retraction after configured duration (later for NO_2x4 state)
+    // Check if wood present to determine if we'll need extra time
+    // Only retract if either: 1) wood present (normal timing), or 2) no wood AND extra time has passed
+    if (rotationClampIsExtended) {
+        unsigned long rotationClampRetractDelay = ROTATION_CLAMP_EXTEND_DURATION_MS;
+        
+        // Add extra delay if no wood detected (applies during CUTTING and RETURNING_NO_2x4)
+        if (!get2x4Present()) {
+            rotationClampRetractDelay += 2000; // Extra time for NO_2x4 scenario
+        }
+        
+        if (millis() - rotationClampExtendTime >= rotationClampRetractDelay) {
+            retractRotationClamp();
+            //serial.println("Rotation Clamp retracted after configured duration.");
+        }
     }
 
     // 2x4 sensor - Update global _2x4Present flag

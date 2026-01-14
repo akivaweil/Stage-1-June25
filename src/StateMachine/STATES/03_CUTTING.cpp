@@ -31,7 +31,7 @@ unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for cla
 float ROTATION_CLAMP_ACTIVATION_DISTANCE = 6.0;                  // Clamp activation distance from start of cut (inches)
 
 // Transfer Arm Configuration
-unsigned long TA_SIGNAL_DURATION = 5000;                         // Transfer arm signal duration
+unsigned long TA_SIGNAL_DURATION = 2000;                         // Transfer arm signal duration
 float TA_SIGNAL_ACTIVATION_DISTANCE = 8.5;                       // TA signal activation distance from start of cut (inches)
 
 // Cut Motor Timing & Recovery

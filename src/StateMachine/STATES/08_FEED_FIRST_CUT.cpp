@@ -13,7 +13,6 @@ const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute positi
 const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
 const float FEED_MOTOR_SECOND_RUN_END_POSITION = 0.33; // inches - absolute position for second run end
 const unsigned long FEED_CLAMP_DELAY_MS = 300; // Delay after extending feed clamp and retracting secure clamp
-const unsigned long SECURE_CLAMP_RETRACTION_DELAY_MS = 100; // Delay after retracting secure clamp before feed motor starts
 
 // Note: FEED_TRAVEL_DISTANCE, FEED_MOTOR_STEPS_PER_INCH, FEED_CLAMP, _2x4_SECURE_CLAMP, 
 // and START_CYCLE_SWITCH are already defined in Config files and accessible via includes
@@ -133,19 +132,16 @@ void executeFeedFirstCutStep() {
                 // Only retract secure clamp if not coming from no-wood situation
                 if (!getComingFromNoWoodWithSensorsClear()) {
                     retract2x4SecureClamp();
-                    stepStartTime = millis(); // Start timer for secure clamp retraction delay
-                } else {
-                    stepStartTime = millis(); // Start timer even if secure clamp not retracted
                 }
                 //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
+                stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
             }
             break;
 
         case WAIT_200MS:
-            // Wait for secure clamp retraction delay (100ms) before starting feed motor
-            if (millis() - stepStartTime >= SECURE_CLAMP_RETRACTION_DELAY_MS) {
-                //serial.println("FeedFirstCut: Waiting for secure clamp retraction delay");
+            if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
+                //serial.println("FeedFirstCut: Waiting 200ms");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -184,15 +180,14 @@ void executeFeedFirstCutStep() {
                 extendFeedClamp();
                 retract2x4SecureClamp();
                 //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
-                stepStartTime = millis(); // Start timer for secure clamp retraction delay
+                stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
             }
             break;
 
         case WAIT_200MS_SECOND:
-            // Wait for secure clamp retraction delay (100ms) before starting feed motor
-            if (millis() - stepStartTime >= SECURE_CLAMP_RETRACTION_DELAY_MS) {
-                //serial.println("FeedFirstCut: Waiting for secure clamp retraction delay (second run)");
+            if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
+                //serial.println("FeedFirstCut: Waiting 200ms (second run)");
                 advanceToNextFeedFirstCutStep();
             }
             break;

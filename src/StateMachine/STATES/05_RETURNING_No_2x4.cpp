@@ -10,6 +10,7 @@ const float FEED_MOTOR_SPEED_MULTIPLIER = 0.6; // Speed reduction for NO_2x4 ret
 const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movement
 const float FEED_MOTOR_HOME_POSITION = 0.8; // Home position
 const float FEED_MOTOR_FINAL_POSITION = -1.2; // Final position
+const unsigned long ROTATION_CLAMP_EXTRA_DELAY_MS = 300; // Extra delay before extending rotation clamp after sensor clears
 
 // Step enumeration for better readability
 enum ReturningNo2x4Step {
@@ -186,7 +187,7 @@ void handleReturningNo2x4Step(int step) {
                 extern const int _2x4_PRESENT_SENSOR;
                 if (getWoodPresentSensorBounce()->read() == HIGH) {
                     // Sensor is clear (not active) - safe to extend secure clamp
-                    delay(300);
+                    delay(ROTATION_CLAMP_EXTRA_DELAY_MS);
                     extend2x4SecureClamp();
                     // Set flag to prevent IDLE from retracting the clamp
                     setComingFromNoWoodWithSensorsClear(true);

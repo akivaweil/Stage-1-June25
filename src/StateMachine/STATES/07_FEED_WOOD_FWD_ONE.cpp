@@ -91,7 +91,7 @@ void executeFeedWoodFwdOneStep() {
             break;
 
         case WAIT_200MS:
-            if (millis() - stepStartTime >= 200) {
+            if (millis() - stepStartTime >= 400) {
                 //serial.println("FeedWoodFwdOne: Waiting 200ms");
                 advanceToNextFeedWoodFwdOneStep();
             }

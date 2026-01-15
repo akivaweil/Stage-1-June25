@@ -11,7 +11,7 @@ const float FEED_MOTOR_2ND_POSITION = -1.2; // Position for 2nd position movemen
 const float FEED_MOTOR_HOME_POSITION = 0.8; // Home position
 const float FEED_MOTOR_FINAL_POSITION = -1.2; // Final position
 const unsigned long ROTATION_CLAMP_EXTRA_DELAY_MS = 300; // Extra delay before extending rotation clamp after sensor clears
-unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 2000; // Extra delay for rotation clamp retraction when no wood detected
+unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 200; // (NO_2x4 state) Extra delay for rotation clamp retraction when no wood detected 
 
 // Step enumeration for better readability
 enum ReturningNo2x4Step {

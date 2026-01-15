@@ -17,6 +17,7 @@
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔄 CUT MOTOR                                                 ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
+// Motor specs: 200 steps/revolution on standard ball screw
 float CUT_MOTOR_STEPS_PER_INCH = 500.0;
 const int CUT_HOMING_DIRECTION = -1;
 
@@ -34,6 +35,7 @@ float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚡ FEED MOTOR                                                 ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
+// Motor specs: 200 steps/revolution on standard ball screw
 float FEED_MOTOR_STEPS_PER_INCH = 1000.0; 
 const int FEED_HOMING_DIRECTION = 1;
 float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.15;

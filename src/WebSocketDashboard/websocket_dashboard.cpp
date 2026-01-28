@@ -286,6 +286,57 @@ ConfigurationData getDefaultConfiguration() {
     return config;
 }
 
+// Update dynamic configuration based on mode
+void updateDynamicConfig() {
+    EEPROM.begin(CONFIG_EEPROM_SIZE);
+    
+    // 1. Get baseline (3 Inch) configuration
+    ConfigurationData baselineConfig;
+    EEPROM.get(CONFIG_OFFSET_3INCH, baselineConfig);
+    
+    // Check if baseline config is valid, if not use defaults
+    if (baselineConfig.magic != CONFIG_MAGIC) {
+        baselineConfig = getDefaultConfiguration();
+    }
+    
+    // 2. Determine 3 Inch Cut Distance (Baseline)
+    // If we are in 3 Inch mode (0), the current CUT_TRAVEL_DISTANCE is the baseline
+    // If we are in Minis mode (1), we use the stored 3 Inch config value
+    float baselineCutDistance = (currentConfigMode == 0) ? CUT_TRAVEL_DISTANCE : baselineConfig.CUT_TRAVEL_DISTANCE;
+    
+    // 3. Calculate difference
+    // diff = (3 Inch Distance) - (Current Distance)
+    // Example: 3 Inch = 9.2, Minis = 7.2 -> diff = 2.0
+    float diff = baselineCutDistance - CUT_TRAVEL_DISTANCE;
+    
+    // 4. Update Rotation Activation Distances
+    // We want activation to happen 'diff' earlier relative to start, 
+    // which means at the same physical position relative to the end of cut.
+    // Default/Baseline is 8.2 inches from start (for 9.2 inch cut -> 1 inch before end)
+    // New distance should be 8.2 - 2.0 = 6.2 inches from start (for 7.2 inch cut -> 1 inch before end)
+    
+    // Use the values from baseline config as the starting point
+    // Note: ROTATION_SERVO_ACTIVATION_DISTANCE and ROTATION_CLAMP_ACTIVATION_DISTANCE 
+    // are loaded from EEPROM but not typically modified via dashboard, so we use baseline values.
+    
+    ROTATION_SERVO_ACTIVATION_DISTANCE = baselineConfig.ROTATION_SERVO_ACTIVATION_DISTANCE - diff;
+    ROTATION_CLAMP_ACTIVATION_DISTANCE = baselineConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE - diff;
+    
+    // Log for debugging
+    Serial.print("Dynamic Config Update: Mode=");
+    Serial.print(currentConfigMode);
+    Serial.print(", BaseCut=");
+    Serial.print(baselineCutDistance);
+    Serial.print(", CurrCut=");
+    Serial.print(CUT_TRAVEL_DISTANCE);
+    Serial.print(", Diff=");
+    Serial.print(diff);
+    Serial.print(", ServoAct=");
+    Serial.print(ROTATION_SERVO_ACTIVATION_DISTANCE);
+    Serial.print(", ClampAct=");
+    Serial.println(ROTATION_CLAMP_ACTIVATION_DISTANCE);
+}
+
 // Apply configuration to global variables
 // NOTE: EEPROM is only used for these parameters:
 //  - CUT_TRAVEL_DISTANCE (inches)
@@ -297,6 +348,9 @@ void applyConfiguration(const ConfigurationData& config) {
     FEED_TRAVEL_DISTANCE = config.FEED_TRAVEL_DISTANCE;
     CUT_MOTOR_NORMAL_SPEED = config.CUT_MOTOR_NORMAL_SPEED;
     FEED_MOTOR_OFFSET_FROM_SENSOR = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
+    
+    // Update dynamic configuration after applying basic settings
+    updateDynamicConfig();
 }
 
 // Calculate checksum for configuration - only checksum the actual data fields, not padding
@@ -1179,6 +1233,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             if (newValue >= 0.1 && newValue <= 20.0) {
                                 CUT_TRAVEL_DISTANCE = newValue;
                                 saveConfiguration();
+                                // Update dynamic config since cut distance changed
+                                updateDynamicConfig();
                                 response["value"] = newValue;
                                 addEventToLog("Configuration updated: CUT_TRAVEL_DISTANCE = " + String(newValue));
                             } else {
@@ -1234,6 +1290,10 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             
                             // Load config for this mode
                             loadConfiguration(); 
+                            
+                            // Ensure dynamic config is updated (loadConfiguration calls applyConfiguration which calls updateDynamicConfig)
+                            // But let's be explicit just in case
+                            updateDynamicConfig();
                             
                             // Respond with confirmation and new config
                             JsonDocument response;

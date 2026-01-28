@@ -835,6 +835,15 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             }, 1000);
         }
 
+        function formatConfigValue(val) {
+            if (typeof val === 'number') {
+                // Round to max 3 decimal places to avoid floating point artifacts (e.g. 8.900001)
+                // parseFloat removes trailing zeros
+                return parseFloat(val.toFixed(3));
+            }
+            return val;
+        }
+
         function handleMessage(data) {
             if (data.type === 'pong') {
                 if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
@@ -922,10 +931,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 if (data.config_mode !== undefined) {
                     updateModeUI(data.config_mode);
                 }
-                if(data.cut_travel_distance) document.getElementById('cutTravelDistance').value = data.cut_travel_distance;
-                if(data.feed_travel_distance) document.getElementById('feedTravelDistance').value = data.feed_travel_distance;
-                if(data.feed_motor_offset_from_sensor) document.getElementById('feedMotorOffsetFromSensor').value = data.feed_motor_offset_from_sensor;
-                if(data.cut_motor_normal_speed) document.getElementById('cutMotorNormalSpeed').value = data.cut_motor_normal_speed;
+                if(data.cut_travel_distance) document.getElementById('cutTravelDistance').value = formatConfigValue(data.cut_travel_distance);
+                if(data.feed_travel_distance) document.getElementById('feedTravelDistance').value = formatConfigValue(data.feed_travel_distance);
+                if(data.feed_motor_offset_from_sensor) document.getElementById('feedMotorOffsetFromSensor').value = formatConfigValue(data.feed_motor_offset_from_sensor);
+                if(data.cut_motor_normal_speed) document.getElementById('cutMotorNormalSpeed').value = formatConfigValue(data.cut_motor_normal_speed);
             }
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');

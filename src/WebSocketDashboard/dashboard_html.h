@@ -656,7 +656,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
             
             <div class="input-group">
-                <label>Feed Distance (in)</label>
+                <label>Feed Distance (in) (second square is larger with higher value)</label>
                 <div class="input-row">
                     <input type="number" id="feedTravelDistance" step="0.01" placeholder="3.43">
                     <button class="btn" onclick="updateConfig('feed_travel_distance')">SAVE</button>

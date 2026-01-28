@@ -35,7 +35,12 @@ float FEED_TRAVEL_DISTANCE = 3.43;
 
 // EEPROM configuration constants
 const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
-const int CONFIG_OFFSET = 0; // Configuration starts at beginning of extended EEPROM
+const int CONFIG_OFFSET_3INCH = 0; // 3 Inch configuration at start
+const int CONFIG_OFFSET_MINIS = 512; // Minis configuration at offset 512
+const int CONFIG_MODE_ADDRESS = 1024; // Store active mode at 1024
+
+// Global variable for current mode
+int currentConfigMode = 0; // 0: 3 Inch, 1: Minis
 
 // Enhanced dashboard data structures
 SystemStatus systemStatus;
@@ -386,8 +391,23 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
 void loadConfiguration() {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
     
+    // Read stored config mode
+    int storedMode = 0;
+    EEPROM.get(CONFIG_MODE_ADDRESS, storedMode);
+    
+    // Validate mode
+    if (storedMode == 0 || storedMode == 1) {
+        currentConfigMode = storedMode;
+    } else {
+        currentConfigMode = 0; // Default to 3 Inch
+        // Save default mode
+        EEPROM.put(CONFIG_MODE_ADDRESS, currentConfigMode);
+        EEPROM.commit();
+    }
+    
     ConfigurationData config;
-    EEPROM.get(CONFIG_OFFSET, config);
+    int offset = (currentConfigMode == 0) ? CONFIG_OFFSET_3INCH : CONFIG_OFFSET_MINIS;
+    EEPROM.get(offset, config);
     
     // Validate configuration
     bool isValid = true;
@@ -473,9 +493,14 @@ void saveConfiguration() {
     config.version = 1;
     config.checksum = calculateChecksum(config);
     
-    EEPROM.put(CONFIG_OFFSET, config);
+    int offset = (currentConfigMode == 0) ? CONFIG_OFFSET_3INCH : CONFIG_OFFSET_MINIS;
+    EEPROM.put(offset, config);
+    
+    // Also ensure mode is saved
+    EEPROM.put(CONFIG_MODE_ADDRESS, currentConfigMode);
+    
     EEPROM.commit();
-    Serial.println("Configuration saved");
+    Serial.println("Configuration saved (Mode: " + String(currentConfigMode == 0 ? "3 Inch" : "Minis") + ")");
 }
 
 float getFeedTravelDistance() {
@@ -1181,13 +1206,13 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             }
                         } else if (configKey == "cut_motor_normal_speed") {
                             float newValue = doc["value"];
-                            if (newValue >= 100 && newValue <= 5000) {
+                            if (newValue >= 0.1 && newValue <= 50.0) {
                                 CUT_MOTOR_NORMAL_SPEED = newValue;
                                 saveConfiguration();
                                 response["value"] = newValue;
-                                addEventToLog("Configuration updated: CUT_MOTOR_NORMAL_SPEED = " + String(newValue));
+                                addEventToLog("Configuration updated: CUT_MOTOR_NORMAL_SPEED = " + String(newValue) + " inches/sec");
                             } else {
-                                response["error"] = "Value out of range (100-5000)";
+                                response["error"] = "Value out of range (0.1-50.0 inches/sec)";
                             }
                         } else {
                             response["error"] = "Unknown configuration key";
@@ -1197,6 +1222,43 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         serializeJson(response, message);
                         client->text(message);
                         
+                    } else if (type == "set_config_mode") {
+                        int newMode = doc["mode"];
+                        if (newMode == 0 || newMode == 1) {
+                            currentConfigMode = newMode;
+                            
+                            // Save mode preference
+                            EEPROM.begin(CONFIG_EEPROM_SIZE);
+                            EEPROM.put(CONFIG_MODE_ADDRESS, currentConfigMode);
+                            EEPROM.commit();
+                            
+                            // Load config for this mode
+                            loadConfiguration(); 
+                            
+                            // Respond with confirmation and new config
+                            JsonDocument response;
+                            response["type"] = "config_mode_changed";
+                            response["mode"] = currentConfigMode;
+                            
+                            String message;
+                            serializeJson(response, message);
+                            client->text(message);
+                            
+                            // Also send updated config values
+                            JsonDocument configDoc;
+                            configDoc["type"] = "all_config";
+                            configDoc["config_mode"] = currentConfigMode;
+                            configDoc["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
+                            configDoc["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
+                            configDoc["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
+                            configDoc["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
+                            
+                            String configMessage;
+                            serializeJson(configDoc, configMessage);
+                            ws.textAll(configMessage); // Broadcast to all clients
+                            
+                            addEventToLog("Config mode switched to: " + String(currentConfigMode == 0 ? "3 Inch" : "Minis"));
+                        }
                     } else if (type == "request_config") {
                         String configKey = doc["key"];
                         JsonDocument response;
@@ -1224,6 +1286,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         // Send all configuration values at once
                         JsonDocument response;
                         response["type"] = "all_config";
+                        response["config_mode"] = currentConfigMode;
                         response["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
                         response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
                         response["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;

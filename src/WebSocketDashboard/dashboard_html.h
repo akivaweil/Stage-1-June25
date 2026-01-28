@@ -468,6 +468,43 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .hidden { display: none; }
         .fade-in { animation: fadeIn 0.5s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mode Toggle */
+        .mode-toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px;
+            border-radius: 12px; /* Soft rounded edges */
+            border: 1px solid var(--border-subtle);
+        }
+
+        .mode-option {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 8px; /* Inner soft rounded edges */
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .mode-option.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .mode-option:hover:not(.active) {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -603,6 +640,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 Configuration
             </div>
             
+            <div class="mode-toggle-container">
+                <div class="mode-toggle">
+                    <div class="mode-option active" id="mode-3inch" onclick="setMode(0)">3 Inch</div>
+                    <div class="mode-option" id="mode-minis" onclick="setMode(1)">Minis</div>
+                </div>
+            </div>
+            
             <div class="input-group">
                 <label>Cut Distance (in)</label>
                 <div class="input-row">
@@ -628,9 +672,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
             
             <div class="input-group">
-                <label>Cut Motor Speed</label>
+                <label>Cut Motor Speed (inches/sec)</label>
                 <div class="input-row">
-                    <input type="number" id="cutMotorNormalSpeed" step="10" placeholder="640">
+                    <input type="number" id="cutMotorNormalSpeed" step="0.1" placeholder="1.28">
                     <button class="btn" onclick="updateConfig('cut_motor_normal_speed')">SAVE</button>
                 </div>
             </div>
@@ -870,7 +914,14 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             else if (data.type === 'serial_log') {
                 updateLog('serialLog', data.logs, true);
             }
+            else if (data.type === 'config_mode_changed') {
+                updateModeUI(data.mode);
+                showConfigStatus('Switched to ' + (data.mode === 0 ? '3 Inch' : 'Minis'), 'success');
+            }
             else if (data.type === 'all_config') {
+                if (data.config_mode !== undefined) {
+                    updateModeUI(data.config_mode);
+                }
                 if(data.cut_travel_distance) document.getElementById('cutTravelDistance').value = data.cut_travel_distance;
                 if(data.feed_travel_distance) document.getElementById('feedTravelDistance').value = data.feed_travel_distance;
                 if(data.feed_motor_offset_from_sensor) document.getElementById('feedMotorOffsetFromSensor').value = data.feed_motor_offset_from_sensor;
@@ -1043,6 +1094,31 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             el.textContent = msg;
             el.style.color = type === 'error' ? 'var(--accent-danger)' : 'var(--accent-success)';
             setTimeout(() => el.textContent = '', 3000);
+        }
+
+        function setMode(mode) {
+            if (!ws || ws.readyState !== 1) return showConfigStatus('Not connected', 'error');
+            
+            // Optimistic update
+            updateModeUI(mode);
+            
+            ws.send(JSON.stringify({
+                type: 'set_config_mode',
+                mode: mode
+            }));
+        }
+
+        function updateModeUI(mode) {
+            const btn3Inch = document.getElementById('mode-3inch');
+            const btnMinis = document.getElementById('mode-minis');
+            
+            if (mode === 0) {
+                btn3Inch.classList.add('active');
+                btnMinis.classList.remove('active');
+            } else {
+                btn3Inch.classList.remove('active');
+                btnMinis.classList.add('active');
+            }
         }
 
         // Init

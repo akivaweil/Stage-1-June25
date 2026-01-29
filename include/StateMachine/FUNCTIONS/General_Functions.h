@@ -130,7 +130,6 @@ bool checkAndRecalibrateCutMotorHome(int attempts);
 //* ************************************************************************
 //* ************************* SWITCH LOGIC FUNCTIONS ***********************
 //* ************************************************************************
-void handleReloadMode();
 void handleErrorAcknowledgement();
 void handleStartSwitchSafety();
 void handleStartSwitchContinuousMode();

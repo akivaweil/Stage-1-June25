@@ -608,25 +608,6 @@ bool checkAndRecalibrateCutMotorHome(int attempts) {
 //* ************************* SWITCH LOGIC FUNCTIONS ***********************
 //* ************************************************************************
 
-void handleReloadMode() {
-    if (currentState == IDLE) {
-        bool reloadSwitchOn = reloadSwitch.read() == HIGH;
-        if (reloadSwitchOn && !isReloadMode) {
-            isReloadMode = true;
-            retractFeedClamp();
-            retract2x4SecureClamp();
-            showYellowLed();
-            //serial.println("Entered reload mode");
-        } else if (!reloadSwitchOn && isReloadMode) {
-            isReloadMode = false;
-            extendFeedClamp();
-            extend2x4SecureClamp();
-            turnYellowLedOff();
-            //serial.println("Exited reload mode, ready for operation");
-        }
-    }
-}
-
 void handleErrorAcknowledgement() {
     // This handles the general error acknowledgement via reloadSwitch
     // It was present in the main loop and also within the CUTTING state's homePositionErrorDetected block.

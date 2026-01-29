@@ -218,18 +218,87 @@ The **State Manager** is the central nervous system of the firmware. It is respo
 
 ---
 
-## 3. Error States (Brief Overview)
+## 3. Error States (Detailed Analysis)
 
 These states handle system faults and require user intervention.
 
--   **ERROR**: Generic error state. Blinks Red LED. Waits for Reload Switch toggle to acknowledge.
--   **ERROR_RESET**: Transition state that calls `handleErrorResetState()` to clear errors and reset system components.
--   **SUCTION_ERROR**: Specific to Transfer Arm failure. Stops motors, blinks error code.
--   **Cut_Motor_Homing_Error**: Specific failure if Cut Motor cannot find home.
+-   **ERROR**: Generic error state.
+    -   **Indicator**: Blinks Red and Yellow LEDs (alternating).
+    -   **Recovery**: Waits for `Reload Switch` to be toggled (Rising Edge).
+    -   **Logic**: Stops all motors immediately.
+-   **ERROR_RESET**: Transition state.
+    -   **Action**: Calls `handleErrorResetState()` which typically clears flags, homes motors if necessary, and transitions to IDLE or HOMING depending on severity.
+-   **SUCTION_ERROR** (`Suction_Error.cpp`):
+    -   **Cause**: Transfer Arm Suction Sensor (Pin 39) failed to detect wood during CUTTING.
+    -   **Behavior**:
+        1.  Wait for sensor to clear (go HIGH) then wait 3 seconds.
+        2.  Automatically Home Cut Motor (10s timeout).
+        3.  Blink Red LED.
+    -   **Recovery**: User must toggle `Start Cycle Switch`. System transitions to **HOMING**.
+-   **Cut_Motor_Homing_Error**:
+    -   **Cause**: Cut Motor failed to trigger home sensor during homing sequence or return.
+    -   **Behavior**: Stops all motors. Blinks error code.
+    -   **Recovery**: Acknowledge via `Reload Switch` -> **ERROR_RESET**.
 
 ---
 
-## 4. State Connection & Flow Diagram
+## 4. Hardware Interface & Configuration
+
+### 4.1. Pin Definitions (`Pin_Def.cpp`)
+The system interacts with the ESP32-S3 via specific GPIO assignments:
+
+| Component | Pin | Logic Level / Type | Note |
+| :--- | :--- | :--- | :--- |
+| **Cut Motor** | Step: 12, Dir: 11 | Stepper Driver | |
+| **Feed Motor** | Step: 17, Dir: 18 | Stepper Driver | |
+| **Rotation Servo** | 14 | PWM | |
+| **Cut Home Switch** | 3 | Active HIGH | Input Pulldown |
+| **Feed Home Sensor** | 45 | Active LOW | Input Pullup |
+| **Reload Switch** | 6 | Active HIGH | Input Pulldown |
+| **Start Switch** | 5 | Active HIGH | Input Pulldown |
+| **Manual Feed Sw** | 16 | Active HIGH | Input Pulldown |
+| **First Cut/Fwd** | 10 | Sensor | LOW = Fwd One, HIGH = First Cut |
+| **2x4 Present** | 4 | Active LOW | Input Pullup |
+| **Suction Sensor** | 39 | Active HIGH | HIGH = Grabbed (Confusing naming in code, but Logic is HIGH=Grabbed) |
+| **Feed Clamp** | 36 | Active LOW | LOW = Extended (Inversed) |
+| **Secure Clamp** | 48 | Active LOW | LOW = Extended (Inversed) |
+| **Rotation Clamp** | 42 | Active HIGH | HIGH = Extended |
+| **TA Signal** | 8 | Digital Out | To Transfer Arm |
+
+### 4.2. Motor Configuration (`Motor_Config.cpp`)
+
+**Cut Motor (NEMA 23)**
+-   **Steps Per Inch**: 500.0
+-   **Normal Speed**: 1.28 in/sec
+-   **No Wood Speed**: 1.1 in/sec
+-   **Return Speed**: 30.0 in/sec (Fast return)
+-   **Homing Speed**: 2.6 in/sec
+
+**Feed Motor**
+-   **Steps Per Inch**: 1000.0
+-   **Normal Speed**: 22,000 steps/sec
+-   **Return Speed**: 40,000 steps/sec (High speed return)
+-   **Homing Speed**: 1,500 steps/sec
+
+### 4.3. Special Functional Modes
+
+**Minis Mode vs. 3 Inch Mode**
+-   **Config Mode 1 (Minis)**:
+    -   Adds **50ms** delay to Rotation Clamp retraction.
+    -   Adds **500ms** non-blocking delay before sending Transfer Arm (TA) signal.
+-   **Default Mode (3 Inch)**:
+    -   Standard timing.
+    -   Immediate TA signal transmission.
+
+**LED Wave Pattern**
+-   Used during "No Wood" conditions in Cutting/Returning states.
+-   Sequentially lights up Red -> Yellow -> Green -> Blue LEDs.
+-   Interval: 200ms per step.
+-   Duration: 250ms per LED.
+
+---
+
+## 5. State Connection & Flow Diagram
 
 ```text
        [POWER ON]

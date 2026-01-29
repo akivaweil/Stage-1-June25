@@ -42,6 +42,11 @@ const int CONFIG_MODE_ADDRESS = 1024; // Store active mode at 1024
 // Global variable for current mode
 int currentConfigMode = 0; // 0: 3 Inch, 1: Minis
 
+// Expose current mode to other modules (e.g., StateManager)
+int getCurrentConfigMode() {
+    return currentConfigMode;
+}
+
 // Enhanced dashboard data structures
 SystemStatus systemStatus;
 SensorStatus sensorStatus;
@@ -202,6 +207,7 @@ struct ConfigurationData {
     
     // Timing Configuration
     unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
     unsigned long CUT_HOME_TIMEOUT;
     unsigned long TA_SIGNAL_DURATION;
     
@@ -260,6 +266,7 @@ ConfigurationData getDefaultConfiguration() {
     
     // Timing Configuration - use Motor_Config defaults
     config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    config.ROTATION_CLAMP_EXTEND_DURATION_MS = ROTATION_CLAMP_EXTEND_DURATION_MS;
     config.CUT_HOME_TIMEOUT = CUT_HOME_TIMEOUT;
     config.TA_SIGNAL_DURATION = TA_SIGNAL_DURATION;
 
@@ -280,7 +287,7 @@ ConfigurationData getDefaultConfiguration() {
     config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
     config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
     
-    config.version = 1;
+    config.version = 2;
     config.checksum = 0; // Will be calculated
     
     return config;
@@ -320,7 +327,12 @@ void updateDynamicConfig() {
     // are loaded from EEPROM but not typically modified via dashboard, so we use baseline values.
     
     ROTATION_SERVO_ACTIVATION_DISTANCE = baselineConfig.ROTATION_SERVO_ACTIVATION_DISTANCE - diff;
-    ROTATION_CLAMP_ACTIVATION_DISTANCE = baselineConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE - diff;
+    
+    // Add extra 0.5 inch buffer for clamp in Minis mode (trigger earlier)
+    float clampExtraBuffer = (currentConfigMode == 1) ? 0.5 : 0.0;
+    ROTATION_CLAMP_ACTIVATION_DISTANCE = baselineConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE - diff - clampExtraBuffer;
+    
+    TA_SIGNAL_ACTIVATION_DISTANCE = baselineConfig.TA_SIGNAL_ACTIVATION_DISTANCE - diff;
     
     // Log for debugging
     Serial.print("Dynamic Config Update: Mode=");
@@ -334,7 +346,9 @@ void updateDynamicConfig() {
     Serial.print(", ServoAct=");
     Serial.print(ROTATION_SERVO_ACTIVATION_DISTANCE);
     Serial.print(", ClampAct=");
-    Serial.println(ROTATION_CLAMP_ACTIVATION_DISTANCE);
+    Serial.print(ROTATION_CLAMP_ACTIVATION_DISTANCE);
+    Serial.print(", TaAct=");
+    Serial.println(TA_SIGNAL_ACTIVATION_DISTANCE);
 }
 
 // Apply configuration to global variables
@@ -343,11 +357,13 @@ void updateDynamicConfig() {
 //  - FEED_TRAVEL_DISTANCE (inches)
 //  - CUT_MOTOR_NORMAL_SPEED
 //  - FEED_MOTOR_OFFSET_FROM_SENSOR (inches)
+//  - ROTATION_CLAMP_EXTEND_DURATION_MS (ms)
 void applyConfiguration(const ConfigurationData& config) {
     CUT_TRAVEL_DISTANCE = config.CUT_TRAVEL_DISTANCE;
     FEED_TRAVEL_DISTANCE = config.FEED_TRAVEL_DISTANCE;
     CUT_MOTOR_NORMAL_SPEED = config.CUT_MOTOR_NORMAL_SPEED;
     FEED_MOTOR_OFFSET_FROM_SENSOR = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
+    ROTATION_CLAMP_EXTEND_DURATION_MS = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
     
     // Update dynamic configuration after applying basic settings
     updateDynamicConfig();
@@ -403,6 +419,8 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
     // Timing Configuration
     data = (const uint8_t*)&config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
     for (size_t i = 0; i < sizeof(config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS); i++) checksum += data[i];
+    data = (const uint8_t*)&config.ROTATION_CLAMP_EXTEND_DURATION_MS;
+    for (size_t i = 0; i < sizeof(config.ROTATION_CLAMP_EXTEND_DURATION_MS); i++) checksum += data[i];
     data = (const uint8_t*)&config.CUT_HOME_TIMEOUT;
     for (size_t i = 0; i < sizeof(config.CUT_HOME_TIMEOUT); i++) checksum += data[i];
     data = (const uint8_t*)&config.TA_SIGNAL_DURATION;
@@ -472,8 +490,8 @@ void loadConfiguration() {
         Serial.println("Configuration magic number invalid (EEPROM may be empty), using defaults");
     }
     
-    // Check version
-    if (config.version != 1) {
+    // Check version (bump to 2 when structure changes)
+    if (config.version != 2) {
         isValid = false;
         Serial.println("Configuration version mismatch, using defaults");
     }
@@ -532,6 +550,7 @@ void saveConfiguration() {
     config.FEED_MOTOR_RETURN_ACCELERATION = FEED_MOTOR_RETURN_ACCELERATION;
     config.FEED_MOTOR_HOMING_SPEED = FEED_MOTOR_HOMING_SPEED;
     config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    config.ROTATION_CLAMP_EXTEND_DURATION_MS = ROTATION_CLAMP_EXTEND_DURATION_MS;
     config.CUT_HOME_TIMEOUT = CUT_HOME_TIMEOUT;
     config.TA_SIGNAL_DURATION = TA_SIGNAL_DURATION;
     config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE;
@@ -544,7 +563,7 @@ void saveConfiguration() {
     config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
     config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
     
-    config.version = 1;
+    config.version = 2;
     config.checksum = calculateChecksum(config);
     
     int offset = (currentConfigMode == 0) ? CONFIG_OFFSET_3INCH : CONFIG_OFFSET_MINIS;
@@ -1270,6 +1289,16 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (0.1-50.0 inches/sec)";
                             }
+                            } else if (configKey == "rotation_clamp_extend_ms") {
+                                float newValue = doc["value"];
+                                if (newValue >= 200 && newValue <= 5000) {
+                                    ROTATION_CLAMP_EXTEND_DURATION_MS = (unsigned long)newValue;
+                                    saveConfiguration();
+                                    response["value"] = newValue;
+                                    addEventToLog("Configuration updated: ROTATION_CLAMP_EXTEND_DURATION_MS = " + String(newValue) + " ms");
+                                } else {
+                                    response["error"] = "Value out of range (200-5000 ms)";
+                                }
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1334,6 +1363,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             response["value"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                         } else if (configKey == "cut_motor_normal_speed") {
                             response["value"] = CUT_MOTOR_NORMAL_SPEED;
+                        } else if (configKey == "rotation_clamp_extend_ms") {
+                            response["value"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1351,6 +1382,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
                         response["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                         response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
+                        response["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
                         
                         String message;
                         serializeJson(response, message);

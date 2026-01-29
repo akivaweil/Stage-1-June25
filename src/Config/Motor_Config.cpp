@@ -17,16 +17,15 @@
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔄 CUT MOTOR                                                 ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Motor specs: 200 steps/revolution on standard ball screw
 float CUT_MOTOR_STEPS_PER_INCH = 500.0;
 const int CUT_HOMING_DIRECTION = -1;
 
-// Speeds
-float CUT_MOTOR_NORMAL_SPEED = 640;
-float CUT_MOTOR_NORMAL_ACCELERATION = 8000;
-float CUT_MOTOR_NO_WOOD_SPEED = 550; // 80% of normal speed
-float CUT_MOTOR_RETURN_SPEED = 15000;
-float CUT_MOTOR_HOMING_SPEED = 1300;
+// Speeds (in inches/sec and inches/sec²)
+float CUT_MOTOR_NORMAL_SPEED = 1.28; // inches/sec
+float CUT_MOTOR_NORMAL_ACCELERATION = 16.0; // inches/sec²
+float CUT_MOTOR_NO_WOOD_SPEED = 1.1; // inches/sec (80% of normal speed)
+float CUT_MOTOR_RETURN_SPEED = 30.0; // inches/sec
+float CUT_MOTOR_HOMING_SPEED = 2.6; // inches/sec
 
 // Distances & Movement
 float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
@@ -35,7 +34,6 @@ float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚡ FEED MOTOR                                                 ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Motor specs: 200 steps/revolution on standard ball screw
 float FEED_MOTOR_STEPS_PER_INCH = 1000.0; 
 const int FEED_HOMING_DIRECTION = 1;
 float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.15;

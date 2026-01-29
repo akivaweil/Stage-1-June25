@@ -12,6 +12,8 @@ extern bool errorBlinkState;
 extern unsigned long lastErrorBlinkTime;
 extern bool signalTAActive;
 extern unsigned long signalTAStartTime;
+extern unsigned long taSignalDelayStartTime; // For TA signal delay
+extern bool taSignalDelayActive;             // For TA signal delay
 extern bool rotationServoIsActiveAndTiming;
 extern unsigned long rotationServoActiveStartTime;
 extern bool rotationServoReturnCompleted; // Flag to prevent multiple calls to handleRotationServoReturn()

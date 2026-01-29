@@ -656,7 +656,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
             
             <div class="input-group">
-                <label>Feed Distance (in) (second square is larger with higher value)</label>
+                <label>Feed Distance (in) (controls second square size)</label>
                 <div class="input-row">
                     <input type="number" id="feedTravelDistance" step="0.01" placeholder="3.43">
                     <button class="btn" onclick="updateConfig('feed_travel_distance')">SAVE</button>
@@ -676,6 +676,14 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 <div class="input-row">
                     <input type="number" id="cutMotorNormalSpeed" step="0.1" placeholder="1.28">
                     <button class="btn" onclick="updateConfig('cut_motor_normal_speed')">SAVE</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Rotation Clamp Hold (ms)</label>
+                <div class="input-row">
+                    <input type="number" id="rotationClampExtendMs" step="50" placeholder="2200">
+                    <button class="btn" onclick="updateConfig('rotation_clamp_extend_ms')">SAVE</button>
                 </div>
             </div>
 
@@ -935,6 +943,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 if(data.feed_travel_distance) document.getElementById('feedTravelDistance').value = formatConfigValue(data.feed_travel_distance);
                 if(data.feed_motor_offset_from_sensor) document.getElementById('feedMotorOffsetFromSensor').value = formatConfigValue(data.feed_motor_offset_from_sensor);
                 if(data.cut_motor_normal_speed) document.getElementById('cutMotorNormalSpeed').value = formatConfigValue(data.cut_motor_normal_speed);
+                if(data.rotation_clamp_extend_ms) document.getElementById('rotationClampExtendMs').value = formatConfigValue(data.rotation_clamp_extend_ms);
             }
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
@@ -1079,7 +1088,8 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             'cut_travel_distance': 'cutTravelDistance',
             'feed_travel_distance': 'feedTravelDistance',
             'feed_motor_offset_from_sensor': 'feedMotorOffsetFromSensor',
-            'cut_motor_normal_speed': 'cutMotorNormalSpeed'
+            'cut_motor_normal_speed': 'cutMotorNormalSpeed',
+            'rotation_clamp_extend_ms': 'rotationClampExtendMs'
         };
 
         function updateConfig(key) {

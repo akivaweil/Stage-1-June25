@@ -9,6 +9,9 @@
 #include "WebSocketDashboard/websocket_dashboard.h"
 #include "Config/Config.h"
 
+// Forward declaration (in case header resolution fails)
+int getCurrentConfigMode();
+
 // External references to Bounce objects from main.cpp
 extern Bounce cutHomingSwitch;
 extern Bounce feedHomingSwitch;
@@ -492,6 +495,12 @@ void handleCommonOperations() {
     if (rotationClampIsExtended) {
         unsigned long rotationClampRetractDelay = ROTATION_CLAMP_EXTEND_DURATION_MS;
         
+        // In Minis mode (config mode 1), add an additional fixed 50ms
+        // so the catcher stays engaged longer than in 3 Inch mode.
+        if (getCurrentConfigMode() == 1) {
+            rotationClampRetractDelay += 50;
+        }
+        
         // Add extra delay if no wood detected (applies during CUTTING and RETURNING_NO_2x4)
         if (!get2x4Present()) {
             extern unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS; // From 05_RETURNING_No_2x4.cpp
@@ -526,6 +535,25 @@ void handleCommonOperations() {
     }
     
     // Handle TA signal timeout after TA_SIGNAL_DURATION
+    // Note: Start delay is now handled inside handleTASignalTiming() which is called from general functions if needed,
+    // but here we just need to ensure the main state manager loop calls it or handles the logic.
+    // The previous implementation had logic here. Let's update it to support the delay.
+    
+    extern bool taSignalDelayActive;
+    extern unsigned long taSignalDelayStartTime;
+    
+    // Check start delay
+    if (taSignalDelayActive) {
+        if (millis() - taSignalDelayStartTime >= 500) {
+            // Delay finished, activate signal
+            digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
+            signalTAStartTime = millis();
+            signalTAActive = true;
+            taSignalDelayActive = false;
+        }
+    }
+    
+    // Check signal duration
     if (signalTAActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
         extern const int TRANSFER_ARM_SIGNAL_PIN; // This is in main.cpp
         digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)

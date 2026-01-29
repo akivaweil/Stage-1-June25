@@ -21,12 +21,12 @@
 extern float CUT_MOTOR_STEPS_PER_INCH;
 extern const int CUT_HOMING_DIRECTION;
 
-// Speeds (defaults - can be modified via dashboard)
-extern float CUT_MOTOR_NORMAL_SPEED;
-extern float CUT_MOTOR_NORMAL_ACCELERATION;
-extern float CUT_MOTOR_NO_WOOD_SPEED;
-extern float CUT_MOTOR_RETURN_SPEED;
-extern float CUT_MOTOR_HOMING_SPEED;
+// Speeds (in inches/sec and inches/sec² - defaults can be modified via dashboard)
+extern float CUT_MOTOR_NORMAL_SPEED; // inches/sec
+extern float CUT_MOTOR_NORMAL_ACCELERATION; // inches/sec²
+extern float CUT_MOTOR_NO_WOOD_SPEED; // inches/sec
+extern float CUT_MOTOR_RETURN_SPEED; // inches/sec
+extern float CUT_MOTOR_HOMING_SPEED; // inches/sec
 
 // Distances & Movement (defaults - can be modified via dashboard)
 extern float CUT_MOTOR_INCREMENTAL_MOVE_INCHES;

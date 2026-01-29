@@ -21,12 +21,34 @@ const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
 //* ************************************************************************
 // Contains functions related to signaling other stages or components.
 
+// Global non-blocking delay variables for TA signal
+unsigned long taSignalDelayStartTime = 0;
+bool taSignalDelayActive = false;
+
 void sendSignalToTA() {
-  // Set the signal pin HIGH to trigger Transfer Arm (active HIGH)
-  digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
-  signalTAStartTime = millis();
-  signalTAActive = true;
-  //serial.println("TA Signal activated (HIGH).");
+  // Instead of setting HIGH immediately, start a non-blocking delay
+  // Check config mode: if Minis mode (1), add 500ms delay. Otherwise no delay.
+  int mode = 0;
+  
+  // Since we cannot include websocket_dashboard.h here due to conflicts,
+  // we will simply assume mode 0 if we can't access it, or better yet,
+  // we can declare the function signature manually
+  extern int getCurrentConfigMode();
+  mode = getCurrentConfigMode();
+  
+  if (mode == 1) {
+      // Minis mode: Start 500ms non-blocking delay
+      if (!taSignalDelayActive) {
+          taSignalDelayStartTime = millis();
+          taSignalDelayActive = true;
+      }
+  } else {
+      // 3 Inch mode: Execute immediately
+      digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
+      signalTAStartTime = millis();
+      signalTAActive = true;
+      taSignalDelayActive = false;
+  }
 }
 
 //* ************************************************************************
@@ -254,22 +276,22 @@ void handleHomingLedBlink() {
 
 void configureCutMotorForCutting() {
     if (cutMotor) {
-        cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_NORMAL_SPEED);
-        cutMotor->setAcceleration((uint32_t)CUT_MOTOR_NORMAL_ACCELERATION);
+        cutMotor->setSpeedInHz((uint32_t)(CUT_MOTOR_NORMAL_SPEED * CUT_MOTOR_STEPS_PER_INCH));
+        cutMotor->setAcceleration((uint32_t)(CUT_MOTOR_NORMAL_ACCELERATION * CUT_MOTOR_STEPS_PER_INCH));
     }
 }
 
 void configureCutMotorForCuttingSlow() {
     if (cutMotor) {
-        cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_NO_WOOD_SPEED);
-        cutMotor->setAcceleration((uint32_t)CUT_MOTOR_NORMAL_ACCELERATION);
+        cutMotor->setSpeedInHz((uint32_t)(CUT_MOTOR_NO_WOOD_SPEED * CUT_MOTOR_STEPS_PER_INCH));
+        cutMotor->setAcceleration((uint32_t)(CUT_MOTOR_NORMAL_ACCELERATION * CUT_MOTOR_STEPS_PER_INCH));
     }
 }
 
 void configureCutMotorForReturn() {
     if (cutMotor) {
-        cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_RETURN_SPEED);
-        cutMotor->setAcceleration((uint32_t)CUT_MOTOR_NORMAL_ACCELERATION);
+        cutMotor->setSpeedInHz((uint32_t)(CUT_MOTOR_RETURN_SPEED * CUT_MOTOR_STEPS_PER_INCH));
+        cutMotor->setAcceleration((uint32_t)(CUT_MOTOR_NORMAL_ACCELERATION * CUT_MOTOR_STEPS_PER_INCH));
     }
 }
 
@@ -352,7 +374,7 @@ void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {
     //serial.println(homingSwitch.read() == HIGH ? "HIGH" : "LOW");
     
     unsigned long startTime = millis();
-    cutMotor->setSpeedInHz((uint32_t)CUT_MOTOR_HOMING_SPEED);
+    cutMotor->setSpeedInHz((uint32_t)(CUT_MOTOR_HOMING_SPEED * CUT_MOTOR_STEPS_PER_INCH));
     cutMotor->moveTo(-40000);
     
     //serial.print("Cut motor homing speed set to: ");
@@ -702,7 +724,19 @@ void handleRotationServoReturn() {
     //Serial.println(" degrees).");
 }
 
+// Function to handle Transfer Arm signal timing (including start delay)
 void handleTASignalTiming() { 
+  // Handle start delay if active
+  if (taSignalDelayActive) {
+      if (millis() - taSignalDelayStartTime >= 500) {
+          digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
+          signalTAStartTime = millis();
+          signalTAActive = true;
+          taSignalDelayActive = false;
+      }
+  }
+
+  // Handle signal duration
   if (signalTAActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
     digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)
     signalTAActive = false;

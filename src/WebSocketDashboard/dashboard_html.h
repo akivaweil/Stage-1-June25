@@ -687,6 +687,30 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 </div>
             </div>
 
+            <div class="input-group">
+                <label>Rotation Clamp Activation (in from start)</label>
+                <div class="input-row">
+                    <input type="number" id="rotationClampActivationDistance" step="0.1" placeholder="6.0">
+                    <button class="btn" onclick="updateConfig('rotation_clamp_activation_distance')">SAVE</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Rotation Servo Activation (in from start)</label>
+                <div class="input-row">
+                    <input type="number" id="rotationServoActivationDistance" step="0.1" placeholder="8.2">
+                    <button class="btn" onclick="updateConfig('rotation_servo_activation_distance')">SAVE</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>TA Signal Activation (in from start)</label>
+                <div class="input-row">
+                    <input type="number" id="taSignalActivationDistance" step="0.1" placeholder="8.5">
+                    <button class="btn" onclick="updateConfig('ta_signal_activation_distance')">SAVE</button>
+                </div>
+            </div>
+
             <div id="configStatus" style="font-size: 0.8rem; text-align: center; min-height: 1.2em; transition: color 0.3s;"></div>
         </div>
 
@@ -944,6 +968,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 if(data.feed_motor_offset_from_sensor) document.getElementById('feedMotorOffsetFromSensor').value = formatConfigValue(data.feed_motor_offset_from_sensor);
                 if(data.cut_motor_normal_speed) document.getElementById('cutMotorNormalSpeed').value = formatConfigValue(data.cut_motor_normal_speed);
                 if(data.rotation_clamp_extend_ms) document.getElementById('rotationClampExtendMs').value = formatConfigValue(data.rotation_clamp_extend_ms);
+                if(data.rotation_clamp_activation_distance !== undefined) document.getElementById('rotationClampActivationDistance').value = formatConfigValue(data.rotation_clamp_activation_distance);
+                if(data.rotation_servo_activation_distance !== undefined) document.getElementById('rotationServoActivationDistance').value = formatConfigValue(data.rotation_servo_activation_distance);
+                if(data.ta_signal_activation_distance !== undefined) document.getElementById('taSignalActivationDistance').value = formatConfigValue(data.ta_signal_activation_distance);
             }
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
@@ -1089,7 +1116,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             'feed_travel_distance': 'feedTravelDistance',
             'feed_motor_offset_from_sensor': 'feedMotorOffsetFromSensor',
             'cut_motor_normal_speed': 'cutMotorNormalSpeed',
-            'rotation_clamp_extend_ms': 'rotationClampExtendMs'
+            'rotation_clamp_extend_ms': 'rotationClampExtendMs',
+            'rotation_clamp_activation_distance': 'rotationClampActivationDistance',
+            'rotation_servo_activation_distance': 'rotationServoActivationDistance',
+            'ta_signal_activation_distance': 'taSignalActivationDistance'
         };
 
         function updateConfig(key) {

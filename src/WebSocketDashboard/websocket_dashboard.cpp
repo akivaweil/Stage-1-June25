@@ -1299,6 +1299,36 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                                 } else {
                                     response["error"] = "Value out of range (200-5000 ms)";
                                 }
+                        } else if (configKey == "rotation_clamp_activation_distance") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.1 && newValue <= 20.0) {
+                                ROTATION_CLAMP_ACTIVATION_DISTANCE = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: ROTATION_CLAMP_ACTIVATION_DISTANCE = " + String(newValue) + " in");
+                            } else {
+                                response["error"] = "Value out of range (0.1-20.0)";
+                            }
+                        } else if (configKey == "rotation_servo_activation_distance") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.1 && newValue <= 20.0) {
+                                ROTATION_SERVO_ACTIVATION_DISTANCE = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: ROTATION_SERVO_ACTIVATION_DISTANCE = " + String(newValue) + " in");
+                            } else {
+                                response["error"] = "Value out of range (0.1-20.0)";
+                            }
+                        } else if (configKey == "ta_signal_activation_distance") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.1 && newValue <= 20.0) {
+                                TA_SIGNAL_ACTIVATION_DISTANCE = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: TA_SIGNAL_ACTIVATION_DISTANCE = " + String(newValue) + " in");
+                            } else {
+                                response["error"] = "Value out of range (0.1-20.0)";
+                            }
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1341,6 +1371,10 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             configDoc["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
                             configDoc["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                             configDoc["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
+                            configDoc["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                            configDoc["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
+                            configDoc["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
+                            configDoc["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
                             
                             String configMessage;
                             serializeJson(configDoc, configMessage);
@@ -1365,6 +1399,12 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             response["value"] = CUT_MOTOR_NORMAL_SPEED;
                         } else if (configKey == "rotation_clamp_extend_ms") {
                             response["value"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                        } else if (configKey == "rotation_clamp_activation_distance") {
+                            response["value"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
+                        } else if (configKey == "rotation_servo_activation_distance") {
+                            response["value"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
+                        } else if (configKey == "ta_signal_activation_distance") {
+                            response["value"] = TA_SIGNAL_ACTIVATION_DISTANCE;
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1383,6 +1423,9 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
                         response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
                         response["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                        response["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
+                        response["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
+                        response["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
                         
                         String message;
                         serializeJson(response, message);

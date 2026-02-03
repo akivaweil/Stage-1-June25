@@ -537,9 +537,12 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
 
         <!-- Performance -->
         <div class="card col-span-8 fade-in" style="animation-delay: 0.2s">
-            <div class="card-header">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                Performance Metrics
+            <div class="card-header" style="justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Performance Metrics
+                </div>
+                <button class="btn" onclick="triggerStartCycle()" style="font-size: 0.7rem; padding: 0.4rem 0.8rem; background: var(--accent-primary); color: white; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">START CYCLE</button>
             </div>
             <div class="metrics-container">
                 <div id="reloadTimeContainer" style="position: relative; cursor: pointer;" onclick="toggleReloadHistory()">
@@ -975,6 +978,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
             }
+            else if (data.type === 'error') {
+                showConfigStatus(data.message, 'error');
+            }
         }
 
         function updateReloadHistoryList(history) {
@@ -1168,6 +1174,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 btn3Inch.classList.remove('active');
                 btnMinis.classList.add('active');
             }
+        }
+
+        function triggerStartCycle() {
+            if (!ws || ws.readyState !== 1) return showConfigStatus('Not connected', 'error');
+            ws.send(JSON.stringify({type: 'trigger_start_cycle'}));
         }
 
         // Init

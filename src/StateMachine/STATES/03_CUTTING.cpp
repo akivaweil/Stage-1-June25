@@ -20,15 +20,15 @@
 // Rotation Servo Settings
 int ROTATION_SERVO_HOME_POSITION = 14-10;                           // Servo home position angle
 int ROTATION_SERVO_ACTIVE_POSITION = 108-15;                        // Servo active rotation angle
-unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2000;     // Duration to hold active position
+unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait dration at home position
-unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 50;     // Wait time after suction detected before returning
+unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 150;     // Wait time after suction detected before returning
 float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
 
 // Rotation Clamp Configuration
 unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for clamp to fully extend 
-float ROTATION_CLAMP_ACTIVATION_DISTANCE = 6.0;                  // Clamp activation distance from start of cut (inches)
+float ROTATION_CLAMP_ACTIVATION_DISTANCE = 5.75;                  // Clamp activation distance from start of cut (inches)
 
 // Transfer Arm Configuration
 unsigned long TA_SIGNAL_DURATION = 2000;                         // Transfer arm signal duration

@@ -528,6 +528,18 @@ void loadConfiguration() {
 void saveConfiguration() {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
     
+    // Compute diff and clampExtraBuffer so we store BASELINE values for activation distances
+    // (same logic as updateDynamicConfig). This keeps clamp, servo, and TA independent when
+    // user changes only one of them.
+    ConfigurationData baselineConfig;
+    EEPROM.get(CONFIG_OFFSET_3INCH, baselineConfig);
+    if (baselineConfig.magic != CONFIG_MAGIC) {
+        baselineConfig = getDefaultConfiguration();
+    }
+    float baselineCutDistance = (currentConfigMode == 0) ? CUT_TRAVEL_DISTANCE : baselineConfig.CUT_TRAVEL_DISTANCE;
+    float diff = baselineCutDistance - CUT_TRAVEL_DISTANCE;
+    float clampExtraBuffer = (currentConfigMode == 1) ? 0.5 : 0.0;
+    
     ConfigurationData config;
     
     // Set magic number
@@ -553,9 +565,10 @@ void saveConfiguration() {
     config.ROTATION_CLAMP_EXTEND_DURATION_MS = ROTATION_CLAMP_EXTEND_DURATION_MS;
     config.CUT_HOME_TIMEOUT = CUT_HOME_TIMEOUT;
     config.TA_SIGNAL_DURATION = TA_SIGNAL_DURATION;
-    config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE;
-    config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE;
-    config.TA_SIGNAL_ACTIVATION_DISTANCE = TA_SIGNAL_ACTIVATION_DISTANCE;
+    // Store baselines so updateDynamicConfig() can apply diff independently per setting
+    config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE + diff + clampExtraBuffer;
+    config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE + diff;
+    config.TA_SIGNAL_ACTIVATION_DISTANCE = TA_SIGNAL_ACTIVATION_DISTANCE + diff;
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
     config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
     config.FEED_MOTOR_OFFSET_FROM_SENSOR = FEED_MOTOR_OFFSET_FROM_SENSOR;
@@ -1381,6 +1394,18 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             ws.textAll(configMessage); // Broadcast to all clients
                             
                             addEventToLog("Config mode switched to: " + String(currentConfigMode == 0 ? "3 Inch" : "Minis"));
+                        }
+                    } else if (type == "trigger_start_cycle") {
+                        if (getCurrentState() == IDLE) {
+                            dashboardStartCycleTrigger = true;
+                            addEventToLog("Cycle start triggered from dashboard");
+                        } else {
+                            JsonDocument response;
+                            response["type"] = "error";
+                            response["message"] = "Machine must be in IDLE state to start";
+                            String msg;
+                            serializeJson(response, msg);
+                            client->text(msg);
                         }
                     } else if (type == "request_config") {
                         String configKey = doc["key"];

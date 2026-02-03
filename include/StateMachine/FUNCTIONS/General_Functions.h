@@ -26,6 +26,7 @@ extern bool continuousModeActive;
 extern bool cuttingCycleInProgress;
 extern bool woodSuctionError;
 extern bool comingFromNoWoodWithSensorsClear;
+extern bool dashboardStartCycleTrigger; // Flag to trigger a start cycle from the dashboard
 
 // System state enum
 enum SystemState {

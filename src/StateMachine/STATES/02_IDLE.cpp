@@ -114,14 +114,20 @@ void checkStartConditions() {
     showGreenLed();
     
     bool startCycleRose = getStartCycleSwitch()->rose();
+    
+    // Check if start condition is met (either physical switch or dashboard trigger)
+    bool startTriggered = startCycleRose || (dashboardStartCycleTrigger && !cuttingCycleInProgress);
+    
     bool continuousModeActive = getContinuousModeActive();
-    bool cuttingCycleInProgress = getCuttingCycleInProgress();
     bool woodSuctionError = getWoodSuctionError();
     bool startSwitchSafe = getStartSwitchSafe();
     bool _2x4Present = get2x4Present();
     
-    if (((startCycleRose || (continuousModeActive && !cuttingCycleInProgress)) 
+    if (((startTriggered || (continuousModeActive && !cuttingCycleInProgress)) 
         && !woodSuctionError) && startSwitchSafe) {
+        
+        // Reset dashboard trigger once consumed
+        dashboardStartCycleTrigger = false;
         
         // Don't start new cycle if coming from no-wood situation - require manual reset
         if (getComingFromNoWoodWithSensorsClear()) {

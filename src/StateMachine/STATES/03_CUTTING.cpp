@@ -6,12 +6,13 @@
 #include "OTAUpdater/ota_updater.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚔️ CUTTING STATE                                                     ║
+//║ ⚔️ CUTTING STATE ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
-// Handles the wood cutting operation with a clean 3-step process:
+// Handles the wood cutting operation with a clean 4-step process:
 // Step 0: Initialize cutting sequence - extend clamps and configure motors
 // Step 1: Check suction sensor and start cut motor movement
 // Step 2: Monitor cut motor position, activate rotation components, and complete cut
+// Step 3: Handle reload switch interrupt return to home
 // 
 // After cutting completion, transitions to appropriate RETURNING state based on wood detection.
 // All post-cutting logic (return sequences, homing, continuous mode) is handled by RETURNING states.
@@ -42,7 +43,7 @@ unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;              // Motor state 
 unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout for waiting for suction sensor to go HIGH (ms)
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 📊 STATE VARIABLES                                                   ║
+//║ 📊 STATE VARIABLES ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 namespace {
     struct CuttingStateContext {
@@ -62,7 +63,7 @@ namespace {
 }
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 HELPER FUNCTIONS                                                  ║
+//║ 🔧 HELPER FUNCTIONS ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 // Updates LED based on wood present sensor reading
@@ -207,6 +208,24 @@ void onExitCuttingState() {
 }
 
 void executeCuttingState() {
+    // Check if reload switch is activated - if so, return motor to home and transition to reload state
+    if (getReloadSwitch()->read() == HIGH && cuttingContext.step != 3) {
+        FastAccelStepper* cutMotor = getCutMotor();
+        FastAccelStepper* feedMotor = getFeedMotor();
+        
+        if (cutMotor) cutMotor->stopMove();
+        if (feedMotor) feedMotor->stopMove();
+        
+        // Retract secondary components
+        retractRotationClamp();
+        handleRotationServoReturn();
+        
+        // Initiate return
+        startCutMotorReturnSequence();
+        
+        cuttingContext.step = 3;
+    }
+
     if (homePositionErrorDetected) {
         handleHomePositionError();
         return;
@@ -221,6 +240,9 @@ void executeCuttingState() {
             break;
         case 2: 
             handleCuttingStep2();
+            break;
+        case 3: 
+            handleCuttingStep3();
             break;
         default:
             cuttingContext.step = 0;
@@ -328,6 +350,22 @@ void handleCuttingStep2() {
             changeState(RETURNING_NO_2x4);
         } else {
             changeState(RETURNING_YES_2x4);
+        }
+    }
+}
+
+void handleCuttingStep3() {
+    //! ************************************************************************
+    //! STEP 3: WAIT FOR CUT MOTOR TO REACH HOME BEFORE TRANSITIONING TO RELOAD
+    //! ************************************************************************
+    FastAccelStepper* cutMotor = getCutMotor();
+    if (cutMotor && !cutMotor->isRunning()) {
+        getCutHomingSwitch()->update();
+        if (getCutHomingSwitch()->read() == HIGH) {
+            changeState(RELOAD);
+        } else {
+            // If motor stopped but not at home, try moving home again
+            moveCutMotorToHome();
         }
     }
 }

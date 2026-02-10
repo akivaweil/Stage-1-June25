@@ -17,6 +17,7 @@ void onExitCuttingState();
 void handleCuttingStep0();
 void handleCuttingStep1();
 void handleCuttingStep2();
+void handleCuttingStep3();
 void handleHomePositionError();
 void resetCuttingSteps();
 bool isCuttingStateStep0();

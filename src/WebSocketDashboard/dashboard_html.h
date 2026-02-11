@@ -800,6 +800,16 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             }
         });
 
+        function flashSystemStateCard() {
+            const card = document.getElementById('systemStateCard');
+            if (card) {
+                card.classList.remove('system-state-card-flash');
+                card.offsetHeight;
+                card.classList.add('system-state-card-flash');
+                setTimeout(() => card.classList.remove('system-state-card-flash'), 500);
+            }
+        }
+
         function updateConnectionStatus(connected) {
             const badge = document.getElementById('connectionStatus');
             const text = document.getElementById('connectionText');
@@ -811,6 +821,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 badge.classList.remove('connected');
                 badge.classList.add('disconnected');
                 text.textContent = 'Offline';
+                flashSystemStateCard();
             }
         }
 
@@ -897,15 +908,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 const now = Date.now();
                 const estimated = lastUptimeMs + (now - lastUptimeUpdateTime);
                 if (lastUptimeMs === 0 || Math.abs(estimated - data.uptime) > 2000) {
-                    if (lastUptimeMs === 0 && data.uptime < 3000) {
-                        const card = document.getElementById('systemStateCard');
-                        if (card) {
-                            card.classList.remove('system-state-card-flash');
-                            card.offsetHeight;
-                            card.classList.add('system-state-card-flash');
-                            setTimeout(() => card.classList.remove('system-state-card-flash'), 500);
-                        }
-                    }
                     lastUptimeMs = data.uptime;
                     lastUptimeUpdateTime = now;
                     document.getElementById('uptime').textContent = formatUptime(data.uptime);

@@ -153,6 +153,14 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             overflow: visible; /* Changed to visible for dropdown */
         }
 
+        @keyframes systemStateBootFlash {
+            0%, 100% { box-shadow: var(--shadow-card); border-color: var(--border-subtle); }
+            50% { box-shadow: 0 0 24px rgba(248, 113, 113, 0.6); border-color: var(--accent-danger); }
+        }
+        .system-state-card-flash {
+            animation: systemStateBootFlash 0.5s ease-out;
+        }
+
         .card::before {
             content: '';
             position: absolute;
@@ -518,7 +526,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         </header>
 
         <!-- System Status -->
-        <div class="card col-span-4 fade-in" style="animation-delay: 0.1s">
+        <div class="card col-span-4 fade-in" id="systemStateCard" style="animation-delay: 0.1s">
             <div class="card-header">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
                 System State
@@ -889,6 +897,15 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 const now = Date.now();
                 const estimated = lastUptimeMs + (now - lastUptimeUpdateTime);
                 if (lastUptimeMs === 0 || Math.abs(estimated - data.uptime) > 2000) {
+                    if (lastUptimeMs === 0 && data.uptime < 3000) {
+                        const card = document.getElementById('systemStateCard');
+                        if (card) {
+                            card.classList.remove('system-state-card-flash');
+                            card.offsetHeight;
+                            card.classList.add('system-state-card-flash');
+                            setTimeout(() => card.classList.remove('system-state-card-flash'), 500);
+                        }
+                    }
                     lastUptimeMs = data.uptime;
                     lastUptimeUpdateTime = now;
                     document.getElementById('uptime').textContent = formatUptime(data.uptime);

@@ -32,6 +32,7 @@ extern bool comingFromNoWoodWithSensorsClear;
 // Global variables for state management
 static int consecutiveYeswoodCount = 0;
 static SystemState previousState = STARTUP;
+static unsigned long rotationServoReturnHomeStartedAt = 0;
 
 // Forward declarations for state execution functions
 void executeStartupState();
@@ -329,6 +330,10 @@ void setRotationServoReturnDelayStartTime(unsigned long value) {
     rotationServoReturnDelayStartTime = value;
 }
 
+void setRotationServoReturnHomeStartedAt(unsigned long value) {
+    rotationServoReturnHomeStartedAt = value;
+}
+
 unsigned long getRotationClampExtendTime() {
     return rotationClampExtendTime;
 }
@@ -467,9 +472,11 @@ void handleCommonOperations() {
                 
                 // Check if wait duration has passed (faster return after transfer arm grabs wood)
                 if (millis() - suctionHighDetectedTime >= ROTATION_SERVO_SUCTION_HOLD_DURATION_MS) {
-                    // Wait duration has passed continuously - return servo to home
+                    // Wait duration has passed continuously - extend clamp for return, then return servo to home
                     String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
                     addSerialLog(message);
+                    extendRotationClamp(); // Keep clamp active during active→home rotation
+                    rotationServoReturnHomeStartedAt = millis();
                     handleRotationServoReturn();
                     rotationServoIsActiveAndTiming = false;
                     rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
@@ -487,6 +494,13 @@ void handleCommonOperations() {
                 suctionWaitDebugTime = millis();
             }
         }
+    }
+
+    // Retract rotation clamp after servo has reached home (clamp was extended for active→home rotation)
+    if (rotationServoReturnCompleted && rotationClampIsExtended && rotationServoReturnHomeStartedAt != 0 &&
+        (millis() - rotationServoReturnHomeStartedAt >= ROTATION_SERVO_RETURN_HOME_DURATION_MS)) {
+        retractRotationClamp();
+        rotationServoReturnHomeStartedAt = 0;
     }
 
     // Handle Rotation Clamp retraction after configured duration (later for NO_2x4 state)

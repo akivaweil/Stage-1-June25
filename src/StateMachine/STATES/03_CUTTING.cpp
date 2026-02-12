@@ -25,6 +25,7 @@ unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;     // Duration to 
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait dration at home position
 unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 300;     // Wait time after suction detected before returning
+unsigned long ROTATION_SERVO_RETURN_HOME_DURATION_MS = 800;      // Time for servo to reach home; clamp stays extended during return then retracts
 float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
 
 // Rotation Clamp Configuration
@@ -295,10 +296,12 @@ void handleCuttingStep0() {
     cuttingContext.waitingForSuction = false;
     cuttingContext.suctionWaitStartTime = 0;
 
-    //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)
+    //! Home rotation servo if wood is properly grabbed (clamp active during active→home, then retract after home)
     if (isWoodProperlyGrabbed()) {
         extern bool rotationServoIsActiveAndTiming;
         if (!cuttingContext.servoReturnStarted) {
+            extendRotationClamp();
+            setRotationServoReturnHomeStartedAt(millis());
             handleRotationServoReturn();
             cuttingContext.servoReturnStarted = true;
         }

@@ -86,6 +86,7 @@ void setRotationServoIsActiveAndTiming(bool value);
 // Rotation servo return delay access functions
 unsigned long getRotationServoReturnDelayStartTime();
 void setRotationServoReturnDelayStartTime(unsigned long value);
+void setRotationServoReturnHomeStartedAt(unsigned long value);
 
 unsigned long getRotationClampExtendTime();
 void setRotationClampExtendTime(unsigned long value);

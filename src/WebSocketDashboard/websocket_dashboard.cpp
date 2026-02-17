@@ -32,6 +32,7 @@ int reloadTimeCount = 0; // Number of reload times recorded
 // Dashboard configuration variables - these are loaded from EEPROM/config and can be modified via dashboard
 float CUT_TRAVEL_DISTANCE = 9.2;
 float FEED_TRAVEL_DISTANCE = 3.43;
+int ROTATION_SERVO_HOME_POSITION = 14;  // Servo home position (degrees), adjustable via dashboard
 
 // EEPROM configuration constants
 const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
@@ -1332,6 +1333,15 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (0.1-20.0)";
                             }
+                        } else if (configKey == "rotation_servo_home_position") {
+                            int newValue = doc["value"];
+                            if (newValue >= 0 && newValue <= 180) {
+                                ROTATION_SERVO_HOME_POSITION = newValue;
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: ROTATION_SERVO_HOME_POSITION = " + String(newValue) + " deg");
+                            } else {
+                                response["error"] = "Value out of range (0-180)";
+                            }
                         } else if (configKey == "ta_signal_activation_distance") {
                             float newValue = doc["value"];
                             if (newValue >= 0.1 && newValue <= 20.0) {
@@ -1387,6 +1397,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             configDoc["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
                             configDoc["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
                             configDoc["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
+                            configDoc["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
                             configDoc["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
                             
                             String configMessage;
@@ -1428,6 +1439,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             response["value"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
                         } else if (configKey == "rotation_servo_activation_distance") {
                             response["value"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
+                        } else if (configKey == "rotation_servo_home_position") {
+                            response["value"] = ROTATION_SERVO_HOME_POSITION;
                         } else if (configKey == "ta_signal_activation_distance") {
                             response["value"] = TA_SIGNAL_ACTIVATION_DISTANCE;
                         } else {
@@ -1450,6 +1463,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
                         response["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
                         response["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
+                        response["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
                         response["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
                         
                         String message;

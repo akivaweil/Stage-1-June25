@@ -715,6 +715,14 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
 
             <div class="input-group">
+                <label>Rotation Servo Home Position (deg)</label>
+                <div class="input-row">
+                    <input type="number" id="rotationServoHomePosition" min="0" max="180" step="1" placeholder="14">
+                    <button class="btn" onclick="updateConfig('rotation_servo_home_position')">SAVE</button>
+                </div>
+            </div>
+
+            <div class="input-group">
                 <label>TA Signal Activation (in from start)</label>
                 <div class="input-row">
                     <input type="number" id="taSignalActivationDistance" step="0.1" placeholder="8.5">
@@ -992,6 +1000,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 if(data.rotation_clamp_extend_ms) document.getElementById('rotationClampExtendMs').value = formatConfigValue(data.rotation_clamp_extend_ms);
                 if(data.rotation_clamp_activation_distance !== undefined) document.getElementById('rotationClampActivationDistance').value = formatConfigValue(data.rotation_clamp_activation_distance);
                 if(data.rotation_servo_activation_distance !== undefined) document.getElementById('rotationServoActivationDistance').value = formatConfigValue(data.rotation_servo_activation_distance);
+                if(data.rotation_servo_home_position !== undefined) document.getElementById('rotationServoHomePosition').value = formatConfigValue(data.rotation_servo_home_position);
                 if(data.ta_signal_activation_distance !== undefined) document.getElementById('taSignalActivationDistance').value = formatConfigValue(data.ta_signal_activation_distance);
             }
             else if (data.type === 'config_updated') {
@@ -1144,6 +1153,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             'rotation_clamp_extend_ms': 'rotationClampExtendMs',
             'rotation_clamp_activation_distance': 'rotationClampActivationDistance',
             'rotation_servo_activation_distance': 'rotationServoActivationDistance',
+            'rotation_servo_home_position': 'rotationServoHomePosition',
             'ta_signal_activation_distance': 'taSignalActivationDistance'
         };
 

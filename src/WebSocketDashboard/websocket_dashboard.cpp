@@ -40,6 +40,8 @@ const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
 const int CONFIG_OFFSET_3INCH = 0; // 3 Inch configuration at start
 const int CONFIG_OFFSET_MINIS = 512; // Minis configuration at offset 512
 const int CONFIG_MODE_ADDRESS = 1024; // Store active mode at 1024
+const int SERVO_HOME_EEPROM_ADDRESS = 1028;   // Rotation servo home position (independent of 3in/minis)
+const int SERVO_ACTIVE_EEPROM_ADDRESS = 1032; // Rotation servo active position (independent of 3in/minis)
 
 // Global variable for current mode
 int currentConfigMode = 0; // 0: 3 Inch, 1: Minis
@@ -650,14 +652,31 @@ void setFeedTravelDistance(float value) {
     }
 }
 
+// Load/save rotation servo positions from EEPROM (separate from 3 Inch/Minis config)
+void loadServoPositionsFromEEPROM() {
+    EEPROM.begin(CONFIG_EEPROM_SIZE);
+    int storedHome = 14, storedActive = 108;
+    EEPROM.get(SERVO_HOME_EEPROM_ADDRESS, storedHome);
+    EEPROM.get(SERVO_ACTIVE_EEPROM_ADDRESS, storedActive);
+    if (storedHome >= 0 && storedHome <= 180) ROTATION_SERVO_HOME_POSITION = storedHome;
+    if (storedActive >= 0 && storedActive <= 180) ROTATION_SERVO_ACTIVE_POSITION = storedActive;
+}
+
+void saveServoPositionsToEEPROM() {
+    EEPROM.begin(CONFIG_EEPROM_SIZE);
+    EEPROM.put(SERVO_HOME_EEPROM_ADDRESS, ROTATION_SERVO_HOME_POSITION);
+    EEPROM.put(SERVO_ACTIVE_EEPROM_ADDRESS, ROTATION_SERVO_ACTIVE_POSITION);
+    EEPROM.commit();
+}
+
 // Initialize dashboard data structures
 void initializeDashboardData() {
     systemStartTime = millis();
     lastStateChangeTime = millis();
-    
-    
-    // Load configuration
+
+    // Load configuration (3 Inch / Minis)
     loadConfiguration();
+    loadServoPositionsFromEEPROM();
     
     // Initialize system status
     systemStatus.currentState = getStateName(getCurrentState());
@@ -1338,6 +1357,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             int newValue = doc["value"];
                             if (newValue >= 0 && newValue <= 180) {
                                 ROTATION_SERVO_HOME_POSITION = newValue;
+                                saveServoPositionsToEEPROM();
                                 response["value"] = newValue;
                                 addEventToLog("Configuration updated: ROTATION_SERVO_HOME_POSITION = " + String(newValue) + " deg");
                             } else {
@@ -1347,6 +1367,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             int newValue = doc["value"];
                             if (newValue >= 0 && newValue <= 180) {
                                 ROTATION_SERVO_ACTIVE_POSITION = newValue;
+                                saveServoPositionsToEEPROM();
                                 response["value"] = newValue;
                                 addEventToLog("Configuration updated: ROTATION_SERVO_ACTIVE_POSITION = " + String(newValue) + " deg");
                             } else {

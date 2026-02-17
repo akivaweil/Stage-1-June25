@@ -657,6 +657,24 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                     <div class="mode-option" id="mode-minis" onclick="setMode(1)">Minis</div>
                 </div>
             </div>
+
+            <div class="label-sm" style="margin-top: 1rem; margin-bottom: 0.5rem;">Rotation Servo</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                <div class="input-group">
+                    <label>Home (deg)</label>
+                    <div class="input-row">
+                        <input type="number" id="rotationServoHomePosition" min="0" max="180" step="1" placeholder="14">
+                        <button class="btn" onclick="updateConfig('rotation_servo_home_position')">SAVE</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Active (deg)</label>
+                    <div class="input-row">
+                        <input type="number" id="rotationServoActivePosition" min="0" max="180" step="1" placeholder="108">
+                        <button class="btn" onclick="updateConfig('rotation_servo_active_position')">SAVE</button>
+                    </div>
+                </div>
+            </div>
             
             <div class="input-group">
                 <label>Cut Distance (in)</label>
@@ -711,14 +729,6 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 <div class="input-row">
                     <input type="number" id="rotationServoActivationDistance" step="0.1" placeholder="8.2">
                     <button class="btn" onclick="updateConfig('rotation_servo_activation_distance')">SAVE</button>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Rotation Servo Home Position (deg)</label>
-                <div class="input-row">
-                    <input type="number" id="rotationServoHomePosition" min="0" max="180" step="1" placeholder="14">
-                    <button class="btn" onclick="updateConfig('rotation_servo_home_position')">SAVE</button>
                 </div>
             </div>
 
@@ -1001,6 +1011,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 if(data.rotation_clamp_activation_distance !== undefined) document.getElementById('rotationClampActivationDistance').value = formatConfigValue(data.rotation_clamp_activation_distance);
                 if(data.rotation_servo_activation_distance !== undefined) document.getElementById('rotationServoActivationDistance').value = formatConfigValue(data.rotation_servo_activation_distance);
                 if(data.rotation_servo_home_position !== undefined) document.getElementById('rotationServoHomePosition').value = formatConfigValue(data.rotation_servo_home_position);
+                if(data.rotation_servo_active_position !== undefined) document.getElementById('rotationServoActivePosition').value = formatConfigValue(data.rotation_servo_active_position);
                 if(data.ta_signal_activation_distance !== undefined) document.getElementById('taSignalActivationDistance').value = formatConfigValue(data.ta_signal_activation_distance);
             }
             else if (data.type === 'config_updated') {
@@ -1154,6 +1165,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             'rotation_clamp_activation_distance': 'rotationClampActivationDistance',
             'rotation_servo_activation_distance': 'rotationServoActivationDistance',
             'rotation_servo_home_position': 'rotationServoHomePosition',
+            'rotation_servo_active_position': 'rotationServoActivePosition',
             'ta_signal_activation_distance': 'taSignalActivationDistance'
         };
 

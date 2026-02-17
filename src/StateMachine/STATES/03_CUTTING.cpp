@@ -18,8 +18,7 @@
 // All post-cutting logic (return sequences, homing, continuous mode) is handled by RETURNING states.
 
 // Configuration Settings
-// Rotation Servo Settings (ROTATION_SERVO_HOME_POSITION set via web dashboard)
-int ROTATION_SERVO_ACTIVE_POSITION = 108;                        // Servo active rotation angle
+// Rotation Servo (ROTATION_SERVO_HOME_POSITION, ROTATION_SERVO_ACTIVE_POSITION set via web dashboard)
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;     // Duration to hold active position
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
 unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait dration at home position

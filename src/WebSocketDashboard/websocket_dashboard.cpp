@@ -1220,6 +1220,18 @@ void setupWebSocketDashboard() {
     Serial.println("/");
 }
 
+// Helper to populate JsonObject with config data
+void populateConfigJson(const ConfigurationData& config, JsonObject obj) {
+    obj["cut_travel_distance"] = config.CUT_TRAVEL_DISTANCE;
+    obj["feed_travel_distance"] = config.FEED_TRAVEL_DISTANCE;
+    obj["feed_motor_offset_from_sensor"] = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
+    obj["cut_motor_normal_speed"] = config.CUT_MOTOR_NORMAL_SPEED;
+    obj["rotation_clamp_extend_ms"] = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
+    obj["rotation_clamp_activation_distance"] = config.ROTATION_CLAMP_ACTIVATION_DISTANCE;
+    obj["rotation_servo_activation_distance"] = config.ROTATION_SERVO_ACTIVATION_DISTANCE;
+    obj["ta_signal_activation_distance"] = config.TA_SIGNAL_ACTIVATION_DISTANCE;
+}
+
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     switch(type) {
         case WS_EVT_CONNECT: {
@@ -1504,6 +1516,110 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         String message;
                         serializeJson(response, message);
                         client->text(message);
+                    } else if (type == "download_all_configs") {
+                        JsonDocument response;
+                        response["type"] = "all_configs_data";
+                        
+                        EEPROM.begin(CONFIG_EEPROM_SIZE);
+                        ConfigurationData config3inch, configMinis;
+                        EEPROM.get(CONFIG_OFFSET_3INCH, config3inch);
+                        EEPROM.get(CONFIG_OFFSET_MINIS, configMinis);
+                        
+                        JsonObject obj3inch = response["3inch"].to<JsonObject>();
+                        JsonObject objMinis = response["minis"].to<JsonObject>();
+                        
+                        if (config3inch.magic == CONFIG_MAGIC) populateConfigJson(config3inch, obj3inch);
+                        if (configMinis.magic == CONFIG_MAGIC) populateConfigJson(configMinis, objMinis);
+                        
+                        response["servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
+                        response["servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
+                        
+                        String message;
+                        serializeJson(response, message);
+                        client->text(message);
+                        addEventToLog("Dashboard downloaded all configurations");
+                    } else if (type == "upload_all_configs") {
+                        EEPROM.begin(CONFIG_EEPROM_SIZE);
+                        
+                        // Parse 3inch config
+                        if (!doc["3inch"].isNull()) {
+                            ConfigurationData config3inch;
+                            EEPROM.get(CONFIG_OFFSET_3INCH, config3inch);
+                            if (config3inch.magic != CONFIG_MAGIC) config3inch = getDefaultConfiguration();
+                            
+                            JsonObject obj3inch = doc["3inch"];
+                            if (!obj3inch["cut_travel_distance"].isNull()) config3inch.CUT_TRAVEL_DISTANCE = obj3inch["cut_travel_distance"];
+                            if (!obj3inch["feed_travel_distance"].isNull()) config3inch.FEED_TRAVEL_DISTANCE = obj3inch["feed_travel_distance"];
+                            if (!obj3inch["feed_motor_offset_from_sensor"].isNull()) config3inch.FEED_MOTOR_OFFSET_FROM_SENSOR = obj3inch["feed_motor_offset_from_sensor"];
+                            if (!obj3inch["cut_motor_normal_speed"].isNull()) config3inch.CUT_MOTOR_NORMAL_SPEED = obj3inch["cut_motor_normal_speed"];
+                            if (!obj3inch["rotation_clamp_extend_ms"].isNull()) config3inch.ROTATION_CLAMP_EXTEND_DURATION_MS = obj3inch["rotation_clamp_extend_ms"];
+                            if (!obj3inch["rotation_clamp_activation_distance"].isNull()) config3inch.ROTATION_CLAMP_ACTIVATION_DISTANCE = obj3inch["rotation_clamp_activation_distance"];
+                            if (!obj3inch["rotation_servo_activation_distance"].isNull()) config3inch.ROTATION_SERVO_ACTIVATION_DISTANCE = obj3inch["rotation_servo_activation_distance"];
+                            if (!obj3inch["ta_signal_activation_distance"].isNull()) config3inch.TA_SIGNAL_ACTIVATION_DISTANCE = obj3inch["ta_signal_activation_distance"];
+                            
+                            config3inch.checksum = calculateChecksum(config3inch);
+                            EEPROM.put(CONFIG_OFFSET_3INCH, config3inch);
+                        }
+                        
+                        // Parse minis config
+                        if (!doc["minis"].isNull()) {
+                            ConfigurationData configMinis;
+                            EEPROM.get(CONFIG_OFFSET_MINIS, configMinis);
+                            if (configMinis.magic != CONFIG_MAGIC) configMinis = getDefaultConfiguration();
+                            
+                            JsonObject objMinis = doc["minis"];
+                            if (!objMinis["cut_travel_distance"].isNull()) configMinis.CUT_TRAVEL_DISTANCE = objMinis["cut_travel_distance"];
+                            if (!objMinis["feed_travel_distance"].isNull()) configMinis.FEED_TRAVEL_DISTANCE = objMinis["feed_travel_distance"];
+                            if (!objMinis["feed_motor_offset_from_sensor"].isNull()) configMinis.FEED_MOTOR_OFFSET_FROM_SENSOR = objMinis["feed_motor_offset_from_sensor"];
+                            if (!objMinis["cut_motor_normal_speed"].isNull()) configMinis.CUT_MOTOR_NORMAL_SPEED = objMinis["cut_motor_normal_speed"];
+                            if (!objMinis["rotation_clamp_extend_ms"].isNull()) configMinis.ROTATION_CLAMP_EXTEND_DURATION_MS = objMinis["rotation_clamp_extend_ms"];
+                            if (!objMinis["rotation_clamp_activation_distance"].isNull()) configMinis.ROTATION_CLAMP_ACTIVATION_DISTANCE = objMinis["rotation_clamp_activation_distance"];
+                            if (!objMinis["rotation_servo_activation_distance"].isNull()) configMinis.ROTATION_SERVO_ACTIVATION_DISTANCE = objMinis["rotation_servo_activation_distance"];
+                            if (!objMinis["ta_signal_activation_distance"].isNull()) configMinis.TA_SIGNAL_ACTIVATION_DISTANCE = objMinis["ta_signal_activation_distance"];
+                            
+                            configMinis.checksum = calculateChecksum(configMinis);
+                            EEPROM.put(CONFIG_OFFSET_MINIS, configMinis);
+                        }
+                        
+                        // Parse servo config
+                        if (!doc["servo_home_position"].isNull()) ROTATION_SERVO_HOME_POSITION = doc["servo_home_position"];
+                        if (!doc["servo_active_position"].isNull()) ROTATION_SERVO_ACTIVE_POSITION = doc["servo_active_position"];
+                        
+                        EEPROM.put(SERVO_HOME_EEPROM_ADDRESS, ROTATION_SERVO_HOME_POSITION);
+                        EEPROM.put(SERVO_ACTIVE_EEPROM_ADDRESS, ROTATION_SERVO_ACTIVE_POSITION);
+                        
+                        EEPROM.commit();
+                        
+                        // Reload and apply the new configuration
+                        loadConfiguration();
+                        updateDynamicConfig();
+                        
+                        JsonDocument response;
+                        response["type"] = "config_updated";
+                        String message;
+                        serializeJson(response, message);
+                        client->text(message);
+                        
+                        // Broadcast to update UI
+                        JsonDocument configDoc;
+                        configDoc["type"] = "all_config";
+                        configDoc["config_mode"] = currentConfigMode;
+                        configDoc["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
+                        configDoc["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
+                        configDoc["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
+                        configDoc["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
+                        configDoc["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                        configDoc["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
+                        configDoc["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
+                        configDoc["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
+                        configDoc["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
+                        configDoc["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
+                        
+                        String configMessage;
+                        serializeJson(configDoc, configMessage);
+                        ws.textAll(configMessage);
+                        
+                        addEventToLog("Configuration uploaded from dashboard");
                     }
                 }
             }

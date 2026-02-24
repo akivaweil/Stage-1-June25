@@ -740,7 +740,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 </div>
             </div>
 
-            <div id="configStatus" style="font-size: 0.8rem; text-align: center; min-height: 1.2em; transition: color 0.3s;"></div>
+            <div id="configStatus" style="font-size: 0.8rem; text-align: center; min-height: 1.2em; transition: color 0.3s; margin-bottom: 0.5rem;"></div>
+
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn" style="background: var(--bg-card); border-color: var(--accent-success); color: var(--accent-success);" onclick="downloadAllConfigs()">↓ Download Config Data</button>
+                <button class="btn" style="background: var(--bg-card); border-color: var(--accent-warning); color: var(--accent-warning);" onclick="document.getElementById('configUploadInput').click()">↑ Upload Config Data</button>
+                <input type="file" id="configUploadInput" style="display: none;" accept=".json" onchange="uploadConfigData(event)">
+            </div>
         </div>
 
         <!-- Logs -->
@@ -1017,6 +1023,18 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
             }
+            else if (data.type === 'all_configs_data') {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'tablesaw_config.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showConfigStatus('Config downloaded successfully', 'success');
+            }
             else if (data.type === 'error') {
                 showConfigStatus(data.message, 'error');
             }
@@ -1220,6 +1238,39 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         function triggerStartCycle() {
             if (!ws || ws.readyState !== 1) return showConfigStatus('Not connected', 'error');
             ws.send(JSON.stringify({type: 'trigger_start_cycle'}));
+        }
+
+        function downloadAllConfigs() {
+            if (!ws || ws.readyState !== 1) return showConfigStatus('Not connected', 'error');
+            ws.send(JSON.stringify({type: 'download_all_configs'}));
+            showConfigStatus('Requesting config data...', 'success');
+        }
+
+        function uploadConfigData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.type !== 'all_configs_data') {
+                        throw new Error('Invalid config file format');
+                    }
+                    
+                    if (!ws || ws.readyState !== 1) return showConfigStatus('Not connected', 'error');
+                    
+                    data.type = 'upload_all_configs';
+                    ws.send(JSON.stringify(data));
+                    showConfigStatus('Uploading configuration...', 'success');
+                } catch (error) {
+                    showConfigStatus('Error reading file: ' + error.message, 'error');
+                }
+                
+                // Clear the input so the same file can be selected again
+                event.target.value = '';
+            };
+            reader.readAsText(file);
         }
 
         // Init

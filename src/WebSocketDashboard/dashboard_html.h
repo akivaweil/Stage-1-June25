@@ -743,8 +743,8 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             <div id="configStatus" style="font-size: 0.8rem; text-align: center; min-height: 1.2em; transition: color 0.3s; margin-bottom: 0.5rem;"></div>
 
             <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 1rem; justify-content: center;">
-                <button class="btn" style="background: var(--bg-card); border-color: var(--accent-success); color: var(--accent-success);" onclick="downloadAllConfigs()">↓ Download Config Data</button>
-                <button class="btn" style="background: var(--bg-card); border-color: var(--accent-warning); color: var(--accent-warning);" onclick="document.getElementById('configUploadInput').click()">↑ Upload Config Data</button>
+                <button class="btn" style="flex: 1; padding: 0.75rem;" onclick="downloadAllConfigs()">↓ Download Config Data</button>
+                <button class="btn" style="flex: 1; padding: 0.75rem;" onclick="document.getElementById('configUploadInput').click()">↑ Upload Config Data</button>
                 <input type="file" id="configUploadInput" style="display: none;" accept=".json" onchange="uploadConfigData(event)">
             </div>
         </div>

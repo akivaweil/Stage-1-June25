@@ -39,6 +39,8 @@ unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;              // Motor state 
 
 // Suction Sensor Configuration
 unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout for waiting for suction sensor to go HIGH (ms)
+unsigned long SUCTION_RETRY_PHASE1_WAIT_MS = 3000;                 // Phase 1 retry wait time (ms)
+unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 2000;                 // Phase 2 retry wait time (ms)
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 📊 STATE VARIABLES ║
@@ -54,6 +56,10 @@ namespace {
         unsigned long servoHomeWaitStartedAt = 0;
         bool waitingForSuction = false;
         unsigned long suctionWaitStartTime = 0;
+        bool suctionRetryAttempted = false;
+        bool inSuctionRetryPhase1 = false;
+        bool inSuctionRetryPhase2 = false;
+        unsigned long suctionRetryTimer = 0;
     };
 
     CuttingStateContext cuttingContext;
@@ -278,10 +284,41 @@ void handleCuttingStep0() {
             
             // Check if timeout has expired
             if (millis() - cuttingContext.suctionWaitStartTime >= SUCTION_WAIT_TIMEOUT_MS) {
-                // Timeout expired - transition to suction error
-                FastAccelStepper* cutMotor = getCutMotor();
-                handleSuctionFailure(cutMotor);
-                return;
+                if (!cuttingContext.suctionRetryAttempted) {
+                    if (!cuttingContext.inSuctionRetryPhase1 && !cuttingContext.inSuctionRetryPhase2) {
+                        // Start Phase 1
+                        cuttingContext.inSuctionRetryPhase1 = true;
+                        cuttingContext.suctionRetryTimer = millis();
+                        return; // Stay in Step 0
+                    }
+                    
+                    if (cuttingContext.inSuctionRetryPhase1) {
+                        if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE1_WAIT_MS) {
+                            // Phase 1 complete, send TA signal and start Phase 2
+                            sendSignalToTA();
+                            cuttingContext.inSuctionRetryPhase1 = false;
+                            cuttingContext.inSuctionRetryPhase2 = true;
+                            cuttingContext.suctionRetryTimer = millis();
+                        }
+                        return; // Stay in Step 0
+                    }
+                    
+                    if (cuttingContext.inSuctionRetryPhase2) {
+                        if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
+                            // Phase 2 complete, officially fail
+                            cuttingContext.suctionRetryAttempted = true;
+                            cuttingContext.inSuctionRetryPhase2 = false;
+                            FastAccelStepper* cutMotor = getCutMotor();
+                            handleSuctionFailure(cutMotor);
+                        }
+                        return; // Stay in Step 0
+                    }
+                } else {
+                    // Timeout expired and retry already attempted - transition to suction error
+                    FastAccelStepper* cutMotor = getCutMotor();
+                    handleSuctionFailure(cutMotor);
+                    return;
+                }
             }
             
             // Still within timeout - stay in Step 0 and keep checking
@@ -292,6 +329,10 @@ void handleCuttingStep0() {
     //! Sensor is HIGH (or went HIGH during wait) - clear waiting flags and proceed
     cuttingContext.waitingForSuction = false;
     cuttingContext.suctionWaitStartTime = 0;
+    cuttingContext.suctionRetryAttempted = false;
+    cuttingContext.inSuctionRetryPhase1 = false;
+    cuttingContext.inSuctionRetryPhase2 = false;
+    cuttingContext.suctionRetryTimer = 0;
 
     //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)
     if (isWoodProperlyGrabbed()) {

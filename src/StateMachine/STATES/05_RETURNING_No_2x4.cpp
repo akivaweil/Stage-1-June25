@@ -74,6 +74,8 @@ enum ReturningNo2x4Step {
 static int returningNo2x4Step = 0;
 static unsigned long cylinderActionTime = 0;
 static bool waitingForCylinder = false;
+static bool waitingForNewWood = false;
+static unsigned long newWoodWaitStartTime = 0;
 
 // LED wave pattern is now handled by shared function in General_Functions.cpp
 
@@ -184,30 +186,54 @@ void handleReturningNo2x4Step(int step) {
                 retractFeedClamp();
                 delay(5);
 
-                // Wait for 2x4 present sensor to be not active (HIGH) before extending clamp
-                extern const int _2x4_PRESENT_SENSOR;
-                if (getWoodPresentSensorBounce()->read() == HIGH) {
-                    // Sensor is clear (not active) - safe to extend secure clamp
-                    delay(ROTATION_CLAMP_EXTRA_DELAY_MS);
-                    extend2x4SecureClamp();
-                    // Set flag to prevent IDLE from retracting the clamp
-                    setComingFromNoWoodWithSensorsClear(true);
-                    
-                    // Complete sequence and transition to IDLE
-                    resetReturningNo2x4Steps();
-                    incrementCuttingCycleCounter();
-                    setCuttingCycleInProgress(false);
-                    
-                    
-                    // When no wood is detected, require manual reset of cycle switch
-                    // This prevents automatic restart when no wood is present
-                    if (getStartCycleSwitch()->read() == HIGH) {
-                        setStartSwitchSafe(false);
+                if (!waitingForNewWood) {
+                    // Wait for 2x4 present sensor to be not active (HIGH) before extending clamp
+                    extern const int _2x4_PRESENT_SENSOR;
+                    if (getWoodPresentSensorBounce()->read() == HIGH) {
+                        // Sensor is clear (not active) - safe to extend secure clamp
+                        delay(ROTATION_CLAMP_EXTRA_DELAY_MS);
+                        extend2x4SecureClamp();
+                        // Set flag to prevent IDLE from retracting the clamp
+                        setComingFromNoWoodWithSensorsClear(true);
+                        
+                        // Start waiting for new wood
+                        waitingForNewWood = true;
+                        newWoodWaitStartTime = millis();
                     }
+                } else {
+                    // We are waiting for new wood
+                    unsigned long timeSinceClear = millis() - newWoodWaitStartTime;
                     
-                    changeState(IDLE);
+                    // Give 1 second leeway before checking for new wood
+                    if (timeSinceClear > 1000) {
+                        if (getWoodPresentSensorBounce()->read() == LOW) {
+                            // New wood detected! Wait 2 seconds then auto-feed
+                            if (timeSinceClear > 3000) { // 1s leeway + 2s wait
+                                // Complete sequence and transition directly to FEED_FIRST_CUT
+                                resetReturningNo2x4Steps();
+                                incrementCuttingCycleCounter();
+                                setCuttingCycleInProgress(false);
+                                setComingFromNoWoodWithSensorsClear(false); // Reset flag since we're feeding
+                                
+                                changeState(FEED_FIRST_CUT);
+                            }
+                        } else {
+                            // If no new wood detected after 1 second, just go to IDLE
+                            // Complete sequence and transition to IDLE
+                            resetReturningNo2x4Steps();
+                            incrementCuttingCycleCounter();
+                            setCuttingCycleInProgress(false);
+                            
+                            // When no wood is detected, require manual reset of cycle switch
+                            // This prevents automatic restart when no wood is present
+                            if (getStartCycleSwitch()->read() == HIGH) {
+                                setStartSwitchSafe(false);
+                            }
+                            
+                            changeState(IDLE);
+                        }
+                    }
                 }
-                // If sensor is still active (LOW), wait here (non-blocking)
             }
             break;
     }
@@ -247,4 +273,6 @@ void resetReturningNo2x4Steps() {
     returningNo2x4Step = 0;
     cylinderActionTime = 0;
     waitingForCylinder = false;
+    waitingForNewWood = false;
+    newWoodWaitStartTime = 0;
 } 

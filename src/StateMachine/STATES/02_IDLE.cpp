@@ -45,11 +45,36 @@
 // Ensure position and wood secure clamps are engaged
 // If no wood detected, turn on blue LED for NO_WOOD mode
 
+// Variables for auto-feed from No_2x4 state
+static bool idleAutoFeedActive = false;
+static unsigned long idleEntryTimeForNoWood = 0;
+static unsigned long newWoodDetectedStartTime = 0;
+static bool idleNewWoodDetected = false;
+
 void executeIdleState() {
     // Check if reload switch is activated - if so, transition to reload state
     if (getReloadSwitch()->read() == HIGH) {
         changeState(RELOAD);
         return;
+    }
+
+    // Auto-feed logic if coming from No_2x4 state
+    if (idleAutoFeedActive) {
+        if (millis() - idleEntryTimeForNoWood > 1000) { // 1 second leeway
+            if (getWoodPresentSensorBounce()->read() == LOW) { // Uses the 2x4 present sensor
+                if (!idleNewWoodDetected) {
+                    idleNewWoodDetected = true;
+                    newWoodDetectedStartTime = millis();
+                } else if (millis() - newWoodDetectedStartTime >= 2000) {
+                    // Wood has been present continuously for 2 seconds
+                    idleAutoFeedActive = false; // Reset flag
+                    changeState(FEED_FIRST_CUT);
+                    return; // Skip other checks
+                }
+            } else {
+                idleNewWoodDetected = false; // Reset if wood is removed during the 2s wait
+            }
+        }
     }
 
     checkFirstCutConditions();
@@ -66,8 +91,12 @@ void onEnterIdleState() {
     if (comingFromNoWood) {
         // Coming from no2x4 with no wood - keep secure clamp extended
         // Don't retract the secure clamp, it should stay extended
+        idleAutoFeedActive = true;
+        idleEntryTimeForNoWood = millis();
+        idleNewWoodDetected = false;
     } else {
         // Normal case - extend secure clamp
+        idleAutoFeedActive = false;
         extend2x4SecureClamp();
     }
 

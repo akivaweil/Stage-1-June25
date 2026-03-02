@@ -719,7 +719,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             <div class="input-group">
                 <label>Rotation Clamp Activation (in from start)</label>
                 <div class="input-row">
-                    <input type="number" id="rotationClampActivationDistance" step="0.1" placeholder="6.0">
+                    <input type="number" id="rotationClampActivationDistance" step="0.1" placeholder="6.5">
                     <button class="btn" onclick="updateConfig('rotation_clamp_activation_distance')">SAVE</button>
                 </div>
             </div>

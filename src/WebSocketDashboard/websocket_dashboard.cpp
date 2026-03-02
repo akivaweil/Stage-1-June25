@@ -42,6 +42,8 @@ const int CONFIG_OFFSET_MINIS = 512; // Minis configuration at offset 512
 const int CONFIG_MODE_ADDRESS = 1024; // Store active mode at 1024
 const int SERVO_HOME_EEPROM_ADDRESS = 1028;   // Rotation servo home position (independent of 3in/minis)
 const int SERVO_ACTIVE_EEPROM_ADDRESS = 1032; // Rotation servo active position (independent of 3in/minis)
+const float MINIS_ROTATION_CLAMP_ACTIVATION_DISTANCE_DEFAULT = 6.5;
+const float MINIS_CLAMP_EXTRA_BUFFER = 0.5;
 
 // Global variable for current mode
 int currentConfigMode = 0; // 0: 3 Inch, 1: Minis
@@ -297,6 +299,10 @@ ConfigurationData getDefaultConfiguration() {
     return config;
 }
 
+float getClampExtraBufferForMode(int mode) {
+    return (mode == 1) ? MINIS_CLAMP_EXTRA_BUFFER : 0.0;
+}
+
 // Update dynamic configuration based on mode
 void updateDynamicConfig() {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
@@ -315,10 +321,24 @@ void updateDynamicConfig() {
     // If we are in Minis mode (1), we use the stored 3 Inch config value
     float baselineCutDistance = (currentConfigMode == 0) ? CUT_TRAVEL_DISTANCE : baselineConfig.CUT_TRAVEL_DISTANCE;
     
+    // Get active mode baseline for activation distances
+    ConfigurationData activeModeConfig;
+    int activeOffset = (currentConfigMode == 0) ? CONFIG_OFFSET_3INCH : CONFIG_OFFSET_MINIS;
+    EEPROM.get(activeOffset, activeModeConfig);
+
     // 3. Calculate difference
     // diff = (3 Inch Distance) - (Current Distance)
     // Example: 3 Inch = 9.2, Minis = 7.2 -> diff = 2.0
     float diff = baselineCutDistance - CUT_TRAVEL_DISTANCE;
+    float clampExtraBuffer = getClampExtraBufferForMode(currentConfigMode);
+
+    if (activeModeConfig.magic != CONFIG_MAGIC) {
+        activeModeConfig = getDefaultConfiguration();
+        if (currentConfigMode == 1) {
+            activeModeConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE =
+                MINIS_ROTATION_CLAMP_ACTIVATION_DISTANCE_DEFAULT + diff + clampExtraBuffer;
+        }
+    }
     
     // 4. Update Rotation Activation Distances
     // We want activation to happen 'diff' earlier relative to start, 
@@ -326,17 +346,10 @@ void updateDynamicConfig() {
     // Default/Baseline is 8.2 inches from start (for 9.2 inch cut -> 1 inch before end)
     // New distance should be 8.2 - 2.0 = 6.2 inches from start (for 7.2 inch cut -> 1 inch before end)
     
-    // Use the values from baseline config as the starting point
-    // Note: ROTATION_SERVO_ACTIVATION_DISTANCE and ROTATION_CLAMP_ACTIVATION_DISTANCE 
-    // are loaded from EEPROM but not typically modified via dashboard, so we use baseline values.
-    
-    ROTATION_SERVO_ACTIVATION_DISTANCE = baselineConfig.ROTATION_SERVO_ACTIVATION_DISTANCE - diff;
-    
-    // Add extra 0.5 inch buffer for clamp in Minis mode (trigger earlier)
-    float clampExtraBuffer = (currentConfigMode == 1) ? 0.5 : 0.0;
-    ROTATION_CLAMP_ACTIVATION_DISTANCE = baselineConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE - diff - clampExtraBuffer;
-    
-    TA_SIGNAL_ACTIVATION_DISTANCE = baselineConfig.TA_SIGNAL_ACTIVATION_DISTANCE - diff;
+    // Use active mode baseline so mode-specific dashboard edits persist after reload.
+    ROTATION_SERVO_ACTIVATION_DISTANCE = activeModeConfig.ROTATION_SERVO_ACTIVATION_DISTANCE - diff;
+    ROTATION_CLAMP_ACTIVATION_DISTANCE = activeModeConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE - diff - clampExtraBuffer;
+    TA_SIGNAL_ACTIVATION_DISTANCE = activeModeConfig.TA_SIGNAL_ACTIVATION_DISTANCE - diff;
     
     // Log for debugging
     Serial.print("Dynamic Config Update: Mode=");
@@ -520,13 +533,28 @@ void loadConfiguration() {
     
     if (!isValid) {
         config = getDefaultConfiguration();
+
+        if (currentConfigMode == 1) {
+            ConfigurationData baselineConfig;
+            EEPROM.get(CONFIG_OFFSET_3INCH, baselineConfig);
+            if (baselineConfig.magic != CONFIG_MAGIC) {
+                baselineConfig = getDefaultConfiguration();
+            }
+
+            float baselineCutDistance = baselineConfig.CUT_TRAVEL_DISTANCE;
+            float diff = baselineCutDistance - config.CUT_TRAVEL_DISTANCE;
+            float clampExtraBuffer = getClampExtraBufferForMode(currentConfigMode);
+            config.ROTATION_CLAMP_ACTIVATION_DISTANCE =
+                MINIS_ROTATION_CLAMP_ACTIVATION_DISTANCE_DEFAULT + diff + clampExtraBuffer;
+        }
+
+        applyConfiguration(config);
         saveConfiguration();
         Serial.println("Configuration loaded: Using default values");
     } else {
         Serial.println("Configuration loaded: Using stored values");
+        applyConfiguration(config);
     }
-    
-    applyConfiguration(config);
 }
 
 void saveConfiguration() {
@@ -542,7 +570,7 @@ void saveConfiguration() {
     }
     float baselineCutDistance = (currentConfigMode == 0) ? CUT_TRAVEL_DISTANCE : baselineConfig.CUT_TRAVEL_DISTANCE;
     float diff = baselineCutDistance - CUT_TRAVEL_DISTANCE;
-    float clampExtraBuffer = (currentConfigMode == 1) ? 0.5 : 0.0;
+    float clampExtraBuffer = getClampExtraBufferForMode(currentConfigMode);
     
     ConfigurationData config;
     

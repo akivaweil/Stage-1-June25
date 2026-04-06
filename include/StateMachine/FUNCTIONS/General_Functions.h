@@ -103,7 +103,7 @@ void showBlueLed();
 void turnBlueLedOff();
 void allLedsOff();
 void handleHomingLedBlink();
-void handleNoWoodLedWavePattern();
+void handleNoWoodLedWavePattern(float speedMultiplier = 1.0f);
 void resetNoWoodLedWavePattern(bool preserveYellowLed = false);
 
 //* ************************************************************************

@@ -11,7 +11,7 @@
 const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
 const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end
 const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
-const float FEED_MOTOR_SECOND_RUN_END_POSITION = 0.4; // inches - absolute position for second run end
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = 0.5; // inches - absolute position for second run end
 const unsigned long FEED_CLAMP_DELAY_MS = 400; // Delay after extending feed clamp and retracting secure clamp
 
 // Note: FEED_TRAVEL_DISTANCE, FEED_MOTOR_STEPS_PER_INCH, FEED_CLAMP, _2x4_SECURE_CLAMP, 

@@ -40,7 +40,10 @@ unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;              // Motor state 
 // Suction Sensor Configuration
 unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout for waiting for suction sensor to go HIGH (ms)
 unsigned long SUCTION_RETRY_PHASE1_WAIT_MS = 3000;                 // Phase 1 retry wait time (ms)
-unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 2000;                 // Phase 2 retry wait time (ms)
+unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 5000;                 // Phase 2 retry wait time (ms)
+
+// LED Wave Pattern
+const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs RETURNING_NO_2x4 state when no wood detected during cut
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 📊 STATE VARIABLES ║
@@ -78,8 +81,8 @@ void updateWoodPresentLed() {
         if (woodPresent) {
             showYellowLed();
         } else {
-            // Show LED wave pattern when no wood is present
-            handleNoWoodLedWavePattern();
+            // Show LED wave pattern when no wood is present (5x slower than RETURNING_NO_2x4 state)
+            handleNoWoodLedWavePattern(NO_WOOD_LED_WAVE_SPEED_MULTIPLIER);
         }
     }
 }

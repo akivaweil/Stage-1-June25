@@ -195,14 +195,18 @@ static unsigned long ledWaveOnTime[4] = {0, 0, 0, 0}; // When each LED turned on
 static unsigned long ledWaveTurnOnTime[4] = {0, 0, 0, 0}; // When each LED should next turn on
 static bool ledWaveInitialized = false;
 
-void handleNoWoodLedWavePattern() {
+void handleNoWoodLedWavePattern(float speedMultiplier) {
+    // Scale timing constants by speedMultiplier (>1 = slower)
+    unsigned long interval = (unsigned long)(LED_WAVE_INTERVAL_MS * speedMultiplier);
+    unsigned long onDuration = (unsigned long)(LED_ON_DURATION_MS * speedMultiplier);
+
     // Initialize wave pattern if not already done
     if (!ledWaveInitialized) {
         unsigned long now = millis();
         ledWaveTurnOnTime[0] = now; // Red starts immediately
-        ledWaveTurnOnTime[1] = now + LED_WAVE_INTERVAL_MS; // Yellow starts after red
-        ledWaveTurnOnTime[2] = now + (LED_WAVE_INTERVAL_MS * 2); // Green starts after yellow
-        ledWaveTurnOnTime[3] = now + (LED_WAVE_INTERVAL_MS * 3); // Blue starts after green
+        ledWaveTurnOnTime[1] = now + interval; // Yellow starts after red
+        ledWaveTurnOnTime[2] = now + (interval * 2); // Green starts after yellow
+        ledWaveTurnOnTime[3] = now + (interval * 3); // Blue starts after green
         ledWaveOnTime[0] = 0;
         ledWaveOnTime[1] = 0;
         ledWaveOnTime[2] = 0;
@@ -225,11 +229,11 @@ void handleNoWoodLedWavePattern() {
             // Record when this LED turned on
             ledWaveOnTime[i] = now;
             // Schedule next turn on (continuous wave)
-            ledWaveTurnOnTime[i] = now + LED_ON_DURATION_MS + (LED_WAVE_INTERVAL_MS * 3);
+            ledWaveTurnOnTime[i] = now + onDuration + (interval * 3);
         }
 
-        // Check if LED should turn off (after being on for LED_ON_DURATION_MS)
-        if (ledWaveOnTime[i] > 0 && now - ledWaveOnTime[i] >= LED_ON_DURATION_MS) {
+        // Check if LED should turn off (after being on for onDuration)
+        if (ledWaveOnTime[i] > 0 && now - ledWaveOnTime[i] >= onDuration) {
             // Turn off this LED
             switch (i) {
                 case 0: digitalWrite(STATUS_LED_RED, LOW); break;

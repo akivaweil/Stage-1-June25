@@ -3,6 +3,41 @@
 #include "StateMachine/FUNCTIONS/General_Functions.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
+const unsigned long IDLE_WOOD_PRESENT_ACTIVE_DELAY_MS = 1500;
+static bool idleWoodPresentPreviousState = LOW;
+static bool idleWoodPresentDelayActive = false;
+static unsigned long idleWoodPresentDelayStartMs = 0;
+
+static bool checkWoodPresentActiveAutoFeedFirstCut() {
+    bool woodPresentNow = getWoodPresentSensorBounce()->read();
+    bool woodPresentBecameActive = (idleWoodPresentPreviousState == HIGH && woodPresentNow == LOW);
+    extern const int FIRST_CUT_OR_WOOD_FWD_ONE;
+    bool firstCutOrWoodFwdOneActive = (digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == LOW);
+
+    if (woodPresentBecameActive) {
+        idleWoodPresentDelayActive = true;
+        idleWoodPresentDelayStartMs = millis();
+    }
+
+    if (idleWoodPresentDelayActive) {
+        // Cancel pending auto-feed if wood-present becomes inactive during the delay.
+        if (woodPresentNow == HIGH) {
+            idleWoodPresentDelayActive = false;
+        } else if (firstCutOrWoodFwdOneActive) {
+            idleWoodPresentDelayActive = false;
+        } else if ((millis() - idleWoodPresentDelayStartMs) >= IDLE_WOOD_PRESENT_ACTIVE_DELAY_MS) {
+            idleWoodPresentDelayActive = false;
+            setComingFromNoWoodWithSensorsClear(false);
+            changeState(FEED_FIRST_CUT);
+            idleWoodPresentPreviousState = woodPresentNow;
+            return true;
+        }
+    }
+
+    idleWoodPresentPreviousState = woodPresentNow;
+    return false;
+}
+
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 😴 IDLE STATE                                                       ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
@@ -45,12 +80,6 @@
 // Ensure position and wood secure clamps are engaged
 // If no wood detected, turn on blue LED for NO_WOOD mode
 
-// Variables for auto-feed from No_2x4 state
-static bool idleAutoFeedActive = false;
-static unsigned long idleEntryTimeForNoWood = 0;
-static unsigned long newWoodDetectedStartTime = 0;
-static bool idleNewWoodDetected = false;
-
 void executeIdleState() {
     // Check if reload switch is activated - if so, transition to reload state
     if (getReloadSwitch()->read() == HIGH) {
@@ -58,30 +87,18 @@ void executeIdleState() {
         return;
     }
 
-    // Auto-feed logic if coming from No_2x4 state
-    if (idleAutoFeedActive) {
-        if (millis() - idleEntryTimeForNoWood > 1000) { // 1 second leeway
-            if (getWoodPresentSensorBounce()->read() == LOW) { // Uses the 2x4 present sensor
-                if (!idleNewWoodDetected) {
-                    idleNewWoodDetected = true;
-                    newWoodDetectedStartTime = millis();
-                } else if (millis() - newWoodDetectedStartTime >= 2000) {
-                    // Wood has been present continuously for 2 seconds
-                    idleAutoFeedActive = false; // Reset flag
-                    changeState(FEED_FIRST_CUT);
-                    return; // Skip other checks
-                }
-            } else {
-                idleNewWoodDetected = false; // Reset if wood is removed during the 2s wait
-            }
-        }
-    }
-
     checkFirstCutConditions();
+    if (checkWoodPresentActiveAutoFeedFirstCut()) {
+        return;
+    }
     checkStartConditions();
 }
 
 void onEnterIdleState() {
+    idleWoodPresentPreviousState = getWoodPresentSensorBounce()->read();
+    idleWoodPresentDelayActive = false;
+    idleWoodPresentDelayStartMs = 0;
+
     // Cycle counter is now incremented in RETURNING states to handle continuous mode properly
 
     // Check if coming from no2x4 with no wood detected - if so, keep secure clamp extended
@@ -91,12 +108,8 @@ void onEnterIdleState() {
     if (comingFromNoWood) {
         // Coming from no2x4 with no wood - keep secure clamp extended
         // Don't retract the secure clamp, it should stay extended
-        idleAutoFeedActive = true;
-        idleEntryTimeForNoWood = millis();
-        idleNewWoodDetected = false;
     } else {
         // Normal case - extend secure clamp
-        idleAutoFeedActive = false;
         extend2x4SecureClamp();
     }
 

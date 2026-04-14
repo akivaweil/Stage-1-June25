@@ -117,6 +117,8 @@ void handleReturningNo2x4Sequence() {
         case STEP_WAIT_INITIAL_DELAY:
             if (isStepTimerDone()) {
                 configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
+                retractFeedClamp();
+                delay(5);
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE + FEED_MOTOR_TRAVEL_PLUS_OFFSET);
                 returningNo2x4Step = STEP_WAIT_FEED_REACH_TRAVEL;
             }

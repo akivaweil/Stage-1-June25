@@ -6,29 +6,13 @@
 //* ************************************************************************
 //* ************************ RETURNING NO 2X4 STATE ***********************
 //* ************************************************************************
-// Handles the RETURNING_NO_2x4 cutting sequence when no wood is detected.
-// This state manages the multi-step process for handling material that doesn't trigger the wood sensor.
+// Handles the RETURNING_NO_2x4 sequence when no wood is detected.
+// Cut motor returns home in the background while feed motor runs its sequence.
 
-// Function declarations for RETURNING_NO_2x4 state
 void executeReturningNo2x4State();
 void onEnterReturningNo2x4State();
 void onExitReturningNo2x4State();
-
-// Helper function declarations for RETURNING_NO_2x4 sequence
 void handleReturningNo2x4Sequence();
-void handleReturningNo2x4Step(int step);
-void handleCutMotorHomingWithIncrementalMoves();
-void handleFeedMotorHomingSequenceNo2x4();
-
-// Step handler helper functions
-void handleWaitForMotorAndCylinderAction(FastAccelStepper* motor, bool extendClamp);
-void handleWaitForFeedMotorAndExtendClamp();
-
-// Error handling functions
-void handleCutMotorHomingError();
-
-// Reset all step counters
 void resetReturningNo2x4Steps();
 
-
-#endif // _05_RETURNING_NO_2X4_STATE_H 
+#endif // _05_RETURNING_NO_2X4_STATE_H

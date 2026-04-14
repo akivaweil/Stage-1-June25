@@ -25,7 +25,7 @@ unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 350; // Extra delay for rota
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ ❌ RETURNING NO 2X4 — Step Enumeration                               ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
-// STEP_RETRACT_FEED_CYLINDER    (0): Retract feed cylinder
+// STEP_RETRACT_FEED_CLAMP       (0): Retract feed clamp
 // STEP_WAIT_CUT_MOTOR_HOME      (1): Wait for cut motor to finish returning home
 // STEP_INITIALIZE               (2): Start 150ms initial delay
 // STEP_WAIT_INITIAL_DELAY       (3): 150ms → move feed to FEED_TRAVEL + 0.1"
@@ -41,7 +41,7 @@ unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 350; // Extra delay for rota
 // STEP_FINAL_COMPLETION        (13): Retract clamp → poll sensor → 300ms → extend 2x4 → IDLE
 
 enum ReturningNo2x4Step {
-    STEP_RETRACT_FEED_CYLINDER   = 0,
+    STEP_RETRACT_FEED_CLAMP      = 0,
     STEP_WAIT_CUT_MOTOR_HOME     = 1,
     STEP_INITIALIZE              = 2,
     STEP_WAIT_INITIAL_DELAY      = 3,
@@ -87,7 +87,7 @@ void onEnterReturningNo2x4State() {
     configureFeedMotorForNormalOperation();
     resetNoWoodLedWavePattern();
 
-    returningNo2x4Step      = STEP_RETRACT_FEED_CYLINDER;
+    returningNo2x4Step      = STEP_RETRACT_FEED_CLAMP;
     sensorClearedTimerActive = false;
     sensorClearedTime        = 0;
 }
@@ -105,9 +105,9 @@ void handleReturningNo2x4Sequence() {
     switch (returningNo2x4Step) {
 
         //! ************************************************************************
-        //! STEP 0: Retract feed cylinder
+        //! STEP 0: Retract feed clamp
         //! ************************************************************************
-        case STEP_RETRACT_FEED_CYLINDER:
+        case STEP_RETRACT_FEED_CLAMP:
             retractFeedClamp();
             returningNo2x4Step = STEP_WAIT_CUT_MOTOR_HOME;
             break;

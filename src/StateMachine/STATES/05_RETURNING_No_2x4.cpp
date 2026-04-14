@@ -9,11 +9,11 @@
 //║ ❌ RETURNING NO 2X4 STATE — Config                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 const float FEED_MOTOR_SPEED_MULTIPLIER      = 1.05;
-const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.1;   // Added to FEED_TRAVEL_DISTANCE on enter
+const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.25;  // Added to FEED_TRAVEL_DISTANCE on enter
 const float FEED_MOTOR_2ND_POSITION          = -1.2;  // First backward target
 const float FEED_MOTOR_HOME_POSITION         = 0.8;   // Forward mid-point
 const float FEED_MOTOR_FINAL_POSITION        = -1.2;  // Final resting position
-const unsigned long INITIAL_FEED_DELAY_MS        = 150; // Wait before moving feed motor at enter
+const unsigned long INITIAL_FEED_DELAY_MS        = 200; // Wait before moving feed motor at enter
 const unsigned long AFTER_EXTEND_CLAMP_DELAY_MS  = 150; // Wait after extending feed clamp in step 1
 const unsigned long AFTER_RETRACT_2X4_DELAY_MS   = 100; // Wait after retracting 2x4 secure clamp
 const unsigned long AFTER_0_8_DELAY_MS           = 150; // Wait after feed motor reaches 0.8"

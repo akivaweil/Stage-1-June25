@@ -23,7 +23,7 @@ const int CUT_HOMING_DIRECTION = -1;
 // Speeds (in inches/sec and inches/sec²)
 float CUT_MOTOR_NORMAL_SPEED = 1.28; // inches/sec
 float CUT_MOTOR_NORMAL_ACCELERATION = 16.0; // inches/sec²
-float CUT_MOTOR_NO_WOOD_SPEED = 1.1; // inches/sec (80% of normal speed)
+float CUT_MOTOR_NO_WOOD_SPEED = 0.896; // inches/sec (70% of normal speed)
 float CUT_MOTOR_RETURN_SPEED = 30.0; // inches/sec
 float CUT_MOTOR_HOMING_SPEED = 2.6; // inches/sec
 

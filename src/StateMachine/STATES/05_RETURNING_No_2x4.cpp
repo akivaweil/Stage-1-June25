@@ -9,7 +9,7 @@
 //║ ❌ RETURNING NO 2X4 STATE — Config                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 const float FEED_MOTOR_SPEED_MULTIPLIER      = 1.05;
-const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.25;  // Added to FEED_TRAVEL_DISTANCE on enter
+const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.15;  // Added to FEED_TRAVEL_DISTANCE on enter
 const float FEED_MOTOR_2ND_POSITION          = -1.2;  // First backward target
 const float FEED_MOTOR_HOME_POSITION         = 0.8;   // Forward mid-point
 const float FEED_MOTOR_FINAL_POSITION        = -1.2;  // Final resting position
@@ -25,34 +25,36 @@ unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 350; // Extra delay for rota
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ ❌ RETURNING NO 2X4 — Step Enumeration                               ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
-// [BACKGROUND throughout]: Cut motor returning home from CUTTING state
-//
-// STEP_INITIALIZE               (0): Start 150ms initial delay
-// STEP_WAIT_INITIAL_DELAY       (1): 150ms → move feed to FEED_TRAVEL + 0.1"
-// STEP_WAIT_FEED_REACH_TRAVEL   (2): Feed reaches FEED_TRAVEL + 0.1" → extend feed clamp, 150ms timer
-// STEP_WAIT_AFTER_EXTEND_CLAMP  (3): 150ms → retract 2x4 secure clamp, 100ms timer
-// STEP_WAIT_AFTER_RETRACT_2X4   (4): 100ms → move feed to -1.2" (clamp extended)
-// STEP_WAIT_FEED_AT_NEG_1_2     (5): Feed reaches -1.2" → confirm clamp extended
-// STEP_RETRACT_CLAMP_MOVE_0_8   (6): Retract feed clamp → move feed to 0.8"
-// STEP_WAIT_FEED_AT_0_8         (7): Feed reaches 0.8" → retract clamp, 150ms timer
-// STEP_WAIT_AFTER_0_8           (8): 150ms → extend clamp, move feed to -1.2"
-// STEP_WAIT_FEED_FINAL          (9): Feed reaches -1.2" → extend clamp, 150ms timer, start reload timer
-// STEP_WAIT_AFTER_FINAL        (10): 150ms → advance
-// STEP_FINAL_COMPLETION        (11): Retract clamp → poll sensor → 300ms → extend 2x4 → IDLE
+// STEP_RETRACT_FEED_CYLINDER    (0): Retract feed cylinder
+// STEP_WAIT_CUT_MOTOR_HOME      (1): Wait for cut motor to finish returning home
+// STEP_INITIALIZE               (2): Start 150ms initial delay
+// STEP_WAIT_INITIAL_DELAY       (3): 150ms → move feed to FEED_TRAVEL + 0.1"
+// STEP_WAIT_FEED_REACH_TRAVEL   (4): Feed reaches FEED_TRAVEL + 0.1" → extend feed clamp, 150ms timer
+// STEP_WAIT_AFTER_EXTEND_CLAMP  (5): 150ms → retract 2x4 secure clamp, 100ms timer
+// STEP_WAIT_AFTER_RETRACT_2X4   (6): 100ms → move feed to -1.2" (clamp extended)
+// STEP_WAIT_FEED_AT_NEG_1_2     (7): Feed reaches -1.2" → confirm clamp extended
+// STEP_RETRACT_CLAMP_MOVE_0_8   (8): Retract feed clamp → move feed to 0.8"
+// STEP_WAIT_FEED_AT_0_8         (9): Feed reaches 0.8" → retract clamp, 150ms timer
+// STEP_WAIT_AFTER_0_8          (10): 150ms → extend clamp, move feed to -1.2"
+// STEP_WAIT_FEED_FINAL         (11): Feed reaches -1.2" → extend clamp, 150ms timer, start reload timer
+// STEP_WAIT_AFTER_FINAL        (12): 150ms → advance
+// STEP_FINAL_COMPLETION        (13): Retract clamp → poll sensor → 300ms → extend 2x4 → IDLE
 
 enum ReturningNo2x4Step {
-    STEP_INITIALIZE              = 0,
-    STEP_WAIT_INITIAL_DELAY      = 1,
-    STEP_WAIT_FEED_REACH_TRAVEL  = 2,
-    STEP_WAIT_AFTER_EXTEND_CLAMP = 3,
-    STEP_WAIT_AFTER_RETRACT_2X4  = 4,
-    STEP_WAIT_FEED_AT_NEG_1_2    = 5,
-    STEP_RETRACT_CLAMP_MOVE_0_8  = 6,
-    STEP_WAIT_FEED_AT_0_8        = 7,
-    STEP_WAIT_AFTER_0_8          = 8,
-    STEP_WAIT_FEED_FINAL         = 9,
-    STEP_WAIT_AFTER_FINAL        = 10,
-    STEP_FINAL_COMPLETION        = 11
+    STEP_RETRACT_FEED_CYLINDER   = 0,
+    STEP_WAIT_CUT_MOTOR_HOME     = 1,
+    STEP_INITIALIZE              = 2,
+    STEP_WAIT_INITIAL_DELAY      = 3,
+    STEP_WAIT_FEED_REACH_TRAVEL  = 4,
+    STEP_WAIT_AFTER_EXTEND_CLAMP = 5,
+    STEP_WAIT_AFTER_RETRACT_2X4  = 6,
+    STEP_WAIT_FEED_AT_NEG_1_2    = 7,
+    STEP_RETRACT_CLAMP_MOVE_0_8  = 8,
+    STEP_WAIT_FEED_AT_0_8        = 9,
+    STEP_WAIT_AFTER_0_8          = 10,
+    STEP_WAIT_FEED_FINAL         = 11,
+    STEP_WAIT_AFTER_FINAL        = 12,
+    STEP_FINAL_COMPLETION        = 13
 };
 
 // Static state tracking
@@ -85,7 +87,7 @@ void onEnterReturningNo2x4State() {
     configureFeedMotorForNormalOperation();
     resetNoWoodLedWavePattern();
 
-    returningNo2x4Step      = STEP_INITIALIZE;
+    returningNo2x4Step      = STEP_RETRACT_FEED_CYLINDER;
     sensorClearedTimerActive = false;
     sensorClearedTime        = 0;
 }
@@ -103,8 +105,26 @@ void handleReturningNo2x4Sequence() {
     switch (returningNo2x4Step) {
 
         //! ************************************************************************
-        //! STEP 0: Start 150ms delay before moving feed motor
-        //! [BACKGROUND] Cut motor returning home
+        //! STEP 0: Retract feed cylinder
+        //! ************************************************************************
+        case STEP_RETRACT_FEED_CYLINDER:
+            retractFeedClamp();
+            returningNo2x4Step = STEP_WAIT_CUT_MOTOR_HOME;
+            break;
+
+        //! ************************************************************************
+        //! STEP 1: Wait for cut motor to finish returning home
+        //! ************************************************************************
+        case STEP_WAIT_CUT_MOTOR_HOME: {
+            FastAccelStepper* cutMotor = getCutMotor();
+            if (!cutMotor || !cutMotor->isRunning()) {
+                returningNo2x4Step = STEP_INITIALIZE;
+            }
+            break;
+        }
+
+        //! ************************************************************************
+        //! STEP 2: Start 150ms delay before moving feed motor
         //! ************************************************************************
         case STEP_INITIALIZE:
             startStepTimer(INITIAL_FEED_DELAY_MS);
@@ -112,8 +132,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 1: 150ms elapsed → move feed motor to FEED_TRAVEL_DISTANCE + 0.1"
-        //! [BACKGROUND] Cut motor returning home
+        //! STEP 3: 150ms elapsed → move feed motor to FEED_TRAVEL_DISTANCE + 0.1"
         //! ************************************************************************
         case STEP_WAIT_INITIAL_DELAY:
             if (isStepTimerDone()) {
@@ -126,8 +145,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 2: Feed motor reaches FEED_TRAVEL + 0.1" → extend feed clamp → 150ms timer
-        //! [BACKGROUND] Cut motor returning home
+        //! STEP 4: Feed motor reaches FEED_TRAVEL + 0.1" → extend feed clamp → 150ms timer
         //! ************************************************************************
         case STEP_WAIT_FEED_REACH_TRAVEL:
             if (feedMotor && !feedMotor->isRunning()) {
@@ -138,8 +156,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 3: 150ms elapsed → retract 2x4 secure clamp → 100ms timer
-        //! [BACKGROUND] Cut motor returning home
+        //! STEP 5: 150ms elapsed → retract 2x4 secure clamp → 100ms timer
         //! ************************************************************************
         case STEP_WAIT_AFTER_EXTEND_CLAMP:
             if (isStepTimerDone()) {
@@ -150,8 +167,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 4: 100ms elapsed → extend feed clamp, move feed motor to -1.2"
-        //! [BACKGROUND] Cut motor returning home
+        //! STEP 6: 100ms elapsed → extend feed clamp, move feed motor to -1.2"
         //! ************************************************************************
         case STEP_WAIT_AFTER_RETRACT_2X4:
             if (isStepTimerDone()) {
@@ -164,7 +180,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 5: Feed motor reaches -1.2" → confirm feed clamp extended
+        //! STEP 7: Feed motor reaches -1.2" → confirm feed clamp extended
         //! ************************************************************************
         case STEP_WAIT_FEED_AT_NEG_1_2:
             if (feedMotor && !feedMotor->isRunning()) {
@@ -174,7 +190,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 6: Retract feed clamp → move feed motor to 0.8"
+        //! STEP 8: Retract feed clamp → move feed motor to 0.8"
         //! ************************************************************************
         case STEP_RETRACT_CLAMP_MOVE_0_8:
             configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
@@ -185,7 +201,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 7: Feed motor reaches 0.8" → retract feed clamp → 150ms timer
+        //! STEP 9: Feed motor reaches 0.8" → retract feed clamp → 150ms timer
         //! ************************************************************************
         case STEP_WAIT_FEED_AT_0_8:
             if (feedMotor && !feedMotor->isRunning()) {
@@ -196,7 +212,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 8: 150ms elapsed → extend feed clamp, move feed motor to -1.2"
+        //! STEP 10: 150ms elapsed → extend feed clamp, move feed motor to -1.2"
         //! ************************************************************************
         case STEP_WAIT_AFTER_0_8:
             if (isStepTimerDone()) {
@@ -209,7 +225,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 9: Feed motor reaches -1.2" → extend clamp, start reload timer, 150ms timer
+        //! STEP 11: Feed motor reaches -1.2" → extend clamp, start reload timer, 150ms timer
         //! ************************************************************************
         case STEP_WAIT_FEED_FINAL:
             if (feedMotor && !feedMotor->isRunning()) {
@@ -221,7 +237,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 10: 150ms elapsed → advance to final completion
+        //! STEP 12: 150ms elapsed → advance to final completion
         //! ************************************************************************
         case STEP_WAIT_AFTER_FINAL:
             if (isStepTimerDone()) {
@@ -230,7 +246,7 @@ void handleReturningNo2x4Sequence() {
             break;
 
         //! ************************************************************************
-        //! STEP 11: Retract feed clamp → poll wood sensor → 300ms → extend 2x4 → IDLE
+        //! STEP 13: Retract feed clamp → poll wood sensor → 300ms → extend 2x4 → IDLE
         //! ************************************************************************
         case STEP_FINAL_COMPLETION:
             retractFeedClamp();

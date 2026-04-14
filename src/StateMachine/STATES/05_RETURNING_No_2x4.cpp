@@ -18,6 +18,7 @@ const unsigned long AFTER_EXTEND_CLAMP_DELAY_MS  = 150; // Wait after extending 
 const unsigned long AFTER_RETRACT_2X4_DELAY_MS   = 100; // Wait after retracting 2x4 secure clamp
 const unsigned long AFTER_0_8_DELAY_MS           = 150; // Wait after feed motor reaches 0.8"
 const unsigned long AFTER_FINAL_DELAY_MS         = 150; // Wait after feed motor reaches final pos
+const unsigned long CLAMP_SETTLE_DELAY_MS        = 200; // Wait after clamp extend/retract before motor moves
 const unsigned long SENSOR_CLEAR_DELAY_MS        = 300; // Wait after sensor clears before extending 2x4
 unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 350; // Extra delay for rotation clamp in NO_2x4 scenario (used by StateManager)
 
@@ -118,7 +119,7 @@ void handleReturningNo2x4Sequence() {
             if (isStepTimerDone()) {
                 configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
                 retractFeedClamp();
-                delay(5);
+                delay(CLAMP_SETTLE_DELAY_MS);
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE + FEED_MOTOR_TRAVEL_PLUS_OFFSET);
                 returningNo2x4Step = STEP_WAIT_FEED_REACH_TRAVEL;
             }
@@ -156,7 +157,7 @@ void handleReturningNo2x4Sequence() {
             if (isStepTimerDone()) {
                 configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
                 extendFeedClamp();
-                delay(5);
+                delay(CLAMP_SETTLE_DELAY_MS);
                 moveFeedMotorToPosition(FEED_MOTOR_2ND_POSITION);
                 returningNo2x4Step = STEP_WAIT_FEED_AT_NEG_1_2;
             }
@@ -178,7 +179,7 @@ void handleReturningNo2x4Sequence() {
         case STEP_RETRACT_CLAMP_MOVE_0_8:
             configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
             retractFeedClamp();
-            delay(5);
+            delay(CLAMP_SETTLE_DELAY_MS);
             moveFeedMotorToPosition(FEED_MOTOR_HOME_POSITION);
             returningNo2x4Step = STEP_WAIT_FEED_AT_0_8;
             break;
@@ -201,7 +202,7 @@ void handleReturningNo2x4Sequence() {
             if (isStepTimerDone()) {
                 configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
                 extendFeedClamp();
-                delay(5);
+                delay(CLAMP_SETTLE_DELAY_MS);
                 moveFeedMotorToPosition(FEED_MOTOR_FINAL_POSITION);
                 returningNo2x4Step = STEP_WAIT_FEED_FINAL;
             }

@@ -41,6 +41,7 @@ unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;              // Motor state 
 unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout for waiting for suction sensor to go HIGH (ms)
 unsigned long SUCTION_RETRY_PHASE1_WAIT_MS = 3000;                 // Phase 1 retry wait time (ms)
 unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 5000;                 // Phase 2 retry wait time (ms)
+unsigned long SUCTION_RETRY_SUCCESS_WAIT_MS = 1000;                // Minimum wait after retry succeeds before proceeding (ms)
 
 // LED Wave Pattern
 const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs RETURNING_NO_2x4 state when no wood detected during cut
@@ -65,6 +66,9 @@ namespace {
         bool inSuctionRetryPhase1 = false;
         bool inSuctionRetryPhase2 = false;
         unsigned long suctionRetryTimer = 0;
+        bool suctionRetryInProgress = false;
+        bool suctionRetrySucceeded = false;
+        unsigned long suctionRetrySuccessTime = 0;
     };
 
     CuttingStateContext cuttingContext;
@@ -272,6 +276,20 @@ void handleCuttingStep0() {
     extend2x4SecureClamp();
     extendFeedClamp();
 
+    //! If retry was in progress and sensor just went HIGH, enforce minimum wait before proceeding
+    if (cuttingContext.suctionRetryInProgress && isWoodProperlyGrabbed()) {
+        cuttingContext.suctionRetryInProgress = false;
+        cuttingContext.suctionRetrySucceeded = true;
+        cuttingContext.suctionRetrySuccessTime = millis();
+    }
+    if (cuttingContext.suctionRetrySucceeded) {
+        if (millis() - cuttingContext.suctionRetrySuccessTime < SUCTION_RETRY_SUCCESS_WAIT_MS) {
+            return; // Hold for minimum 1 second after retry success
+        }
+        cuttingContext.suctionRetrySucceeded = false;
+        // Fall through - sensor is HIGH so outer if below will be skipped and we proceed
+    }
+
     //! Check suction sensor before starting cut motor
     if (!isWoodProperlyGrabbed()) {
         // Check if servo is home - if so, ignore suction error and proceed
@@ -293,6 +311,7 @@ void handleCuttingStep0() {
                     if (!cuttingContext.inSuctionRetryPhase1 && !cuttingContext.inSuctionRetryPhase2) {
                         // Start Phase 1
                         cuttingContext.inSuctionRetryPhase1 = true;
+                        cuttingContext.suctionRetryInProgress = true;
                         cuttingContext.suctionRetryTimer = millis();
                         return; // Stay in Step 0
                     }
@@ -338,6 +357,9 @@ void handleCuttingStep0() {
     cuttingContext.inSuctionRetryPhase1 = false;
     cuttingContext.inSuctionRetryPhase2 = false;
     cuttingContext.suctionRetryTimer = 0;
+    cuttingContext.suctionRetryInProgress = false;
+    cuttingContext.suctionRetrySucceeded = false;
+    cuttingContext.suctionRetrySuccessTime = 0;
 
     //! Command servo to home position - must complete before cut motor moves
     if (!cuttingContext.servoReturnStarted) {

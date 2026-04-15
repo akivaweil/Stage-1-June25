@@ -57,6 +57,8 @@ namespace {
         bool waitingForServoHome = false;
         bool servoReturnStarted = false;
         unsigned long servoHomeWaitStartedAt = 0;
+        bool waitingForServoHomeBeforeCut = false;
+        unsigned long servoReturnCommandTime = 0;
         bool waitingForSuction = false;
         unsigned long suctionWaitStartTime = 0;
         bool suctionRetryAttempted = false;
@@ -337,13 +339,21 @@ void handleCuttingStep0() {
     cuttingContext.inSuctionRetryPhase2 = false;
     cuttingContext.suctionRetryTimer = 0;
 
-    //! Home rotation servo if wood is properly grabbed (always ensure it's at home position)
-    if (isWoodProperlyGrabbed()) {
-        extern bool rotationServoIsActiveAndTiming;
-        if (!cuttingContext.servoReturnStarted) {
-            handleRotationServoReturn();
-            cuttingContext.servoReturnStarted = true;
+    //! Command servo to home position - must complete before cut motor moves
+    if (!cuttingContext.servoReturnStarted) {
+        handleRotationServoReturn();
+        cuttingContext.servoReturnStarted = true;
+        cuttingContext.waitingForServoHomeBeforeCut = true;
+        cuttingContext.servoReturnCommandTime = millis();
+        return; // Wait for servo to reach home before moving cut motor
+    }
+
+    //! Block cut motor until servo has had time to reach home position
+    if (cuttingContext.waitingForServoHomeBeforeCut) {
+        if (millis() - cuttingContext.servoReturnCommandTime < ROTATION_SERVO_HOME_WAIT_DURATION_MS) {
+            return; // Still waiting for servo to reach home
         }
+        cuttingContext.waitingForServoHomeBeforeCut = false;
     }
 
     //! Configure cut motor speed based on wood detection

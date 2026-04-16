@@ -349,7 +349,13 @@ void updateDynamicConfig() {
     // Use active mode baseline so mode-specific dashboard edits persist after reload.
     ROTATION_SERVO_ACTIVATION_DISTANCE = activeModeConfig.ROTATION_SERVO_ACTIVATION_DISTANCE - diff;
     ROTATION_CLAMP_ACTIVATION_DISTANCE = activeModeConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE - diff - clampExtraBuffer;
-    TA_SIGNAL_OFFSET_FROM_END = activeModeConfig.TA_SIGNAL_OFFSET_FROM_END;  // no diff needed - offset is relative to end of cut
+    // Validate range: old EEPROM data may have stored a from-start distance (e.g. 8.1) here.
+    // A valid offset-from-end should be small (< 3.0 in). If stale value detected, reset to default.
+    if (activeModeConfig.TA_SIGNAL_OFFSET_FROM_END >= 0.0 && activeModeConfig.TA_SIGNAL_OFFSET_FROM_END < 3.0) {
+        TA_SIGNAL_OFFSET_FROM_END = activeModeConfig.TA_SIGNAL_OFFSET_FROM_END;
+    } else {
+        TA_SIGNAL_OFFSET_FROM_END = 0.2;
+    }
     
     // Log for debugging
     Serial.print("Dynamic Config Update: Mode=");

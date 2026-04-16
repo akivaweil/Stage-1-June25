@@ -693,11 +693,6 @@ void activateRotationServo() {
 }
 
 void handleRotationServoReturn() {
-    // Safety guard: never return servo to home while wood suction is active
-    if (getSuctionSensorBounce()->read() == HIGH) {
-        return;
-    }
-
     // Move rotation servo to home position with fast return - send command multiple times rapidly
     Servo* servo = getRotationServo();
     if (servo) {

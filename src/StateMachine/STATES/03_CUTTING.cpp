@@ -40,7 +40,7 @@ unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;              // Motor state 
 // Suction Sensor Configuration
 unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout for waiting for suction sensor to go HIGH (ms)
 unsigned long SUCTION_RETRY_PHASE1_WAIT_MS = 3000;                 // Phase 1 retry wait time (ms)
-unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 5000;                 // Phase 2 retry wait time (ms)
+unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 3000;                 // Phase 2 retry wait time before second signal + fail (ms)
 unsigned long SUCTION_RETRY_SUCCESS_WAIT_MS = 1000;                // Minimum wait after retry succeeds before proceeding (ms)
 
 // LED Wave Pattern
@@ -329,7 +329,8 @@ void handleCuttingStep0() {
                     
                     if (cuttingContext.inSuctionRetryPhase2) {
                         if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
-                            // Phase 2 complete, officially fail
+                            // 3 seconds after first signal - send second signal then fail
+                            sendSignalToTA();
                             cuttingContext.suctionRetryAttempted = true;
                             cuttingContext.inSuctionRetryPhase2 = false;
                             FastAccelStepper* cutMotor = getCutMotor();

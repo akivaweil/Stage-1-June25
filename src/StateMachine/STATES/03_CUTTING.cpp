@@ -31,7 +31,7 @@ float ROTATION_CLAMP_ACTIVATION_DISTANCE = 5.75;                  // Clamp activ
 
 // Transfer Arm Configuration
 unsigned long TA_SIGNAL_DURATION = 2000;                         // Transfer arm signal duration
-float TA_SIGNAL_ACTIVATION_DISTANCE = 8.5;                       // TA signal activation distance from start of cut (inches)
+float TA_SIGNAL_OFFSET_FROM_END = 0.2;                           // TA signal activation distance before end of cut (inches)
 
 // Cut Motor Timing & Recovery
 unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;              // Recovery operation timeout
@@ -409,9 +409,9 @@ void handleCuttingStep2() {
                                          ROTATION_SERVO_ACTIVATION_DISTANCE,
                                          activateRotationServo);
     
-    activateComponentAtDistanceFromStart(cuttingContext.transferArmSignalSent, 
-                                         TA_SIGNAL_ACTIVATION_DISTANCE,
-                                         sendSignalToTA);
+    activateComponentAtPosition(cuttingContext.transferArmSignalSent, 
+                               TA_SIGNAL_OFFSET_FROM_END,
+                               sendSignalToTA);
     
     //! Check if cut is complete
     FastAccelStepper* cutMotor = getCutMotor();

@@ -733,10 +733,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
 
             <div class="input-group">
-                <label>TA Signal Activation (in from start)</label>
+                <label>TA Signal Before End (in)</label>
                 <div class="input-row">
-                    <input type="number" id="taSignalActivationDistance" step="0.1" placeholder="8.5">
-                    <button class="btn" onclick="updateConfig('ta_signal_activation_distance')">SAVE</button>
+                    <input type="number" id="taSignalOffsetFromEnd" step="0.01" placeholder="0.2">
+                    <button class="btn" onclick="updateConfig('ta_signal_offset_from_end')">SAVE</button>
                 </div>
             </div>
 
@@ -1018,7 +1018,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 if(data.rotation_servo_activation_distance !== undefined) document.getElementById('rotationServoActivationDistance').value = formatConfigValue(data.rotation_servo_activation_distance);
                 if(data.rotation_servo_home_position !== undefined) document.getElementById('rotationServoHomePosition').value = formatConfigValue(data.rotation_servo_home_position);
                 if(data.rotation_servo_active_position !== undefined) document.getElementById('rotationServoActivePosition').value = formatConfigValue(data.rotation_servo_active_position);
-                if(data.ta_signal_activation_distance !== undefined) document.getElementById('taSignalActivationDistance').value = formatConfigValue(data.ta_signal_activation_distance);
+                if(data.ta_signal_offset_from_end !== undefined) document.getElementById('taSignalOffsetFromEnd').value = formatConfigValue(data.ta_signal_offset_from_end);
             }
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
@@ -1184,7 +1184,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             'rotation_servo_activation_distance': 'rotationServoActivationDistance',
             'rotation_servo_home_position': 'rotationServoHomePosition',
             'rotation_servo_active_position': 'rotationServoActivePosition',
-            'ta_signal_activation_distance': 'taSignalActivationDistance'
+            'ta_signal_offset_from_end': 'taSignalOffsetFromEnd'
         };
 
         function updateConfig(key) {

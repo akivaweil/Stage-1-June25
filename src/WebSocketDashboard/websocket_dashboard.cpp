@@ -220,7 +220,7 @@ struct ConfigurationData {
     // Operational Constants
     float ROTATION_CLAMP_ACTIVATION_DISTANCE;
     float ROTATION_SERVO_ACTIVATION_DISTANCE;
-    float TA_SIGNAL_ACTIVATION_DISTANCE;
+    float TA_SIGNAL_OFFSET_FROM_END;
     
     // Safety Constants
     unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
@@ -279,7 +279,7 @@ ConfigurationData getDefaultConfiguration() {
     // Operational Constants - use Motor_Config defaults
     config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE;
     config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE;
-    config.TA_SIGNAL_ACTIVATION_DISTANCE = TA_SIGNAL_ACTIVATION_DISTANCE;
+    config.TA_SIGNAL_OFFSET_FROM_END = TA_SIGNAL_OFFSET_FROM_END;
 
     // Safety Constants - use Motor_Config defaults
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
@@ -349,7 +349,7 @@ void updateDynamicConfig() {
     // Use active mode baseline so mode-specific dashboard edits persist after reload.
     ROTATION_SERVO_ACTIVATION_DISTANCE = activeModeConfig.ROTATION_SERVO_ACTIVATION_DISTANCE - diff;
     ROTATION_CLAMP_ACTIVATION_DISTANCE = activeModeConfig.ROTATION_CLAMP_ACTIVATION_DISTANCE - diff - clampExtraBuffer;
-    TA_SIGNAL_ACTIVATION_DISTANCE = activeModeConfig.TA_SIGNAL_ACTIVATION_DISTANCE - diff;
+    TA_SIGNAL_OFFSET_FROM_END = activeModeConfig.TA_SIGNAL_OFFSET_FROM_END;  // no diff needed - offset is relative to end of cut
     
     // Log for debugging
     Serial.print("Dynamic Config Update: Mode=");
@@ -364,8 +364,8 @@ void updateDynamicConfig() {
     Serial.print(ROTATION_SERVO_ACTIVATION_DISTANCE);
     Serial.print(", ClampAct=");
     Serial.print(ROTATION_CLAMP_ACTIVATION_DISTANCE);
-    Serial.print(", TaAct=");
-    Serial.println(TA_SIGNAL_ACTIVATION_DISTANCE);
+    Serial.print(", TaOffsetFromEnd=");
+    Serial.println(TA_SIGNAL_OFFSET_FROM_END);
 }
 
 // Apply configuration to global variables
@@ -448,8 +448,8 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
     for (size_t i = 0; i < sizeof(config.ROTATION_CLAMP_ACTIVATION_DISTANCE); i++) checksum += data[i];
     data = (const uint8_t*)&config.ROTATION_SERVO_ACTIVATION_DISTANCE;
     for (size_t i = 0; i < sizeof(config.ROTATION_SERVO_ACTIVATION_DISTANCE); i++) checksum += data[i];
-    data = (const uint8_t*)&config.TA_SIGNAL_ACTIVATION_DISTANCE;
-    for (size_t i = 0; i < sizeof(config.TA_SIGNAL_ACTIVATION_DISTANCE); i++) checksum += data[i];
+    data = (const uint8_t*)&config.TA_SIGNAL_OFFSET_FROM_END;
+    for (size_t i = 0; i < sizeof(config.TA_SIGNAL_OFFSET_FROM_END); i++) checksum += data[i];
     
     // Safety Constants
     data = (const uint8_t*)&config.ROTATION_SERVO_RETURN_DELAY_MS;
@@ -600,7 +600,7 @@ void saveConfiguration() {
     // Store baselines so updateDynamicConfig() can apply diff independently per setting
     config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE + diff + clampExtraBuffer;
     config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE + diff;
-    config.TA_SIGNAL_ACTIVATION_DISTANCE = TA_SIGNAL_ACTIVATION_DISTANCE + diff;
+    config.TA_SIGNAL_OFFSET_FROM_END = TA_SIGNAL_OFFSET_FROM_END;  // no diff needed - offset is relative to end of cut
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
     config.FEED_MOTOR_RETURN_DISTANCE = FEED_MOTOR_RETURN_DISTANCE;
     config.FEED_MOTOR_OFFSET_FROM_SENSOR = FEED_MOTOR_OFFSET_FROM_SENSOR;
@@ -1257,7 +1257,7 @@ void populateConfigJson(const ConfigurationData& config, JsonObject obj) {
     obj["rotation_clamp_extend_ms"] = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
     obj["rotation_clamp_activation_distance"] = config.ROTATION_CLAMP_ACTIVATION_DISTANCE;
     obj["rotation_servo_activation_distance"] = config.ROTATION_SERVO_ACTIVATION_DISTANCE;
-    obj["ta_signal_activation_distance"] = config.TA_SIGNAL_ACTIVATION_DISTANCE;
+    obj["ta_signal_offset_from_end"] = config.TA_SIGNAL_OFFSET_FROM_END;
 }
 
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -1413,15 +1413,15 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (0-180)";
                             }
-                        } else if (configKey == "ta_signal_activation_distance") {
+                        } else if (configKey == "ta_signal_offset_from_end") {
                             float newValue = doc["value"];
-                            if (newValue >= 0.1 && newValue <= 20.0) {
-                                TA_SIGNAL_ACTIVATION_DISTANCE = newValue;
+                            if (newValue >= 0.01 && newValue <= 5.0) {
+                                TA_SIGNAL_OFFSET_FROM_END = newValue;
                                 saveConfiguration();
                                 response["value"] = newValue;
-                                addEventToLog("Configuration updated: TA_SIGNAL_ACTIVATION_DISTANCE = " + String(newValue) + " in");
+                                addEventToLog("Configuration updated: TA_SIGNAL_OFFSET_FROM_END = " + String(newValue) + " in");
                             } else {
-                                response["error"] = "Value out of range (0.1-20.0)";
+                                response["error"] = "Value out of range (0.01-5.0)";
                             }
                         } else {
                             response["error"] = "Unknown configuration key";
@@ -1470,7 +1470,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             configDoc["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
                             configDoc["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
                             configDoc["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
-                            configDoc["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
+                            configDoc["ta_signal_offset_from_end"] = TA_SIGNAL_OFFSET_FROM_END;
                             
                             String configMessage;
                             serializeJson(configDoc, configMessage);
@@ -1515,8 +1515,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             response["value"] = ROTATION_SERVO_HOME_POSITION;
                         } else if (configKey == "rotation_servo_active_position") {
                             response["value"] = ROTATION_SERVO_ACTIVE_POSITION;
-                        } else if (configKey == "ta_signal_activation_distance") {
-                            response["value"] = TA_SIGNAL_ACTIVATION_DISTANCE;
+                        } else if (configKey == "ta_signal_offset_from_end") {
+                            response["value"] = TA_SIGNAL_OFFSET_FROM_END;
                         } else {
                             response["error"] = "Unknown configuration key";
                         }
@@ -1539,7 +1539,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         response["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
                         response["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
                         response["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
-                        response["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
+                        response["ta_signal_offset_from_end"] = TA_SIGNAL_OFFSET_FROM_END;
                         
                         String message;
                         serializeJson(response, message);
@@ -1583,7 +1583,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             if (!obj3inch["rotation_clamp_extend_ms"].isNull()) config3inch.ROTATION_CLAMP_EXTEND_DURATION_MS = obj3inch["rotation_clamp_extend_ms"];
                             if (!obj3inch["rotation_clamp_activation_distance"].isNull()) config3inch.ROTATION_CLAMP_ACTIVATION_DISTANCE = obj3inch["rotation_clamp_activation_distance"];
                             if (!obj3inch["rotation_servo_activation_distance"].isNull()) config3inch.ROTATION_SERVO_ACTIVATION_DISTANCE = obj3inch["rotation_servo_activation_distance"];
-                            if (!obj3inch["ta_signal_activation_distance"].isNull()) config3inch.TA_SIGNAL_ACTIVATION_DISTANCE = obj3inch["ta_signal_activation_distance"];
+                            if (!obj3inch["ta_signal_offset_from_end"].isNull()) config3inch.TA_SIGNAL_OFFSET_FROM_END = obj3inch["ta_signal_offset_from_end"];
                             
                             config3inch.checksum = calculateChecksum(config3inch);
                             EEPROM.put(CONFIG_OFFSET_3INCH, config3inch);
@@ -1603,7 +1603,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             if (!objMinis["rotation_clamp_extend_ms"].isNull()) configMinis.ROTATION_CLAMP_EXTEND_DURATION_MS = objMinis["rotation_clamp_extend_ms"];
                             if (!objMinis["rotation_clamp_activation_distance"].isNull()) configMinis.ROTATION_CLAMP_ACTIVATION_DISTANCE = objMinis["rotation_clamp_activation_distance"];
                             if (!objMinis["rotation_servo_activation_distance"].isNull()) configMinis.ROTATION_SERVO_ACTIVATION_DISTANCE = objMinis["rotation_servo_activation_distance"];
-                            if (!objMinis["ta_signal_activation_distance"].isNull()) configMinis.TA_SIGNAL_ACTIVATION_DISTANCE = objMinis["ta_signal_activation_distance"];
+                            if (!objMinis["ta_signal_offset_from_end"].isNull()) configMinis.TA_SIGNAL_OFFSET_FROM_END = objMinis["ta_signal_offset_from_end"];
                             
                             configMinis.checksum = calculateChecksum(configMinis);
                             EEPROM.put(CONFIG_OFFSET_MINIS, configMinis);
@@ -1641,7 +1641,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         configDoc["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
                         configDoc["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
                         configDoc["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
-                        configDoc["ta_signal_activation_distance"] = TA_SIGNAL_ACTIVATION_DISTANCE;
+                        configDoc["ta_signal_offset_from_end"] = TA_SIGNAL_OFFSET_FROM_END;
                         
                         String configMessage;
                         serializeJson(configDoc, configMessage);

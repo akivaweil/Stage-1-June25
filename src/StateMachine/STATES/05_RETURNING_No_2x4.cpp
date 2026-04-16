@@ -11,7 +11,7 @@
 const float FEED_MOTOR_SPEED_MULTIPLIER      = 1.05;
 const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.15;  // Added to FEED_TRAVEL_DISTANCE on enter
 const float FEED_MOTOR_2ND_POSITION          = -1.2;  // First backward target
-const float FEED_MOTOR_HOME_POSITION         = 0.8;   // Forward mid-point
+const float FEED_MOTOR_HOME_POSITION         = 1.1;   // Forward mid-point
 const float FEED_MOTOR_FINAL_POSITION        = -1.2;  // Final resting position
 const unsigned long INITIAL_FEED_DELAY_MS        = 200; // Wait before moving feed motor at enter
 const unsigned long AFTER_EXTEND_CLAMP_DELAY_MS  = 150; // Wait after extending feed clamp in step 1

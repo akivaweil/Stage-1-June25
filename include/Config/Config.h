@@ -37,7 +37,7 @@ extern unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
 //* ************************ [🤖] TRANSFER ARM *****************************
 //* ************************************************************************
 extern unsigned long TA_SIGNAL_DURATION;
-extern float TA_SIGNAL_ACTIVATION_DISTANCE;
+extern float TA_SIGNAL_OFFSET_FROM_END;
 
 //* ************************************************************************
 //* ************************ [⏱️] GENERAL TIMING ***************************

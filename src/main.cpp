@@ -2,6 +2,7 @@
 #include <Bounce2.h>
 #include <FastAccelStepper.h>
 #include <esp_system.h>
+#include <esp_attr.h>
 #include <ESP32Servo.h>
 #include "Config/Pin_Def.h"
 #include "Config/Config.h"
@@ -19,6 +20,29 @@
 // Handles state machine logic, motor control, sensor monitoring, and safety systems.
 
 // Pin definitions and configuration constants are now in Config/ header files
+
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ 💥 CRASH DIAGNOSTICS (RTC BREADCRUMBS)                              ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// RTC_NOINIT_ATTR variables persist across software resets / panics / WDTs
+// (but not across power cycles or hard resets). On boot, esp_reset_reason() +
+// these breadcrumbs tell us exactly what the firmware was doing when it died.
+
+#define CRASH_BREADCRUMB_MAGIC 0xC0FFEE42
+
+RTC_NOINIT_ATTR uint32_t crashBreadcrumbMagic;
+RTC_NOINIT_ATTR uint32_t crashBreadcrumbState;
+RTC_NOINIT_ATTR uint32_t crashBreadcrumbCuttingStep;
+RTC_NOINIT_ATTR uint32_t crashBreadcrumbLastAliveMs;
+RTC_NOINIT_ATTR uint32_t crashBreadcrumbCount;
+
+// Captured-at-boot snapshot of last-run breadcrumbs, exposed to dashboard.
+String lastResetReasonStr = "UNKNOWN";
+String lastCrashStateStr = "UNKNOWN";
+int lastCrashCuttingStep = -1;
+unsigned long lastCrashUptimeMs = 0;
+unsigned long crashCountSincePower = 0;
+bool lastResetWasAbnormal = false;
 
 // Timing variables (constants moved to Config/system_config.h)
 unsigned long rotationServoActiveStartTime = 0;
@@ -92,9 +116,104 @@ bool cutMotorInReturningYes2x4Return = false;
 
 // StateManager instance is created in StateManager.cpp
 
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ 💥 CRASH DIAGNOSTIC HELPERS                                          ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+
+static String resetReasonToString(esp_reset_reason_t reason) {
+  switch (reason) {
+    case ESP_RST_POWERON:   return "POWER_ON";
+    case ESP_RST_EXT:       return "EXT_PIN";
+    case ESP_RST_SW:        return "SW_RESTART";
+    case ESP_RST_PANIC:     return "PANIC (exception)";
+    case ESP_RST_INT_WDT:   return "INT_WATCHDOG";
+    case ESP_RST_TASK_WDT:  return "TASK_WATCHDOG";
+    case ESP_RST_WDT:       return "OTHER_WATCHDOG";
+    case ESP_RST_DEEPSLEEP: return "DEEP_SLEEP_WAKE";
+    case ESP_RST_BROWNOUT:  return "BROWNOUT";
+    case ESP_RST_SDIO:      return "SDIO";
+    default:                return "UNKNOWN";
+  }
+}
+
+static String stateIdToName(uint32_t s) {
+  switch ((SystemState)s) {
+    case STARTUP:                return "STARTUP";
+    case HOMING:                 return "HOMING";
+    case IDLE:                   return "IDLE";
+    case FEED_FIRST_CUT:         return "FEED_FIRST_CUT";
+    case FEED_WOOD_FWD_ONE:      return "FEED_WOOD_FWD_ONE";
+    case CUTTING:                return "CUTTING";
+    case RETURNING_YES_2x4:      return "RETURNING_YES_2x4";
+    case RETURNING_NO_2x4:       return "RETURNING_NO_2x4";
+    case RELOAD:                 return "RELOAD";
+    case ERROR:                  return "ERROR";
+    case ERROR_RESET:            return "ERROR_RESET";
+    case SUCTION_ERROR:          return "SUCTION_ERROR";
+    case Cut_Motor_Homing_Error: return "CUT_MOTOR_HOMING_ERROR";
+    default:                     return "UNKNOWN";
+  }
+}
+
+static void captureCrashDiagnostics() {
+  esp_reset_reason_t reason = esp_reset_reason();
+  lastResetReasonStr = resetReasonToString(reason);
+
+  bool magicValid = (crashBreadcrumbMagic == CRASH_BREADCRUMB_MAGIC);
+  bool abnormal = (reason == ESP_RST_PANIC ||
+                   reason == ESP_RST_INT_WDT ||
+                   reason == ESP_RST_TASK_WDT ||
+                   reason == ESP_RST_WDT ||
+                   reason == ESP_RST_BROWNOUT);
+
+  if (magicValid) {
+    lastCrashStateStr     = stateIdToName(crashBreadcrumbState);
+    lastCrashCuttingStep  = (int)crashBreadcrumbCuttingStep;
+    lastCrashUptimeMs     = crashBreadcrumbLastAliveMs;
+    crashCountSincePower  = crashBreadcrumbCount;
+  } else {
+    lastCrashStateStr     = "N/A";
+    lastCrashCuttingStep  = -1;
+    lastCrashUptimeMs     = 0;
+    crashCountSincePower  = 0;
+    crashBreadcrumbCount  = 0;
+  }
+
+  lastResetWasAbnormal = abnormal && magicValid;
+  if (lastResetWasAbnormal) {
+    crashBreadcrumbCount++;
+    crashCountSincePower = crashBreadcrumbCount;
+  }
+
+  crashBreadcrumbMagic       = CRASH_BREADCRUMB_MAGIC;
+  crashBreadcrumbState       = (uint32_t)STARTUP;
+  crashBreadcrumbCuttingStep = 0xFFFFFFFF;
+  crashBreadcrumbLastAliveMs = 0;
+
+  Serial.print("Reset reason: ");
+  Serial.println(lastResetReasonStr);
+  if (lastResetWasAbnormal) {
+    Serial.print("Last alive in state: ");
+    Serial.print(lastCrashStateStr);
+    Serial.print(" (cutting step ");
+    Serial.print(lastCrashCuttingStep);
+    Serial.print(") at uptime ");
+    Serial.print(lastCrashUptimeMs);
+    Serial.println(" ms");
+  }
+}
+
+static inline void updateCrashBreadcrumbs() {
+  crashBreadcrumbState       = (uint32_t)currentState;
+  crashBreadcrumbCuttingStep = (currentState == CUTTING) ? (uint32_t)getCuttingStateStep() : 0xFFFFFFFF;
+  crashBreadcrumbLastAliveMs = millis();
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Automated Table Saw Control System - Stage 1");
+
+  captureCrashDiagnostics();
   
   setupOTA();
   
@@ -211,6 +330,8 @@ void setup() {
 }
 
 void loop() {
+  updateCrashBreadcrumbs();
+
   // Handle OTA requests when in IDLE, HOMING, RELOAD states, or at the beginning of CUTTING state (step 0)
   bool allowOTA = (currentState == IDLE || currentState == HOMING || currentState == RELOAD);
   

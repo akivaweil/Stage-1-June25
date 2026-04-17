@@ -21,5 +21,6 @@ void handleCuttingStep3();
 void handleHomePositionError();
 void resetCuttingSteps();
 bool isCuttingStateStep0();
+int getCuttingStateStep();
 
 #endif // CUTTING_STATE_H 

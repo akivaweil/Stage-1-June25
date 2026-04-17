@@ -37,6 +37,7 @@ void broadcastErrorStatus();
 void broadcastNetworkInfo();
 void broadcastEventLog();
 void broadcastSerialLog();
+void broadcastCrashInfo();
 void addSerialLog(const String& message);
 void addEventToLog(const String& event);
 void updatePerformanceMetrics(unsigned long cycleTime);

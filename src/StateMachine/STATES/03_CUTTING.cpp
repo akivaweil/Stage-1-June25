@@ -481,3 +481,7 @@ void resetCuttingSteps() {
 bool isCuttingStateStep0() {
     return cuttingContext.step == 0;
 }
+
+int getCuttingStateStep() {
+    return cuttingContext.step;
+}

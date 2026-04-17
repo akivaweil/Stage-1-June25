@@ -631,6 +631,11 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                     <div class="label-sm">LATEST ERROR</div>
                     <div id="lastError" style="color: var(--accent-danger); font-weight: 600; margin-top: 0.25rem;">None</div>
                 </div>
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+                    <div class="label-sm">LAST RESET CAUSE <span id="crashCountBadge" style="font-size: 0.75rem; opacity: 0.7;"></span></div>
+                    <div id="resetReason" style="font-weight: 700; margin-top: 0.25rem; font-family: 'Space Mono', monospace;">—</div>
+                    <div id="crashContext" style="font-size: 0.75rem; opacity: 0.85; margin-top: 0.25rem; font-family: 'Space Mono', monospace; line-height: 1.4;"></div>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: auto;">
                     <div class="error-stat">
                         <div style="font-weight: 700; font-size: 1.5rem;" id="cutMotorErrorCount">0</div>
@@ -994,6 +999,31 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 document.getElementById('lastError').textContent = data.lastError;
                 document.getElementById('cutMotorErrorCount').textContent = data.cutMotorErrorCount || 0;
                 document.getElementById('suctionErrorCount').textContent = data.suctionErrorCount || 0;
+            }
+            else if (data.type === 'crash_info') {
+                const reasonEl = document.getElementById('resetReason');
+                const ctxEl = document.getElementById('crashContext');
+                const badgeEl = document.getElementById('crashCountBadge');
+                if (reasonEl) {
+                    reasonEl.textContent = data.resetReason || '—';
+                    reasonEl.style.color = data.abnormal ? 'var(--accent-danger)' : 'var(--text-main)';
+                }
+                if (ctxEl) {
+                    if (data.abnormal) {
+                        const stepStr = (data.lastCuttingStep >= 0 && data.lastState === 'CUTTING')
+                            ? ' step ' + data.lastCuttingStep : '';
+                        const upMs = data.lastUptimeMs || 0;
+                        const upSec = (upMs / 1000).toFixed(1);
+                        ctxEl.textContent = 'Died in ' + (data.lastState || '?') + stepStr +
+                                            ' @ ' + upSec + 's uptime';
+                    } else {
+                        ctxEl.textContent = 'Clean boot';
+                    }
+                }
+                if (badgeEl) {
+                    const c = data.crashCount || 0;
+                    badgeEl.textContent = c > 0 ? '(' + c + ' since power-on)' : '';
+                }
             }
             else if (data.type === 'event_log') {
                 updateLog('eventLog', data.events);

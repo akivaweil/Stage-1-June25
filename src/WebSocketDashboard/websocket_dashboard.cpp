@@ -765,6 +765,23 @@ void initializeDashboardData() {
     }
     
     addEventToLog("System initialized");
+
+    // Log last reset cause / pre-crash breadcrumb if abnormal
+    {
+        extern String lastResetReasonStr;
+        extern String lastCrashStateStr;
+        extern int lastCrashCuttingStep;
+        extern unsigned long lastCrashUptimeMs;
+        extern bool lastResetWasAbnormal;
+        if (lastResetWasAbnormal) {
+            addEventToLog("CRASH detected: " + lastResetReasonStr +
+                          " in " + lastCrashStateStr +
+                          " (cutStep=" + String(lastCrashCuttingStep) +
+                          ") at " + String(lastCrashUptimeMs) + "ms uptime");
+        } else {
+            addEventToLog("Boot reset reason: " + lastResetReasonStr);
+        }
+    }
     
     // Initialize current sensor, clamp, and LED statuses
     updateSensorStatus();
@@ -1203,6 +1220,36 @@ void addSerialLog(const String& message) {
     Serial.println(message);
 }
 
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ 💥 CRASH INFO BROADCAST                                              ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// Sends last reset reason and pre-crash breadcrumbs (state + cutting step + uptime)
+// captured in main.cpp from RTC_NOINIT_ATTR memory across resets.
+
+void broadcastCrashInfo() {
+    extern String lastResetReasonStr;
+    extern String lastCrashStateStr;
+    extern int lastCrashCuttingStep;
+    extern unsigned long lastCrashUptimeMs;
+    extern unsigned long crashCountSincePower;
+    extern bool lastResetWasAbnormal;
+
+    if (ws.getClients().size() == 0) return;
+
+    JsonDocument doc;
+    doc["type"] = "crash_info";
+    doc["resetReason"] = lastResetReasonStr;
+    doc["lastState"] = lastCrashStateStr;
+    doc["lastCuttingStep"] = lastCrashCuttingStep;
+    doc["lastUptimeMs"] = lastCrashUptimeMs;
+    doc["crashCount"] = crashCountSincePower;
+    doc["abnormal"] = lastResetWasAbnormal;
+
+    String message;
+    serializeJson(doc, message);
+    ws.textAll(message);
+}
+
 // Broadcast serial log
 void broadcastSerialLog() {
     if (ws.getClients().size() > 0) {
@@ -1284,6 +1331,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
             broadcastNetworkInfo();
             broadcastEventLog();
             broadcastSerialLog();
+            broadcastCrashInfo();
             break;
         }
             
@@ -1320,6 +1368,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         broadcastNetworkInfo();
                         broadcastEventLog();
                         broadcastSerialLog();
+                        broadcastCrashInfo();
                     } else if (type == "update_config") {
                         String configKey = doc["key"];
                         JsonDocument response;

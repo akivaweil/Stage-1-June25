@@ -215,6 +215,10 @@ void setup() {
   // Disable brownout detector. TA signal trigger causes a brief 3.3V dip
   // from the shared external load that was rebooting the ESP. Hardware fix
   // (separate regulator / bulk cap) still recommended.
+  // Note: ESP32-S3 brownout threshold is set at build time via sdkconfig,
+  // not exposed at runtime in Arduino SDK, so it's effectively all-or-nothing
+  // here. To re-enable at lowest sensitivity, set CONFIG_ESP_BROWNOUT_DET_LVL=7
+  // (lowest voltage threshold) in build_flags and remove this WRITE_PERI_REG.
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
   Serial.begin(115200);

@@ -4,6 +4,8 @@
 #include <esp_system.h>
 #include <esp_attr.h>
 #include <ESP32Servo.h>
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 #include "Config/Pin_Def.h"
 #include "Config/Config.h"
 #include "OTAUpdater/ota_updater.h"
@@ -210,6 +212,11 @@ static inline void updateCrashBreadcrumbs() {
 }
 
 void setup() {
+  // Disable brownout detector. TA signal trigger causes a brief 3.3V dip
+  // from the shared external load that was rebooting the ESP. Hardware fix
+  // (separate regulator / bulk cap) still recommended.
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
   Serial.begin(115200);
   Serial.println("Automated Table Saw Control System - Stage 1");
 

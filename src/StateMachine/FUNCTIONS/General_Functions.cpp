@@ -596,11 +596,4 @@ void moveFeedMotorToPostCutHome() {
 //* ************************************************************************
 //* ************************* FLAG MANAGEMENT FUNCTIONS ********************
 //* ************************************************************************
-
-bool getComingFromNoWoodWithSensorsClear() {
-    return comingFromNoWoodWithSensorsClear;
-}
-
-void setComingFromNoWoodWithSensorsClear(bool value) {
-    comingFromNoWoodWithSensorsClear = value;
-} 
+// Flag getter/setter implementations live in StateManager.cpp

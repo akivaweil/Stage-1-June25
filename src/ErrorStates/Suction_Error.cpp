@@ -1,7 +1,15 @@
 #include "ErrorStates/Suction_Error.h"
 #include "ErrorStates/Error_Reset.h"  // For error timing constants
 #include "StateMachine/StateManager.h"
+#include "Config/Pins_Definitions.h"
 #include <Bounce2.h>
+
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ ⚙️ SUCTION ERROR CONFIG ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// Delay after entering SUCTION_ERROR before firing a second TA pulse to
+// re-trigger the transfer arm (in case it missed the first pickup).
+static const unsigned long SUCTION_ERROR_TA_RETRY_DELAY_MS = 8000;
 
 // External references to functions from main.cpp (LED functions only)
 extern void turnRedLedOn();
@@ -13,6 +21,11 @@ extern void turnBlueLedOff();
 // External references for cut motor homing
 extern void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout);
 extern Bounce cutHomingSwitch;
+
+// External references for TA signal handling
+extern void sendSignalToTA();
+extern bool signalTAActive;
+extern unsigned long signalTAStartTime;
 
 //* ************************************************************************
 //* ********************* SUCTION ERROR ************************************
@@ -33,37 +46,59 @@ void handleSuctionErrorState() {
     static bool hasHomedCutMotor = false;
     static unsigned long lastSuctionErrorBlinkTime = 0;
     static bool suctionErrorBlinkState = false;
+    static unsigned long suctionErrorEnterTime = 0;
+    static bool taRetryPulseSent = false;
 
-    // Step 1: Home cut motor immediately when entering this state (only once)
+    //! ************************************************************************
+    //! STEP 1: HOME CUT MOTOR AND FORCE TA SIGNAL LOW ON FIRST ENTRY
+    //! ************************************************************************
     if (!hasHomedCutMotor) {
-        //serial.println("SUCTION ERROR: Automatically homing cut motor for safety...");
+        // Kill any stuck TA signal that could be left HIGH because the blocking
+        // homing call below prevents handleCommonOperations() from running.
+        digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
+        signalTAActive = false;
+
+        suctionErrorEnterTime = millis();
+        taRetryPulseSent = false;
+
         homeCutMotorBlocking(cutHomingSwitch, 10000); // 10 second timeout
         hasHomedCutMotor = true;
-        //serial.println("Cut motor homing complete. Now monitoring for user reset.");
     }
 
-    // Step 2: Blink STATUS_LED_RED using defined suction error timing interval
+    //! ************************************************************************
+    //! STEP 2: BLINK RED LED AT SUCTION ERROR INTERVAL
+    //! ************************************************************************
     if (millis() - lastSuctionErrorBlinkTime >= SUCTION_ERROR_BLINK_INTERVAL) {
         lastSuctionErrorBlinkTime = millis();
         suctionErrorBlinkState = !suctionErrorBlinkState;
         if(suctionErrorBlinkState) turnRedLedOn(); else turnRedLedOff();
     }
     
-    // Step 3: Ensure other LEDs are off
     turnYellowLedOff();
     turnGreenLedOff();
     turnBlueLedOff();
 
-    // Step 4 & 5: Use StateManager to access switches instead of global variables
-    if (getStartCycleSwitch()->rose()) { // Check for start switch OFF to ON transition
-        //serial.println("Start cycle switch toggled ON. Resetting from suction error. Transitioning to HOMING.");
-        turnRedLedOff();   // Turn off error LED explicitly before changing state
+    //! ************************************************************************
+    //! STEP 3: FIRE SECOND 500ms TA PULSE AFTER RETRY DELAY (ONCE)
+    //! ************************************************************************
+    if (!taRetryPulseSent &&
+        (millis() - suctionErrorEnterTime >= SUCTION_ERROR_TA_RETRY_DELAY_MS)) {
+        sendSignalToTA();
+        taRetryPulseSent = true;
+    }
+
+    //! ************************************************************************
+    //! STEP 4: WAIT FOR START SWITCH RISING EDGE TO RESET
+    //! ************************************************************************
+    if (getStartCycleSwitch()->rose()) {
+        turnRedLedOff();
         
-        setContinuousModeActive(false); // Ensure continuous mode is off
+        setContinuousModeActive(false);
         
-        // Reset the homing flag for next time this state is entered
         hasHomedCutMotor = false;
+        taRetryPulseSent = false;
+        suctionErrorEnterTime = 0;
         
-        changeState(HOMING);        // Go to HOMING to re-initialize using proper StateManager method
+        changeState(HOMING);
     }
 } 

@@ -471,6 +471,11 @@ void handleCommonOperations() {
                     addSerialLog(message);
                     returnRotationServoHome();
                     rotationServoActive = false;
+                    //! Safe to set true here — by the time the next CUTTING Step 0 reads
+                    //! this flag, the state machine has gone through RETURNING + later
+                    //! stages, which is orders of magnitude longer than the servo's
+                    //! physical travel time back to home.
+                    rotationServoKnownHome = true;
                     rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
                     waitingForSuctionDelay = false; // Reset for next cycle
                     cooldownEntered = false; // Reset for next cycle

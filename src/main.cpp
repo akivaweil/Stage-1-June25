@@ -49,6 +49,11 @@ bool lastResetWasAbnormal = false;
 // Timing variables (constants moved to Config/system_config.h)
 unsigned long rotationServoActiveStartTime = 0;
 bool rotationServoActive = false;
+// Starts false on boot so the first cut always waits for the servo to reach home.
+// Flips true once a home command has been followed by enough travel time
+// (either the Step 0 explicit wait, or StateManager's mid-cut return path).
+// activateRotationServo() clears it when the servo moves to ACTIVE.
+bool rotationServoKnownHome = false;
 
 // Rotation servo return delay variables
 bool rotationServoReturnDelayActive = false;

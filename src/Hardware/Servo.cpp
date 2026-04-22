@@ -22,6 +22,7 @@ void activateRotationServo() {
 
         rotationServoActiveStartTime = millis();
         rotationServoActive = true;
+        rotationServoKnownHome = false; // servo is moving to ACTIVE — no longer at home
         // Reset the return completed flag for new activation cycle
         rotationServoReturnCompleted = false;
     }

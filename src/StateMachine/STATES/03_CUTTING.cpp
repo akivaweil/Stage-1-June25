@@ -291,64 +291,59 @@ void handleCuttingStep0() {
     }
 
     //! Check suction sensor before starting cut motor
+    //! Gate is the physical WOOD_SUCTION_CONFIRM_SENSOR only — no software-flag
+    //! bypass, so a reset with wood still presented can't sneak past this check
+    //! and command the servo home into a stuck piece.
     if (!isWoodProperlyGrabbed()) {
-        // Check if servo is home - if so, ignore suction error and proceed
-        if (!getRotationServoIsActiveAndTiming()) {
-            // Clear waiting flags
-            cuttingContext.waitingForSuction = false;
-            cuttingContext.suctionWaitStartTime = 0;
-            // Proceed to next block (skip return)
-        } else {
-            // Sensor is LOW - start waiting if not already waiting
-            if (!cuttingContext.waitingForSuction) {
-                cuttingContext.waitingForSuction = true;
-                cuttingContext.suctionWaitStartTime = millis();
-            }
-            
-            // Check if timeout has expired
-            if (millis() - cuttingContext.suctionWaitStartTime >= SUCTION_WAIT_TIMEOUT_MS) {
-                if (!cuttingContext.suctionRetryAttempted) {
-                    if (!cuttingContext.inSuctionRetryPhase1 && !cuttingContext.inSuctionRetryPhase2) {
-                        // Start Phase 1
-                        cuttingContext.inSuctionRetryPhase1 = true;
-                        cuttingContext.suctionRetryInProgress = true;
-                        cuttingContext.suctionRetryTimer = millis();
-                        return; // Stay in Step 0
-                    }
-                    
-                    if (cuttingContext.inSuctionRetryPhase1) {
-                        if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE1_WAIT_MS) {
-                            // Phase 1 complete, send TA signal and start Phase 2
-                            sendSignalToTA();
-                            cuttingContext.inSuctionRetryPhase1 = false;
-                            cuttingContext.inSuctionRetryPhase2 = true;
-                            cuttingContext.suctionRetryTimer = millis();
-                        }
-                        return; // Stay in Step 0
-                    }
-                    
-                    if (cuttingContext.inSuctionRetryPhase2) {
-                        if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
-                            // 3 seconds after first signal - send second signal then fail
-                            sendSignalToTA();
-                            cuttingContext.suctionRetryAttempted = true;
-                            cuttingContext.inSuctionRetryPhase2 = false;
-                            FastAccelStepper* cutMotor = getCutMotor();
-                            handleSuctionFailure(cutMotor);
-                        }
-                        return; // Stay in Step 0
-                    }
-                } else {
-                    // Timeout expired and retry already attempted - transition to suction error
-                    FastAccelStepper* cutMotor = getCutMotor();
-                    handleSuctionFailure(cutMotor);
-                    return;
-                }
-            }
-            
-            // Still within timeout - stay in Step 0 and keep checking
-            return;
+        // Sensor is LOW - start waiting if not already waiting
+        if (!cuttingContext.waitingForSuction) {
+            cuttingContext.waitingForSuction = true;
+            cuttingContext.suctionWaitStartTime = millis();
         }
+
+        // Check if timeout has expired
+        if (millis() - cuttingContext.suctionWaitStartTime >= SUCTION_WAIT_TIMEOUT_MS) {
+            if (!cuttingContext.suctionRetryAttempted) {
+                if (!cuttingContext.inSuctionRetryPhase1 && !cuttingContext.inSuctionRetryPhase2) {
+                    // Start Phase 1
+                    cuttingContext.inSuctionRetryPhase1 = true;
+                    cuttingContext.suctionRetryInProgress = true;
+                    cuttingContext.suctionRetryTimer = millis();
+                    return; // Stay in Step 0
+                }
+
+                if (cuttingContext.inSuctionRetryPhase1) {
+                    if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE1_WAIT_MS) {
+                        // Phase 1 complete, send TA signal and start Phase 2
+                        sendSignalToTA();
+                        cuttingContext.inSuctionRetryPhase1 = false;
+                        cuttingContext.inSuctionRetryPhase2 = true;
+                        cuttingContext.suctionRetryTimer = millis();
+                    }
+                    return; // Stay in Step 0
+                }
+
+                if (cuttingContext.inSuctionRetryPhase2) {
+                    if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
+                        // 3 seconds after first signal - send second signal then fail
+                        sendSignalToTA();
+                        cuttingContext.suctionRetryAttempted = true;
+                        cuttingContext.inSuctionRetryPhase2 = false;
+                        FastAccelStepper* cutMotor = getCutMotor();
+                        handleSuctionFailure(cutMotor);
+                    }
+                    return; // Stay in Step 0
+                }
+            } else {
+                // Timeout expired and retry already attempted - transition to suction error
+                FastAccelStepper* cutMotor = getCutMotor();
+                handleSuctionFailure(cutMotor);
+                return;
+            }
+        }
+
+        // Still within timeout - stay in Step 0 and keep checking
+        return;
     }
     
     //! Sensor is HIGH (or went HIGH during wait) - clear waiting flags and proceed

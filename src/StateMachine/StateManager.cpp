@@ -309,12 +309,12 @@ void setRotationServoActiveStartTime(unsigned long value) {
     rotationServoActiveStartTime = value;
 }
 
-bool getRotationServoIsActiveAndTiming() {
-    return rotationServoIsActiveAndTiming;
+bool getRotationServoActive() {
+    return rotationServoActive;
 }
 
-void setRotationServoIsActiveAndTiming(bool value) {
-    rotationServoIsActiveAndTiming = value;
+void setRotationServoActive(bool value) {
+    rotationServoActive = value;
 }
 
 // Rotation servo return delay timing functions
@@ -353,11 +353,11 @@ void setSignalTAStartTime(unsigned long value) {
 }
 
 bool getSignalTAActive() {
-    return signalTAActive;
+    return taSignalActive;
 }
 
 void setSignalTAActive(bool value) {
-    signalTAActive = value;
+    taSignalActive = value;
 }
 
 int getConsecutiveYeswoodCount() {
@@ -425,7 +425,7 @@ void handleCommonOperations() {
     // Transfer Arm is a separate machine that grabs the cut wood diamond and transfers it to Stage 2
     // The suction sensor detects when the Transfer Arm suction has grabbed (HIGH) or released (LOW) the wood
     // Only monitor suction sensor when in active cutting/returning states (not in error states)
-    if (rotationServoIsActiveAndTiming && 
+    if (rotationServoActive && 
         millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS &&
         currentState != SUCTION_ERROR && 
         currentState != ERROR && 
@@ -469,8 +469,8 @@ void handleCommonOperations() {
                     // Wait duration has passed continuously - return servo to home
                     String message = "Transfer Arm suction grabbed wood after " + String(millis() - rotationServoActiveStartTime) + "ms - returning rotation servo to home.";
                     addSerialLog(message);
-                    handleRotationServoReturn();
-                    rotationServoIsActiveAndTiming = false;
+                    returnRotationServoHome();
+                    rotationServoActive = false;
                     rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
                     waitingForSuctionDelay = false; // Reset for next cycle
                     cooldownEntered = false; // Reset for next cycle
@@ -538,25 +538,25 @@ void handleCommonOperations() {
     // but here we just need to ensure the main state manager loop calls it or handles the logic.
     // The previous implementation had logic here. Let's update it to support the delay.
     
-    extern bool taSignalDelayActive;
+    extern bool taSignalDelayPending;
     extern unsigned long taSignalDelayStartTime;
     
     // Check start delay
-    if (taSignalDelayActive) {
+    if (taSignalDelayPending) {
         if (millis() - taSignalDelayStartTime >= 500) {
             // Delay finished, activate signal
             digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
             signalTAStartTime = millis();
-            signalTAActive = true;
-            taSignalDelayActive = false;
+            taSignalActive = true;
+            taSignalDelayPending = false;
         }
     }
     
     // Check signal duration
-    if (signalTAActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
+    if (taSignalActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
         extern const int TRANSFER_ARM_SIGNAL_PIN; // This is in main.cpp
         digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)
-        signalTAActive = false;
+        taSignalActive = false;
         //serial.println("Signal to Transfer Arm (TA) timed out and reset to LOW"); 
     }
 }

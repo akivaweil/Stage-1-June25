@@ -48,12 +48,12 @@ bool lastResetWasAbnormal = false;
 
 // Timing variables (constants moved to Config/system_config.h)
 unsigned long rotationServoActiveStartTime = 0;
-bool rotationServoIsActiveAndTiming = false;
+bool rotationServoActive = false;
 
 // Rotation servo return delay variables
 bool rotationServoReturnDelayActive = false;
 unsigned long rotationServoReturnDelayStartTime = 0;
-bool rotationServoReturnCompleted = false; // Flag to prevent multiple calls to handleRotationServoReturn()
+bool rotationServoReturnCompleted = false; // Flag to prevent multiple calls to returnRotationServoHome()
 
 unsigned long rotationClampExtendTime = 0;
 bool rotationClampIsExtended = false;
@@ -107,7 +107,7 @@ bool errorBlinkState = false;
 
 // Global variables for signal handling
 unsigned long signalTAStartTime = 0; // For Transfer Arm signal
-bool signalTAActive = false;      // For Transfer Arm signal
+bool taSignalActive = false;      // For Transfer Arm signal
 
 // New flag to track cut motor return during RETURNING_YES_2x4 mode
 bool cutMotorInReturningYes2x4Return = false;

@@ -66,7 +66,7 @@ void handleStartSwitchContinuousMode();
 // State Logic Helpers
 bool shouldStartCycle();
 void activateRotationServo();
-void handleRotationServoReturn();
+void returnRotationServoHome();
 void handleTASignalTiming();
 void handleRotationClampRetract();
 
@@ -93,9 +93,9 @@ CutMotorHomeErrorResult createWarningOnlyResult(const String& message);
 extern bool blinkState;
 extern bool errorBlinkState;
 extern unsigned long lastErrorBlinkTime;
-extern bool signalTAActive;
+extern bool taSignalActive;
 extern unsigned long signalTAStartTime;
-extern bool rotationServoIsActiveAndTiming;
+extern bool rotationServoActive;
 extern unsigned long rotationServoActiveStartTime;
 extern bool rotationClampIsExtended;
 extern unsigned long rotationClampExtendTime;

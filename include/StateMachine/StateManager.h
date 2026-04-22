@@ -80,8 +80,8 @@ void setErrorBlinkState(bool value);
 unsigned long getRotationServoActiveStartTime();
 void setRotationServoActiveStartTime(unsigned long value);
 
-bool getRotationServoIsActiveAndTiming();
-void setRotationServoIsActiveAndTiming(bool value);
+bool getRotationServoActive();
+void setRotationServoActive(bool value);
 
 // Rotation servo return delay access functions
 unsigned long getRotationServoReturnDelayStartTime();

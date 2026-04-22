@@ -11,13 +11,13 @@
 extern bool blinkState;
 extern bool errorBlinkState;
 extern unsigned long lastErrorBlinkTime;
-extern bool signalTAActive;
+extern bool taSignalActive;
 extern unsigned long signalTAStartTime;
 extern unsigned long taSignalDelayStartTime; // For TA signal delay
-extern bool taSignalDelayActive;             // For TA signal delay
-extern bool rotationServoIsActiveAndTiming;
+extern bool taSignalDelayPending;             // For TA signal delay
+extern bool rotationServoActive;
 extern unsigned long rotationServoActiveStartTime;
-extern bool rotationServoReturnCompleted; // Flag to prevent multiple calls to handleRotationServoReturn()
+extern bool rotationServoReturnCompleted; // Flag to prevent multiple calls to returnRotationServoHome()
 extern bool rotationClampIsExtended;
 extern unsigned long rotationClampExtendTime;
 extern bool isReloadMode;
@@ -141,7 +141,7 @@ void handleStartSwitchContinuousMode();
 //* ************************************************************************
 bool shouldStartCycle();
 void activateRotationServo();
-void handleRotationServoReturn();
+void returnRotationServoHome();
 void handleTASignalTiming();
 void moveFeedMotorToPostCutHome();
 

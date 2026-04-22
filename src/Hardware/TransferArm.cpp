@@ -11,7 +11,7 @@
 
 // Global non-blocking delay variables for TA signal
 unsigned long taSignalDelayStartTime = 0;
-bool taSignalDelayActive = false;
+bool taSignalDelayPending = false;
 
 void sendSignalToTA() {
   // Instead of setting HIGH immediately, start a non-blocking delay
@@ -26,34 +26,34 @@ void sendSignalToTA() {
 
   if (mode == 1) {
       // Minis mode: Start 500ms non-blocking delay
-      if (!taSignalDelayActive) {
+      if (!taSignalDelayPending) {
           taSignalDelayStartTime = millis();
-          taSignalDelayActive = true;
+          taSignalDelayPending = true;
       }
   } else {
       // 3 Inch mode: Execute immediately
       digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
       signalTAStartTime = millis();
-      signalTAActive = true;
-      taSignalDelayActive = false;
+      taSignalActive = true;
+      taSignalDelayPending = false;
   }
 }
 
 // Function to handle Transfer Arm signal timing (including start delay)
 void handleTASignalTiming() {
   // Handle start delay if active
-  if (taSignalDelayActive) {
+  if (taSignalDelayPending) {
       if (millis() - taSignalDelayStartTime >= 500) {
           digitalWrite(TRANSFER_ARM_SIGNAL_PIN, HIGH);
           signalTAStartTime = millis();
-          signalTAActive = true;
-          taSignalDelayActive = false;
+          taSignalActive = true;
+          taSignalDelayPending = false;
       }
   }
 
   // Handle signal duration
-  if (signalTAActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
+  if (taSignalActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
     digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)
-    signalTAActive = false;
+    taSignalActive = false;
   }
 }

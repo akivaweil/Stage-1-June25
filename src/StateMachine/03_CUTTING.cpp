@@ -24,6 +24,16 @@ const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much sl
 //║ 📊 STATE VARIABLES ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 namespace {
+    // Phase of the suction-retry state machine. Mutually exclusive — replaces
+    // the three separate inSuctionRetryPhase1/2/Gap booleans, so a single
+    // assignment transitions phases without having to clear the others.
+    enum class SuctionRetryPhase {
+        Idle,       // No retry in progress
+        Phase1,     // First wait before issuing TA signal
+        Phase2,     // TA signal fired; waiting to decide whether to retry again
+        Gap,        // TA line forced LOW between the two retry pulses
+    };
+
     struct CuttingStateContext {
         int step = 0;
         bool rotationClampActivated = false;
@@ -35,10 +45,7 @@ namespace {
         bool clampsExtended = false;
         bool waitingForSuction = false;
         unsigned long suctionWaitStartTime = 0;
-        bool suctionRetryAttempted = false;
-        bool inSuctionRetryPhase1 = false;
-        bool inSuctionRetryPhase2 = false;
-        bool inSuctionRetryGap = false;
+        SuctionRetryPhase suctionRetryPhase = SuctionRetryPhase::Idle;
         unsigned long suctionRetryTimer = 0;
         bool suctionRetryInProgress = false;
         bool suctionRetrySucceeded = false;
@@ -68,7 +75,7 @@ void updateWoodPresentLed() {
 }
 
 // Checks if wood is properly grabbed by transfer arm
-bool isWoodProperlyGrabbed() {
+bool suctionConfirmed() {
     Bounce* suctionSensor = getSuctionSensorBounce();
     return (suctionSensor && suctionSensor->read() == HIGH);
 }
@@ -87,7 +94,7 @@ void configureCutMotorForCurrentCut() {
     }
 }
 
-void handleSuctionFailure(FastAccelStepper* cutMotor) {
+void enterSuctionError(FastAccelStepper* cutMotor) {
     FastAccelStepper* feedMotor = getFeedMotor();
     if (feedMotor && feedMotor->isRunning()) {
         feedMotor->stopMove();
@@ -180,7 +187,7 @@ void executeCuttingState() {
         
         // Retract secondary components
         retractRotationClamp();
-        handleRotationServoReturn();
+        returnRotationServoHome();
         
         // Initiate return
         startCutMotorReturnSequence();
@@ -226,15 +233,13 @@ void handleCuttingStep0() {
     }
 
     //! If retry was in progress and sensor just went HIGH, enforce minimum wait before proceeding
-    if (cuttingContext.suctionRetryInProgress && isWoodProperlyGrabbed()) {
+    if (cuttingContext.suctionRetryInProgress && suctionConfirmed()) {
         cuttingContext.suctionRetryInProgress = false;
         cuttingContext.suctionRetrySucceeded = true;
         cuttingContext.suctionRetrySuccessTime = millis();
         //! Drop phase state now so a sensor flutter during the grace period restarts
         //! the retry clock cleanly instead of jumping back into an expired phase
-        cuttingContext.inSuctionRetryPhase1 = false;
-        cuttingContext.inSuctionRetryPhase2 = false;
-        cuttingContext.inSuctionRetryGap = false;
+        cuttingContext.suctionRetryPhase = SuctionRetryPhase::Idle;
         cuttingContext.suctionRetryTimer = 0;
         cuttingContext.waitingForSuction = false;
         cuttingContext.suctionWaitStartTime = 0;
@@ -251,7 +256,7 @@ void handleCuttingStep0() {
     //! Gate is the physical WOOD_SUCTION_CONFIRM_SENSOR only — no software-flag
     //! bypass, so a reset with wood still presented can't sneak past this check
     //! and command the servo home into a stuck piece.
-    if (!isWoodProperlyGrabbed()) {
+    if (!suctionConfirmed()) {
         // Sensor is LOW - start waiting if not already waiting
         if (!cuttingContext.waitingForSuction) {
             cuttingContext.waitingForSuction = true;
@@ -260,64 +265,56 @@ void handleCuttingStep0() {
 
         // Check if timeout has expired
         if (millis() - cuttingContext.suctionWaitStartTime >= SUCTION_WAIT_TIMEOUT_MS) {
-            if (!cuttingContext.inSuctionRetryPhase1 && !cuttingContext.inSuctionRetryPhase2 && !cuttingContext.inSuctionRetryGap) {
-                // Start Phase 1
-                cuttingContext.inSuctionRetryPhase1 = true;
-                cuttingContext.suctionRetryInProgress = true;
-                cuttingContext.suctionRetryTimer = millis();
-                return; // Stay in Step 0
-            }
-
-            if (cuttingContext.inSuctionRetryPhase1) {
-                if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE1_WAIT_MS) {
-                    // Phase 1 complete, send TA signal and start Phase 2
-                    sendSignalToTA();
-                    cuttingContext.inSuctionRetryPhase1 = false;
-                    cuttingContext.inSuctionRetryPhase2 = true;
+            switch (cuttingContext.suctionRetryPhase) {
+                case SuctionRetryPhase::Idle:
+                    // Start Phase 1
+                    cuttingContext.suctionRetryPhase = SuctionRetryPhase::Phase1;
+                    cuttingContext.suctionRetryInProgress = true;
                     cuttingContext.suctionRetryTimer = millis();
-                }
-                return; // Stay in Step 0
-            }
+                    return; // Stay in Step 0
 
-            if (cuttingContext.inSuctionRetryPhase2) {
-                if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
-                    //! Force the TA line LOW so the second pulse is a distinct rising edge.
-                    //! Without this the first 5s pulse is still HIGH when the second call fires,
-                    //! and the TA only sees one long merged pulse instead of two triggers.
-                    digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
-                    signalTAActive = false;
-                    taSignalDelayActive = false;
-                    cuttingContext.inSuctionRetryPhase2 = false;
-                    cuttingContext.inSuctionRetryGap = true;
-                    cuttingContext.suctionRetryTimer = millis();
-                }
-                return; // Stay in Step 0
-            }
+                case SuctionRetryPhase::Phase1:
+                    if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE1_WAIT_MS) {
+                        // Phase 1 complete, send TA signal and start Phase 2
+                        sendSignalToTA();
+                        cuttingContext.suctionRetryPhase = SuctionRetryPhase::Phase2;
+                        cuttingContext.suctionRetryTimer = millis();
+                    }
+                    return; // Stay in Step 0
 
-            if (cuttingContext.inSuctionRetryGap) {
-                if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_INTER_PULSE_GAP_MS) {
-                    // Gap complete - send the second TA signal, then fail
-                    sendSignalToTA();
-                    cuttingContext.suctionRetryAttempted = true;
-                    cuttingContext.inSuctionRetryGap = false;
-                    FastAccelStepper* cutMotor = getCutMotor();
-                    handleSuctionFailure(cutMotor);
-                }
-                return; // Stay in Step 0
+                case SuctionRetryPhase::Phase2:
+                    if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
+                        //! Force the TA line LOW so the second pulse is a distinct rising edge.
+                        //! Without this the first 5s pulse is still HIGH when the second call fires,
+                        //! and the TA only sees one long merged pulse instead of two triggers.
+                        digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
+                        taSignalActive = false;
+                        taSignalDelayPending = false;
+                        cuttingContext.suctionRetryPhase = SuctionRetryPhase::Gap;
+                        cuttingContext.suctionRetryTimer = millis();
+                    }
+                    return; // Stay in Step 0
+
+                case SuctionRetryPhase::Gap:
+                    if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_INTER_PULSE_GAP_MS) {
+                        // Gap complete - send the second TA signal, then fail
+                        sendSignalToTA();
+                        cuttingContext.suctionRetryPhase = SuctionRetryPhase::Idle;
+                        FastAccelStepper* cutMotor = getCutMotor();
+                        enterSuctionError(cutMotor);
+                    }
+                    return; // Stay in Step 0
             }
         }
 
         // Still within timeout - stay in Step 0 and keep checking
         return;
     }
-    
+
     //! Sensor is HIGH (or went HIGH during wait) - clear waiting flags and proceed
     cuttingContext.waitingForSuction = false;
     cuttingContext.suctionWaitStartTime = 0;
-    cuttingContext.suctionRetryAttempted = false;
-    cuttingContext.inSuctionRetryPhase1 = false;
-    cuttingContext.inSuctionRetryPhase2 = false;
-    cuttingContext.inSuctionRetryGap = false;
+    cuttingContext.suctionRetryPhase = SuctionRetryPhase::Idle;
     cuttingContext.suctionRetryTimer = 0;
     cuttingContext.suctionRetryInProgress = false;
     cuttingContext.suctionRetrySucceeded = false;
@@ -325,12 +322,12 @@ void handleCuttingStep0() {
 
     //! Command servo to home position - must complete before cut motor moves
     if (!cuttingContext.servoReturnStarted) {
-        handleRotationServoReturn();
+        returnRotationServoHome();
         //! Reconcile the active-and-timing flag with the command we just issued.
         //! The flag is only cleared by StateManager when it sees suction HIGH mid-cut,
         //! so a stale-true flag from a prior cycle would otherwise survive the explicit
         //! return and make any later wait-for-home check fire on a servo that's home.
-        rotationServoIsActiveAndTiming = false;
+        rotationServoActive = false;
         cuttingContext.servoReturnStarted = true;
         cuttingContext.waitingForServoHomeBeforeCut = true;
         cuttingContext.servoReturnCommandTime = millis();

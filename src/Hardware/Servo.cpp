@@ -13,7 +13,7 @@
 
 void activateRotationServo() {
     // Activate rotation servo without sending TA signal
-    if (!rotationServoIsActiveAndTiming) {
+    if (!rotationServoActive) {
         Servo* servo = getRotationServo();
         if (servo) {
             // Force servo write with robust control - no attach checks, just send the command
@@ -21,13 +21,13 @@ void activateRotationServo() {
         }
 
         rotationServoActiveStartTime = millis();
-        rotationServoIsActiveAndTiming = true;
+        rotationServoActive = true;
         // Reset the return completed flag for new activation cycle
         rotationServoReturnCompleted = false;
     }
 }
 
-void handleRotationServoReturn() {
+void returnRotationServoHome() {
     // Move rotation servo to home position with fast return - send command multiple times rapidly
     Servo* servo = getRotationServo();
     if (servo) {

@@ -127,7 +127,7 @@ extern const int STATUS_LED_RED;
 extern const int STATUS_LED_YELLOW;
 extern const int STATUS_LED_GREEN;
 extern const int STATUS_LED_BLUE;
-// Configuration constants moved to States_Config.h
+// Configuration constants live in Config.h
 
 
 

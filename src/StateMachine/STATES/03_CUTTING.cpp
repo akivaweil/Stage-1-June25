@@ -1,7 +1,7 @@
 #include "StateMachine/03_CUTTING.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
-#include "StateMachine/STATES/States_Config.h"
+#include "Config/Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 #include "OTAUpdater/ota_updater.h"
 
@@ -13,38 +13,11 @@
 // Step 1: Check suction sensor and start cut motor movement
 // Step 2: Monitor cut motor position, activate rotation components, and complete cut
 // Step 3: Handle reload switch interrupt return to home
-// 
+//
 // After cutting completion, transitions to appropriate RETURNING state based on wood detection.
 // All post-cutting logic (return sequences, homing, continuous mode) is handled by RETURNING states.
 
-// Configuration Settings
-// Rotation Servo (ROTATION_SERVO_HOME_POSITION, ROTATION_SERVO_ACTIVE_POSITION set via web dashboard)
-unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;     // Duration to hold active position
-unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;              // Delay before returning to home
-unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;        // Wait dration at home position
-unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 300;     // Wait time after suction detected before returning
-float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;                  // Servo activation distance from start of cut (inches)
-
-// Rotation Clamp Configuration
-unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;          // Time for clamp to fully extend 
-float ROTATION_CLAMP_ACTIVATION_DISTANCE = 5.75;                  // Clamp activation distance from start of cut (inches)
-
-// Transfer Arm Configuration
-unsigned long TA_SIGNAL_DURATION = 5000;                         // Transfer arm signal duration
-float TA_SIGNAL_OFFSET_FROM_END = 0.2;                           // TA signal activation distance before end of cut (inches)
-
-// Cut Motor Timing & Recovery
-unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;              // Recovery operation timeout
-unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;              // Motor state verification delay
-
-// Suction Sensor Configuration
-unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout for waiting for suction sensor to go HIGH (ms)
-unsigned long SUCTION_RETRY_PHASE1_WAIT_MS = 3000;                 // Phase 1 retry wait time (ms)
-unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 3000;                 // Phase 2 retry wait time before second signal + fail (ms)
-unsigned long SUCTION_RETRY_SUCCESS_WAIT_MS = 1000;                // Minimum wait after retry succeeds before proceeding (ms)
-unsigned long SUCTION_RETRY_INTER_PULSE_GAP_MS = 200;              // LOW gap between the two retry TA pulses so the TA sees a fresh rising edge
-
-// LED Wave Pattern
+// LED Wave Pattern (cutting-state local; not a system-wide config)
 const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs RETURNING_NO_2x4 state when no wood detected during cut
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗

@@ -6,9 +6,7 @@
 //║ 🏠 HOMING STATE                                                     ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // Handles the homing sequence for all motors.
-
-// Configuration Settings
-unsigned long CUT_HOME_TIMEOUT = 5000; // Cut motor homing timeout
+// CUT_HOME_TIMEOUT now lives in Config.cpp along with the rest of the timings.
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ STEP 1: BLINK BLUE LED TO INDICATE HOMING IN PROGRESS               ║

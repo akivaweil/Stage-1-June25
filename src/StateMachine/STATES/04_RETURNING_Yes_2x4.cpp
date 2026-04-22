@@ -1,13 +1,12 @@
 #include <Arduino.h>
 #include <FastAccelStepper.h>
 #include <Bounce2.h>
-#include "../../../include/StateMachine/04_RETURNING_Yes_2x4.h"
-#include "../../../include/StateMachine/StateManager.h"
-#include "../../../include/StateMachine/FUNCTIONS/General_Functions.h"
-#include "../../../include/Config/Pin_Def.h"
-#include "../../../include/Config/Motor_Config.h"
-#include "../../../include/StateMachine/STATES/States_Config.h"
-#include "../../../include/WebSocketDashboard/websocket_dashboard.h"
+#include "StateMachine/04_RETURNING_Yes_2x4.h"
+#include "StateMachine/StateManager.h"
+#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "Config/Pin_Def.h"
+#include "Config/Config.h"
+#include "WebSocketDashboard/websocket_dashboard.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ ✅ RETURNING YES 2X4 STATE                                           ║

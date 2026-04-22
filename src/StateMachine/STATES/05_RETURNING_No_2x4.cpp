@@ -99,7 +99,6 @@ void onExitReturningNo2x4State() {
 void handleReturningNo2x4Sequence() {
     handleNoWoodLedWavePattern();
 
-    extern float FEED_TRAVEL_DISTANCE;
     FastAccelStepper* feedMotor = getFeedMotor();
 
     switch (returningNo2x4Step) {

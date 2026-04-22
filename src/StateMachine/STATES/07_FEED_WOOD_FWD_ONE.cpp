@@ -63,7 +63,6 @@ void onExitFeedWoodFwdOneState() {
 
 void executeFeedWoodFwdOneStep() {
     FastAccelStepper* feedMotor = getFeedMotor();
-    extern const float FEED_TRAVEL_DISTANCE;
 
     switch (currentStep) {
         case RETRACT_FEED_CLAMP:

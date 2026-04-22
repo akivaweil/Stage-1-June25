@@ -48,6 +48,7 @@ extern float FEED_MOTOR_HOMING_SPEED;
 
 // Distances & Movement (defaults - can be modified via dashboard)
 extern float FEED_MOTOR_RETURN_DISTANCE;
+extern float FEED_TRAVEL_DISTANCE;
 
 //* ************************************************************************
 //* ************************ [🤖] TRANSFER ARM *****************************

@@ -2,10 +2,8 @@
 #include "WebSocketDashboard/dashboard_html.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/FUNCTIONS/General_Functions.h"
-#include "StateMachine/STATES/States_Config.h"
 #include "Config/Pin_Def.h"
-#include "Config/Motor_Config.h"
-#include "Config/config.h"
+#include "Config/Config.h"
 #include <ArduinoJson.h>
 #include <EEPROM.h>
 

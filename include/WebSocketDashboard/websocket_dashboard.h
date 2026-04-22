@@ -6,7 +6,7 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 #include <SPIFFS.h>
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* ********************** WEBSOCKET DASHBOARD ****************************

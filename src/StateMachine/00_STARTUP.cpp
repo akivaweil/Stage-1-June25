@@ -1,6 +1,6 @@
 #include "StateMachine/00_STARTUP.h"
 #include "StateMachine/StateManager.h"
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 #include <WiFi.h>
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗

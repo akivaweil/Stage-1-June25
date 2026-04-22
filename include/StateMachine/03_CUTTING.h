@@ -1,7 +1,7 @@
 #ifndef CUTTING_STATE_H
 #define CUTTING_STATE_H
 
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* ************************** CUTTING STATE *******************************

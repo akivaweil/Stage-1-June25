@@ -6,9 +6,9 @@
 //* ************************************************************************
 // Configuration constants for the Automated Table Saw - Stage 1
 // Single source of truth for all tunable timing/position/speed constants.
-// Motor-specific constants live in Motor_Config.h.
+// Motor-specific constants live in MotorConfig.h.
 
-#include "Config/Motor_Config.h"
+#include "Config/MotorConfig.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ ⚙️ ROTATION SERVO                                                   ║

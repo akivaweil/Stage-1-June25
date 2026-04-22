@@ -1,7 +1,7 @@
 #ifndef IDLE_STATE_H
 #define IDLE_STATE_H
 
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* ************************** IDLE STATE **********************************

@@ -1,7 +1,7 @@
-#ifndef _04_RETURNING_YES_2X4_STATE_H
-#define _04_RETURNING_YES_2X4_STATE_H
+#ifndef _04_RETURNING_WITH_2X4_H
+#define _04_RETURNING_WITH_2X4_H
 
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* ******************** RETURNING YES 2X4 STATE **************************
@@ -23,4 +23,4 @@ void handleFeedWoodMovement();
 // Reset all step counters
 void resetReturningYes2x4Steps();
 
-#endif // _04_RETURNING_YES_2X4_STATE_H 
+#endif // _04_RETURNING_WITH_2X4_H 

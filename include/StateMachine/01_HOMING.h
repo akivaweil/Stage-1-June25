@@ -1,7 +1,7 @@
 #ifndef HOMING_STATE_H
 #define HOMING_STATE_H
 
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* ************************** HOMING STATE ********************************

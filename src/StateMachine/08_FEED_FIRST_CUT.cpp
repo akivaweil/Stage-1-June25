@@ -1,7 +1,7 @@
 #include "StateMachine/08_FEED_FIRST_CUT.h"
 #include "StateMachine/StateManager.h"
-#include "StateMachine/FUNCTIONS/General_Functions.h"
-#include "Config/config.h"
+#include "StateMachine/General_Functions.h"
+#include "Config/Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗

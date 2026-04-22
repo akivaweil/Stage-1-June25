@@ -3,7 +3,7 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include "Config/Pin_Def.h"
+#include "Config/Pins.h"
 
 //* ************************************************************************
 //* *********************** OTA UPDATER IMPLEMENTATION *********************

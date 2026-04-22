@@ -1,5 +1,5 @@
-#include "ErrorStates/Cut_Motor_Error.h"
-#include "ErrorStates/Error_Reset.h"  // For error timing constants
+#include "StateMachine/10_CUT_MOTOR_ERROR.h"
+#include "StateMachine/11_ERROR_RESET.h"  // For error timing constants
 #include "StateMachine/StateManager.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 

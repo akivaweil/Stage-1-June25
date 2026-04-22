@@ -1,6 +1,6 @@
 #include "StateMachine/02_IDLE.h"
 #include "StateMachine/StateManager.h"
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
 const unsigned long IDLE_WOOD_PRESENT_ACTIVE_DELAY_MS = 1500;

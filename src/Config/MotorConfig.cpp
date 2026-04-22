@@ -1,63 +1,63 @@
-#include "Config/Pin_Def.h"
+#include "Config/MotorConfig.h"
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 📌 PIN DEFINITIONS                                           ║
+//║ ⚙️ MOTOR CONFIGURATION                                       ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Hardware pin assignments for the Automated Table Saw - Stage 1
-// ESP32-S3 based system with stepper motors, servo, sensors, and switches
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ MOTOR PINS                                                ║
+//║ ⚙️ ROTATION SERVO                                            ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Stepper motor control pins
-const int CUT_MOTOR_STEP_PIN = 12;         // Step pulse signal for cutting motor
-const int CUT_MOTOR_DIR_PIN = 11;          // Direction control for cutting motor
-const int FEED_MOTOR_STEP_PIN = 17;   // Step pulse signal for feed motor (pushes wood forward for angled cuts)
-const int FEED_MOTOR_DIR_PIN = 18;    // Direction control for feed motor
+// (Servo parameters moved to config.cpp)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔄 SERVO PINS                                                ║
+//║ 🔧 ROTATION CLAMP                                            ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Servo control pins
-const int ROTATION_SERVO_PIN = 14;
+// (Rotation clamp parameters moved to config.cpp)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔘 SWITCH & SENSOR PINS                                      ║
+//║ 🔄 CUT MOTOR                                                 ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-  // Homing switches and sensors
-  const int CUT_MOTOR_HOME_SWITCH = 3;        // Active HIGH - input pulldown
-  const int FEED_MOTOR_HOME_SENSOR = 45;      // Active LOW - input pullup
+float CUT_MOTOR_STEPS_PER_INCH = 500.0;
+const int CUT_HOMING_DIRECTION = -1;
 
-// Control switches (Active HIGH - input pulldown)
-const int RELOAD_SWITCH = 6;
-const int START_CYCLE_SWITCH = 5;
-const int MANUAL_FEED_SWITCH = 16;         // Manual wood feed control
+// Speeds (in inches/sec and inches/sec²)
+float CUT_MOTOR_NORMAL_SPEED = 1.28; // inches/sec
+float CUT_MOTOR_NORMAL_ACCELERATION = 16.0; // inches/sec²
+float CUT_MOTOR_NO_WOOD_SPEED = 0.896; // inches/sec (70% of normal speed)
+float CUT_MOTOR_RETURN_SPEED = 30.0; // inches/sec
+float CUT_MOTOR_HOMING_SPEED = 2.6; // inches/sec
 
-// Sensors (Active LOW - input pullup)
-const int FIRST_CUT_OR_WOOD_FWD_ONE = 10;       // Decides state: LOW = wood_fwd_one, HIGH = first_cut
-const int _2x4_PRESENT_SENSOR = 4;
-const int WOOD_SUCTION_CONFIRM_SENSOR = 39;  // Confirms wood is grabbed by transfer arm suction (HIGH = grabbed, LOW = not grabbed)
+// Distances & Movement
+float CUT_MOTOR_INCREMENTAL_MOVE_INCHES = 0.1;
+float CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = 0.4;
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 CLAMP PINS                                                ║
+//║ ⚡ FEED MOTOR                                                 ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Pneumatic clamp control pins (HIGH = extend, LOW = retract)
-const int FEED_CLAMP = 36;         // Clamps wood during feed positioning
-const int _2x4_SECURE_CLAMP = 48;       // Secures 2x4 during cutting
-const int ROTATION_CLAMP = 42;          // Clamps cut pieces for rotation
+float FEED_MOTOR_STEPS_PER_INCH = 1000.0; 
+const int FEED_HOMING_DIRECTION = 1;
+float FEED_MOTOR_OFFSET_FROM_SENSOR = 0.15;
+
+// Speeds
+float FEED_MOTOR_NORMAL_SPEED = 22000;
+float FEED_MOTOR_NORMAL_ACCELERATION = 22000;
+float FEED_MOTOR_RETURN_SPEED = 40000;
+float FEED_MOTOR_RETURN_ACCELERATION = 30000;
+float FEED_MOTOR_HOMING_SPEED = 1500;
+
+// Distances & Movement
+float FEED_MOTOR_RETURN_DISTANCE = 0.0;
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 📡 SIGNAL PINS                                               ║
+//║ 🤖 TRANSFER ARM                                              ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Communication pins for external systems
-const int TRANSFER_ARM_SIGNAL_PIN = 8;  // Signal to Transfer Arm system
+// (Transfer arm parameters moved to config.cpp)
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
-//║ 💡 LED PINS                                                  ║
+//║ ⏱️ GENERAL TIMING                                            ║
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
-// Status indication LEDs
-const int STATUS_LED_RED = 47;      // Error/fault indication
-const int STATUS_LED_YELLOW = 21;   // Warning/caution indication
-const int STATUS_LED_GREEN = 37;    // Ready/operation OK indication
-const int STATUS_LED_BLUE = 19;     // Process active indication
+// (General timing parameters moved to config.cpp)
 
+//╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗
+//║ 📐 PRE-CALCULATED STEPS                                      ║
+//╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝

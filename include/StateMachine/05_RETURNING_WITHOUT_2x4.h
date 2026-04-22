@@ -1,7 +1,7 @@
-#ifndef _05_RETURNING_NO_2X4_STATE_H
-#define _05_RETURNING_NO_2X4_STATE_H
+#ifndef _05_RETURNING_WITHOUT_2X4_H
+#define _05_RETURNING_WITHOUT_2X4_H
 
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* ************************ RETURNING NO 2X4 STATE ***********************
@@ -15,4 +15,4 @@ void onExitReturningNo2x4State();
 void handleReturningNo2x4Sequence();
 void resetReturningNo2x4Steps();
 
-#endif // _05_RETURNING_NO_2X4_STATE_H
+#endif // _05_RETURNING_WITHOUT_2X4_H

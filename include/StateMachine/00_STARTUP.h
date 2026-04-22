@@ -1,7 +1,7 @@
 #ifndef STARTUP_STATE_H
 #define STARTUP_STATE_H
 
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* ************************** STARTUP STATE *******************************

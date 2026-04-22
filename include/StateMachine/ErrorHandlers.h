@@ -1,5 +1,5 @@
-#ifndef ERRORS_FUNCTIONS_H
-#define ERRORS_FUNCTIONS_H
+#ifndef ERROR_HANDLERS_H
+#define ERROR_HANDLERS_H
 
 #include <Arduino.h>
 #include <Bounce2.h>
@@ -7,7 +7,7 @@
 #include <FastAccelStepper.h>
 
 // Include the SystemState enum definition
-#include "StateMachine/FUNCTIONS/General_Functions.h"
+#include "StateMachine/General_Functions.h"
 
 //* ************************************************************************
 //* *********************** ERROR FUNCTION DECLARATIONS ********************

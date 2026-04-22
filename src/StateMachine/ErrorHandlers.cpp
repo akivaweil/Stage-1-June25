@@ -1,6 +1,6 @@
 // IMPORTANT NOTE: This file contains helper functions specifically used by the error handling system.
 // It relies on the main file for pin definitions and global variable declarations (via extern).
-#include "ErrorStates/Errors_Functions.h"
+#include "StateMachine/ErrorHandlers.h"
 #include "Config/Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 

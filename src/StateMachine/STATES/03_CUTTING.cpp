@@ -56,11 +56,10 @@ namespace {
         bool rotationClampActivated = false;
         bool rotationServoActivated = false;
         bool transferArmSignalSent = false;
-        bool waitingForServoHome = false;
         bool servoReturnStarted = false;
-        unsigned long servoHomeWaitStartedAt = 0;
         bool waitingForServoHomeBeforeCut = false;
         unsigned long servoReturnCommandTime = 0;
+        bool clampsExtended = false;
         bool waitingForSuction = false;
         unsigned long suctionWaitStartTime = 0;
         bool suctionRetryAttempted = false;
@@ -105,31 +104,6 @@ bool isWoodProperlyGrabbed() {
 bool isWoodPresent() {
     Bounce* woodPresentSensor = getWoodPresentSensorBounce();
     return (woodPresentSensor && woodPresentSensor->read() == LOW);
-}
-
-// Waits for rotation servo to return home before starting cut
-bool waitForServoHomeIfNeeded() {
-    if (!isWoodProperlyGrabbed()) {
-        cuttingContext.waitingForServoHome = false;
-        return false;
-    }
-
-    extern bool rotationServoIsActiveAndTiming;
-
-    if (rotationServoIsActiveAndTiming && !cuttingContext.waitingForServoHome) {
-        cuttingContext.waitingForServoHome = true;
-        cuttingContext.servoHomeWaitStartedAt = millis();
-        return true;
-    }
-
-    if (cuttingContext.waitingForServoHome) {
-        if (millis() - cuttingContext.servoHomeWaitStartedAt < ROTATION_SERVO_HOME_WAIT_DURATION_MS) {
-            return true;
-        }
-        cuttingContext.waitingForServoHome = false;
-    }
-
-    return false;
 }
 
 void configureCutMotorForCurrentCut() {
@@ -268,21 +242,29 @@ void executeCuttingState() {
 void handleCuttingStep0() {
     //! Check for OTA upload at the beginning of cutting state
     handleOTA();
-    
-    //! Wait for rotation servo to return home if needed
-    if (waitForServoHomeIfNeeded()) {
-        return; // Still waiting, exit and check again next cycle
+
+    //! Extend clamps to secure wood - once per CUTTING entry, not every tick.
+    //! Retractions only happen on state exit / reload interrupt, and resetCuttingSteps
+    //! on entry zeroes the flag, so this is safe and removes redundant digitalWrites.
+    if (!cuttingContext.clampsExtended) {
+        extend2x4SecureClamp();
+        extendFeedClamp();
+        cuttingContext.clampsExtended = true;
     }
-        
-    //! Extend clamps to secure wood
-    extend2x4SecureClamp();
-    extendFeedClamp();
 
     //! If retry was in progress and sensor just went HIGH, enforce minimum wait before proceeding
     if (cuttingContext.suctionRetryInProgress && isWoodProperlyGrabbed()) {
         cuttingContext.suctionRetryInProgress = false;
         cuttingContext.suctionRetrySucceeded = true;
         cuttingContext.suctionRetrySuccessTime = millis();
+        //! Drop phase state now so a sensor flutter during the grace period restarts
+        //! the retry clock cleanly instead of jumping back into an expired phase
+        cuttingContext.inSuctionRetryPhase1 = false;
+        cuttingContext.inSuctionRetryPhase2 = false;
+        cuttingContext.inSuctionRetryGap = false;
+        cuttingContext.suctionRetryTimer = 0;
+        cuttingContext.waitingForSuction = false;
+        cuttingContext.suctionWaitStartTime = 0;
     }
     if (cuttingContext.suctionRetrySucceeded) {
         if (millis() - cuttingContext.suctionRetrySuccessTime < SUCTION_RETRY_SUCCESS_WAIT_MS) {
@@ -371,6 +353,11 @@ void handleCuttingStep0() {
     //! Command servo to home position - must complete before cut motor moves
     if (!cuttingContext.servoReturnStarted) {
         handleRotationServoReturn();
+        //! Reconcile the active-and-timing flag with the command we just issued.
+        //! The flag is only cleared by StateManager when it sees suction HIGH mid-cut,
+        //! so a stale-true flag from a prior cycle would otherwise survive the explicit
+        //! return and make any later wait-for-home check fire on a servo that's home.
+        rotationServoIsActiveAndTiming = false;
         cuttingContext.servoReturnStarted = true;
         cuttingContext.waitingForServoHomeBeforeCut = true;
         cuttingContext.servoReturnCommandTime = millis();

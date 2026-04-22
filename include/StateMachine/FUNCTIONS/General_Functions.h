@@ -32,7 +32,7 @@ enum SystemState {
     CUTTING,
     ERROR,
     ERROR_RESET,
-    SUCTION_ERROR,
+    TA_GRAB_FAILURE,
     Cut_Motor_Homing_Error,
     RETURNING_YES_2x4,
     RETURNING_NO_2x4,

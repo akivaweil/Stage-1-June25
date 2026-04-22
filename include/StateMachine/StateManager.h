@@ -118,6 +118,5 @@ void handleCommonOperations();
 // Error state handling functions
 void handleStandardErrorState();
 void handleErrorResetState();
-void handleSuctionErrorState();
 
 #endif // STATE_MANAGER_H 

@@ -4,7 +4,7 @@
 #include "StateMachine/STATES/States_Config.h"
 #include "ErrorStates/Errors_Functions.h"
 #include "ErrorStates/Error_Reset.h"
-#include "ErrorStates/Suction_Error.h"
+#include "ErrorStates/TA_Grab_Failure.h"
 #include "ErrorStates/Cut_Motor_Error.h"
 
 // External references to Bounce objects from main.cpp
@@ -95,8 +95,8 @@ void executeStateMachine() {
         case ERROR_RESET:
             handleErrorResetState();
             break;
-        case SUCTION_ERROR:
-            handleSuctionErrorState();
+        case TA_GRAB_FAILURE:
+            handleTaGrabFailureState();
             break;
         case Cut_Motor_Homing_Error:
             handleCutMotorErrorState();
@@ -397,7 +397,7 @@ void printStateChange() {
         //     case RETURNING_NO_2x4: Serial.println("RETURNING_NO_2x4"); break;
         //     case ERROR: Serial.println("ERROR"); break;
         //     case ERROR_RESET: Serial.println("ERROR_RESET"); break;
-        //     case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
+        //     case TA_GRAB_FAILURE: Serial.println("TA_GRAB_FAILURE"); break;
         //     case Cut_Motor_Homing_Error: Serial.println("Cut_Motor_Homing_Error"); break;
         //     default: Serial.println("UNKNOWN"); break;
         // }

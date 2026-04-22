@@ -51,13 +51,18 @@ void executeCuttingState() {
 }
 
 void handleCuttingStep0() {
+    Bounce* suctionSensor = getSuctionSensorBounce();
+    if (suctionSensor && suctionSensor->read() == LOW) {
+        Serial.println("TA grab failure at cut start - suction sensor LOW, pausing until cleared");
+        changeState(TA_GRAB_FAILURE);
+        return;
+    }
+
     Serial.println("Starting cut motion");
-        
+
     extend2x4SecureClamp();
     extendFeedClamp();
 
-    // Only home rotation servo if wood is properly grabbed (safety check)
-    Bounce* suctionSensor = getSuctionSensorBounce();
     if (suctionSensor && suctionSensor->read() == HIGH) {
         handleRotationServoReturn();
         Serial.println("Rotation servo homed for cut cycle - wood properly grabbed by transfer arm");
@@ -88,20 +93,18 @@ void handleCuttingStep1() {
     if (cutMotor && cutMotor->getCurrentPosition() >= SUCTION_SENSOR_CHECK_DISTANCE_STEPS) {
         Bounce* suctionSensor = getSuctionSensorBounce();
         if (suctionSensor && suctionSensor->read() == LOW) {
-            // No suction detected - error condition
             FastAccelStepper* feedMotor = getFeedMotor();
-            
+
             if (feedMotor && feedMotor->isRunning()) {
                 feedMotor->stopMove();
             }
-            
+
             if (cutMotor) {
                 configureCutMotorForReturn();
                 moveCutMotorToHome();
             }
-            
-            setCuttingCycleInProgress(false);
-            changeState(SUCTION_ERROR);
+
+            changeState(TA_GRAB_FAILURE);
             stepStartTime = 0;
             return;
         } else {

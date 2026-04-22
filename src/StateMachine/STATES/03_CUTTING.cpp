@@ -42,6 +42,7 @@ unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;                      // Timeout fo
 unsigned long SUCTION_RETRY_PHASE1_WAIT_MS = 3000;                 // Phase 1 retry wait time (ms)
 unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 3000;                 // Phase 2 retry wait time before second signal + fail (ms)
 unsigned long SUCTION_RETRY_SUCCESS_WAIT_MS = 1000;                // Minimum wait after retry succeeds before proceeding (ms)
+unsigned long SUCTION_RETRY_INTER_PULSE_GAP_MS = 200;              // LOW gap between the two retry TA pulses so the TA sees a fresh rising edge
 
 // LED Wave Pattern
 const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs RETURNING_NO_2x4 state when no wood detected during cut
@@ -65,6 +66,7 @@ namespace {
         bool suctionRetryAttempted = false;
         bool inSuctionRetryPhase1 = false;
         bool inSuctionRetryPhase2 = false;
+        bool inSuctionRetryGap = false;
         unsigned long suctionRetryTimer = 0;
         bool suctionRetryInProgress = false;
         bool suctionRetrySucceeded = false;
@@ -303,42 +305,50 @@ void handleCuttingStep0() {
 
         // Check if timeout has expired
         if (millis() - cuttingContext.suctionWaitStartTime >= SUCTION_WAIT_TIMEOUT_MS) {
-            if (!cuttingContext.suctionRetryAttempted) {
-                if (!cuttingContext.inSuctionRetryPhase1 && !cuttingContext.inSuctionRetryPhase2) {
-                    // Start Phase 1
-                    cuttingContext.inSuctionRetryPhase1 = true;
-                    cuttingContext.suctionRetryInProgress = true;
+            if (!cuttingContext.inSuctionRetryPhase1 && !cuttingContext.inSuctionRetryPhase2 && !cuttingContext.inSuctionRetryGap) {
+                // Start Phase 1
+                cuttingContext.inSuctionRetryPhase1 = true;
+                cuttingContext.suctionRetryInProgress = true;
+                cuttingContext.suctionRetryTimer = millis();
+                return; // Stay in Step 0
+            }
+
+            if (cuttingContext.inSuctionRetryPhase1) {
+                if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE1_WAIT_MS) {
+                    // Phase 1 complete, send TA signal and start Phase 2
+                    sendSignalToTA();
+                    cuttingContext.inSuctionRetryPhase1 = false;
+                    cuttingContext.inSuctionRetryPhase2 = true;
                     cuttingContext.suctionRetryTimer = millis();
-                    return; // Stay in Step 0
                 }
+                return; // Stay in Step 0
+            }
 
-                if (cuttingContext.inSuctionRetryPhase1) {
-                    if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE1_WAIT_MS) {
-                        // Phase 1 complete, send TA signal and start Phase 2
-                        sendSignalToTA();
-                        cuttingContext.inSuctionRetryPhase1 = false;
-                        cuttingContext.inSuctionRetryPhase2 = true;
-                        cuttingContext.suctionRetryTimer = millis();
-                    }
-                    return; // Stay in Step 0
+            if (cuttingContext.inSuctionRetryPhase2) {
+                if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
+                    //! Force the TA line LOW so the second pulse is a distinct rising edge.
+                    //! Without this the first 5s pulse is still HIGH when the second call fires,
+                    //! and the TA only sees one long merged pulse instead of two triggers.
+                    digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
+                    signalTAActive = false;
+                    taSignalDelayActive = false;
+                    cuttingContext.inSuctionRetryPhase2 = false;
+                    cuttingContext.inSuctionRetryGap = true;
+                    cuttingContext.suctionRetryTimer = millis();
                 }
+                return; // Stay in Step 0
+            }
 
-                if (cuttingContext.inSuctionRetryPhase2) {
-                    if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
-                        // 3 seconds after first signal - send second signal then fail
-                        sendSignalToTA();
-                        cuttingContext.suctionRetryAttempted = true;
-                        cuttingContext.inSuctionRetryPhase2 = false;
-                        FastAccelStepper* cutMotor = getCutMotor();
-                        handleSuctionFailure(cutMotor);
-                    }
-                    return; // Stay in Step 0
+            if (cuttingContext.inSuctionRetryGap) {
+                if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_INTER_PULSE_GAP_MS) {
+                    // Gap complete - send the second TA signal, then fail
+                    sendSignalToTA();
+                    cuttingContext.suctionRetryAttempted = true;
+                    cuttingContext.inSuctionRetryGap = false;
+                    FastAccelStepper* cutMotor = getCutMotor();
+                    handleSuctionFailure(cutMotor);
                 }
-            } else {
-                // Timeout expired and retry already attempted - transition to suction error
-                FastAccelStepper* cutMotor = getCutMotor();
-                handleSuctionFailure(cutMotor);
-                return;
+                return; // Stay in Step 0
             }
         }
 
@@ -352,6 +362,7 @@ void handleCuttingStep0() {
     cuttingContext.suctionRetryAttempted = false;
     cuttingContext.inSuctionRetryPhase1 = false;
     cuttingContext.inSuctionRetryPhase2 = false;
+    cuttingContext.inSuctionRetryGap = false;
     cuttingContext.suctionRetryTimer = 0;
     cuttingContext.suctionRetryInProgress = false;
     cuttingContext.suctionRetrySucceeded = false;

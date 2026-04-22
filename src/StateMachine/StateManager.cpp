@@ -412,6 +412,9 @@ void updateSwitches() {
 void handleCommonOperations() {
     // Update all switches first
     updateSwitches();
+
+    // Flip rotationServoKnownHome true once the post-command travel buffer elapses.
+    updateRotationServoHomeStatus();
     
     // Check for cut motor hitting home sensor during RETURNING_YES_2x4 return
     extern bool cutMotorInReturningYes2x4Return; // This global flag is still in main.cpp
@@ -471,11 +474,9 @@ void handleCommonOperations() {
                     addSerialLog(message);
                     returnRotationServoHome();
                     rotationServoActive = false;
-                    //! Safe to set true here — by the time the next CUTTING Step 0 reads
-                    //! this flag, the state machine has gone through RETURNING + later
-                    //! stages, which is orders of magnitude longer than the servo's
-                    //! physical travel time back to home.
-                    rotationServoKnownHome = true;
+                    //! rotationServoKnownHome is handled by the pending-buffer in
+                    //! returnRotationServoHome() — it flips true once the travel
+                    //! buffer elapses via updateRotationServoHomeStatus().
                     rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
                     waitingForSuctionDelay = false; // Reset for next cycle
                     cooldownEntered = false; // Reset for next cycle

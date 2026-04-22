@@ -22,7 +22,8 @@ void activateRotationServo() {
 
         rotationServoActiveStartTime = millis();
         rotationServoActive = true;
-        rotationServoKnownHome = false; // servo is moving to ACTIVE — no longer at home
+        rotationServoKnownHome = false;      // servo is moving to ACTIVE — no longer at home
+        rotationServoHomePending = false;    // cancel any in-flight home buffer
         // Reset the return completed flag for new activation cycle
         rotationServoReturnCompleted = false;
     }
@@ -37,5 +38,19 @@ void returnRotationServoHome() {
             servo->write(ROTATION_SERVO_HOME_POSITION);
             delayMicroseconds(100); // Small delay between rapid writes
         }
+    }
+    //! Start the travel buffer — rotationServoKnownHome will flip true once
+    //! ROTATION_SERVO_HOME_WAIT_DURATION_MS has elapsed, via
+    //! updateRotationServoHomeStatus() on the main loop tick.
+    rotationServoHomePending = true;
+    rotationServoHomeCommandTime = millis();
+    rotationServoKnownHome = false; // becomes true only after the buffer
+}
+
+void updateRotationServoHomeStatus() {
+    if (rotationServoHomePending &&
+        millis() - rotationServoHomeCommandTime >= ROTATION_SERVO_HOME_WAIT_DURATION_MS) {
+        rotationServoKnownHome = true;
+        rotationServoHomePending = false;
     }
 }

@@ -17,8 +17,11 @@ extern unsigned long taSignalDelayStartTime; // For TA signal delay
 extern bool taSignalDelayPending;             // For TA signal delay
 extern bool rotationServoActive;
 extern bool rotationServoKnownHome;          // true once a home command has had time to complete
+extern bool rotationServoHomePending;        // return commanded, waiting for travel buffer to elapse
+extern unsigned long rotationServoHomeCommandTime;
 extern unsigned long rotationServoActiveStartTime;
 extern bool rotationServoReturnCompleted; // Flag to prevent multiple calls to returnRotationServoHome()
+void updateRotationServoHomeStatus();        // flips rotationServoKnownHome once the pending buffer elapses
 extern bool rotationClampIsExtended;
 extern unsigned long rotationClampExtendTime;
 extern bool isReloadMode;

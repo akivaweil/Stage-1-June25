@@ -40,8 +40,6 @@ namespace {
         bool rotationServoActivated = false;
         bool transferArmSignalSent = false;
         bool servoReturnStarted = false;
-        bool waitingForServoHomeBeforeCut = false;
-        unsigned long servoReturnCommandTime = 0;
         bool clampsExtended = false;
         bool waitingForSuction = false;
         unsigned long suctionWaitStartTime = 0;
@@ -320,36 +318,21 @@ void handleCuttingStep0() {
     cuttingContext.suctionRetrySucceeded = false;
     cuttingContext.suctionRetrySuccessTime = 0;
 
-    //! Command servo to home position - must complete before cut motor moves
-    if (!cuttingContext.servoReturnStarted) {
-        if (rotationServoKnownHome) {
-            //! Servo is already home (previous cycle's mid-cut return completed, or
-            //! we already commanded+waited this cycle). Skip the redundant command
-            //! and the 300 ms blind wait. Boot-time default is false, so the first
-            //! cut after power-on still goes through the full home+wait path.
-            cuttingContext.servoReturnStarted = true;
-            cuttingContext.waitingForServoHomeBeforeCut = false;
-        } else {
+    //! Ensure the rotation servo is home before moving the cut motor.
+    //! rotationServoKnownHome is the single source of truth:
+    //!   - false on boot (servo position unknown → always home-and-wait first cut)
+    //!   - cleared when activateRotationServo() moves the servo to ACTIVE
+    //!   - flipped true ROTATION_SERVO_HOME_WAIT_DURATION_MS after any
+    //!     returnRotationServoHome() call, via updateRotationServoHomeStatus()
+    //! Step 0 issues the return command once per entry (if needed) and simply
+    //! waits across ticks until the flag flips.
+    if (!rotationServoKnownHome) {
+        if (!cuttingContext.servoReturnStarted) {
             returnRotationServoHome();
-            //! Reconcile the active-and-timing flag with the command we just issued.
-            //! The flag is only cleared by StateManager when it sees suction HIGH mid-cut,
-            //! so a stale-true flag from a prior cycle would otherwise survive the explicit
-            //! return and make any later wait-for-home check fire on a servo that's home.
             rotationServoActive = false;
             cuttingContext.servoReturnStarted = true;
-            cuttingContext.waitingForServoHomeBeforeCut = true;
-            cuttingContext.servoReturnCommandTime = millis();
-            return; // Wait for servo to reach home before moving cut motor
         }
-    }
-
-    //! Block cut motor until servo has had time to reach home position
-    if (cuttingContext.waitingForServoHomeBeforeCut) {
-        if (millis() - cuttingContext.servoReturnCommandTime < ROTATION_SERVO_HOME_WAIT_DURATION_MS) {
-            return; // Still waiting for servo to reach home
-        }
-        cuttingContext.waitingForServoHomeBeforeCut = false;
-        rotationServoKnownHome = true; // wait complete → servo has reached home
+        return; // wait for the travel buffer to elapse
     }
 
     //! Configure cut motor speed based on wood detection

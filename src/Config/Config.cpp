@@ -18,7 +18,7 @@ const int CONFIG_OFFSET = 0;
 // (HOME/ACTIVE position values live in websocket_dashboard.cpp — dashboard-managed)
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
-unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 300;
+unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 200;  // Travel buffer from ACTIVE → HOME before rotationServoKnownHome flips true
 unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 300;
 float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;
 

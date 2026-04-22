@@ -50,10 +50,15 @@ bool lastResetWasAbnormal = false;
 unsigned long rotationServoActiveStartTime = 0;
 bool rotationServoActive = false;
 // Starts false on boot so the first cut always waits for the servo to reach home.
-// Flips true once a home command has been followed by enough travel time
-// (either the Step 0 explicit wait, or StateManager's mid-cut return path).
-// activateRotationServo() clears it when the servo moves to ACTIVE.
+// Flips true only after ROTATION_SERVO_HOME_WAIT_DURATION_MS has elapsed since
+// the most recent returnRotationServoHome() command — never set instantly.
+// activateRotationServo() clears it when the servo moves back to ACTIVE.
 bool rotationServoKnownHome = false;
+// True from the moment a home command is issued until the travel buffer elapses
+// and the known-home flag flips true. Ensures any flag-true transition always
+// carries the full physical-travel buffer.
+bool rotationServoHomePending = false;
+unsigned long rotationServoHomeCommandTime = 0;
 
 // Rotation servo return delay variables
 bool rotationServoReturnDelayActive = false;

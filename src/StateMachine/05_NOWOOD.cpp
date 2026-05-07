@@ -9,10 +9,10 @@
 //║ ❌ NOWOOD STATE — Config                                             ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 const float FEED_MOTOR_SPEED_MULTIPLIER      = 1.05;
-const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.15;  // Added to FEED_TRAVEL_DISTANCE on enter
-const float FEED_MOTOR_2ND_POSITION          = -1.7;  // Backward target after 0.15" nudge
-const float FEED_MOTOR_HOME_POSITION         = 1.1;   // Forward mid-point
-const float FEED_MOTOR_FINAL_POSITION        = -1.2;  // Final resting position
+const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.15;  // Added to FEED_TRAVEL_DISTANCE magnitude (positive offset away from sensor)
+const float FEED_MOTOR_2ND_POSITION          = 1.7;   // Pulled-back target (away from sensor)
+const float FEED_MOTOR_HOME_POSITION         = -1.1;  // Mid-point toward sensor (dead code; flipped for consistency)
+const float FEED_MOTOR_FINAL_POSITION        = 1.2;   // Final resting position (dead code; flipped for consistency)
 const unsigned long INITIAL_FEED_DELAY_MS        = 200; // Wait before moving feed motor at enter
 const unsigned long AFTER_EXTEND_CLAMP_DELAY_MS  = 150; // Wait after extending feed clamp in step 1
 const unsigned long AFTER_RETRACT_2X4_DELAY_MS   = 100; // Wait after retracting top clamp
@@ -138,7 +138,7 @@ void handleNowoodSequence() {
                 configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
                 retractFeedClamp();
                 delay(CLAMP_SETTLE_DELAY_MS);
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE + FEED_MOTOR_TRAVEL_PLUS_OFFSET);
+                moveFeedMotorToPosition(-(FEED_TRAVEL_DISTANCE + FEED_MOTOR_TRAVEL_PLUS_OFFSET));
                 nowoodStep = STEP_WAIT_FEED_REACH_TRAVEL;
             }
             break;

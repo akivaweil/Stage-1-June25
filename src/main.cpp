@@ -312,7 +312,11 @@ void setup() {
 
   feedMotor = engine.stepperConnectToPin(FEED_MOTOR_STEP_PIN);
   if (feedMotor) {
-    feedMotor->setDirectionPin(FEED_MOTOR_DIR_PIN);
+    // dirHighCountsUp = false inverts the dir pin polarity so that NEGATIVE
+    // step counts move physically toward the home sensor. Coordinate values
+    // throughout the codebase are negated to match; net hardware behavior is
+    // unchanged.
+    feedMotor->setDirectionPin(FEED_MOTOR_DIR_PIN, false);
     configureFeedMotorForNormalOperation();
     feedMotor->setCurrentPosition(0);
   } else {

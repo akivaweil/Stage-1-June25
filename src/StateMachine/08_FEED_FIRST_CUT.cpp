@@ -8,12 +8,11 @@
 //║ 📐 RELEVANT CONSTANTS                                               ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 // State-specific constants
-// Coordinate convention: NEGATIVE = toward home sensor (saw side); POSITIVE = away from sensor (load side).
-const float FEED_MOTOR_FIRST_RUN_START_POSITION = 1.2; // inches - retracted start position (away from sensor)
-const float FEED_MOTOR_FIRST_RUN_END_POSITION = -3.4; // inches - advanced end position (near home sensor)
-const float FEED_MOTOR_SECOND_RUN_START_POSITION = 1.2; // inches - retracted start (second run)
-const float FEED_MOTOR_SECOND_RUN_END_POSITION = -0.35; // inches - precision end (second run)
-const float FEED_MOTOR_MINIS_SECOND_RUN_OFFSET = 0.25; // inches - in Minis mode (2.65" squares), advance 0.25" less while clamped (added to second-run end so it lands closer to zero)
+const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
+const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end
+const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = 0.35; // inches - absolute position for second run end
+const float FEED_MOTOR_MINIS_SECOND_RUN_OFFSET = -0.25; // inches - in Minis mode (2.65" squares), advance 0.25" less while clamped
 const unsigned long FEED_CLAMP_DELAY_MS = 400; // Delay after extending feed clamp and retracting top clamp
 
 extern int getCurrentConfigMode();
@@ -32,7 +31,7 @@ extern int getCurrentConfigMode();
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 2: MOVE TO FIRST RUN START POSITION (+1.2 INCHES)               ║
+//║ STEP 2: MOVE TO FIRST RUN START POSITION (-1.2 INCHES)               ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
@@ -44,7 +43,7 @@ extern int getCurrentConfigMode();
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 5: MOVE TO FIRST RUN END POSITION (-3.4 INCHES, NEAR HOME)      ║
+//║ STEP 5: MOVE TO FIRST RUN END POSITION (3.4 INCHES)                  ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
@@ -56,7 +55,7 @@ extern int getCurrentConfigMode();
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 8: MOVE TO SECOND RUN START POSITION (+1.2 INCHES)             ║
+//║ STEP 8: MOVE TO SECOND RUN START POSITION (-1.2 INCHES)             ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
@@ -68,7 +67,7 @@ extern int getCurrentConfigMode();
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 11: MOVE TO SECOND RUN END POSITION (-0.35 INCHES)             ║
+//║ STEP 11: MOVE TO SECOND RUN END POSITION (2.0 INCHES)               ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗

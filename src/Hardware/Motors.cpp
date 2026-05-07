@@ -76,17 +76,14 @@ void moveCutMotorToHome() {
 
 void moveFeedMotorToTravel() {
     if (feedMotor) {
-        feedMotor->moveTo(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+        feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
     }
 }
 
 // NOTE: feed-motor "home" (the physical home sensor / post-homing rest pose)
-// is at coordinate -FEED_TRAVEL_DISTANCE — NOT at position 0. Position 0 is
+// is at coordinate FEED_TRAVEL_DISTANCE — NOT at position 0. Position 0 is
 // the fully pulled-back / load end, opposite the home sensor. The helpers
 // below move to position 0, which is NOT home.
-// CONVENTION: negative coordinates run toward the home sensor; positive runs
-// away from it (toward the load end). The dir pin is inverted in main.cpp to
-// keep the physical mapping consistent with this sign convention.
 void moveFeedMotorToZero() {
     if (feedMotor) {
         feedMotor->moveTo(0);
@@ -156,12 +153,11 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         return;
     }
 
-    // Step 1: Move toward home sensor until it triggers.
-    // With the inverted dir pin, runBackward() (decreasing step count) physically
-    // drives the carriage toward the home sensor.
+    // Step 1: Move toward home sensor until it triggers
     feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
 
-    feedMotor->runBackward();
+    // Try using runForward() instead of moveTo() for more reliable operation
+    feedMotor->runForward();
 
     // Verify motor started
     delay(100); // Small delay to let motor start
@@ -176,7 +172,7 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         static unsigned long lastRestartCheck = 0;
         if (millis() - lastRestartCheck >= 1000) {
             if (!feedMotor->isRunning()) {
-                feedMotor->runBackward();
+                feedMotor->runForward();
             }
             lastRestartCheck = millis();
         }
@@ -188,10 +184,10 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         }
     }
 
-    feedMotor->forceStopAndNewPosition(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+    feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
 
-    // Step 2: Move 0.15" away from sensor (toward load end = positive direction)
-    feedMotor->moveTo(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH + FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
+    // Step 2: Move to working position (offset from sensor)
+    feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
 
     // Wait for move to complete with timeout
     unsigned long moveStartTime = millis();
@@ -202,8 +198,8 @@ void homeFeedMotorBlocking(Bounce& homingSwitch) {
         }
     }
 
-    // Step 3: Re-zero so this offset position becomes -FEED_TRAVEL_DISTANCE
-    feedMotor->setCurrentPosition(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+    // Step 3: Set this position as the new zero
+    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
 
     configureFeedMotorForNormalOperation();
 }
@@ -227,9 +223,9 @@ bool homeFeedMotorNonBlocking(Bounce& homingSwitch) {
         feedMotorHomingStartTime = millis();
         feedMotorHomingLastRestartCheck = millis();
 
-        // Step 1: Start moving toward home sensor (runBackward with inverted dir pin)
+        // Step 1: Start moving toward home sensor
         feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-        feedMotor->runBackward();
+        feedMotor->runForward();
         feedMotorHomingStep = 1;
         return false; // Not complete yet
     }
@@ -248,23 +244,24 @@ bool homeFeedMotorNonBlocking(Bounce& homingSwitch) {
         // If motor stopped running unexpectedly, restart it
         if (millis() - feedMotorHomingLastRestartCheck >= 1000) {
             if (!feedMotor->isRunning()) {
-                feedMotor->runBackward();
+                feedMotor->runForward();
             }
             feedMotorHomingLastRestartCheck = millis();
         }
 
         if (homingSwitch.read() == LOW) {
-            // Home sensor detected — stop motor; sensor coordinate is -FEED_TRAVEL_DISTANCE
-            feedMotor->forceStopAndNewPosition(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+            // Home sensor detected - stop motor and move to step 2
+            feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
             feedMotorHomingStep = 2;
             return false; // Not complete yet
         }
     }
 
-    // Step 2: Move 0.15" away from sensor (positive direction = toward load end)
+    // Step 2: Move to working position
     if (feedMotorHomingStep == 2) {
         if (!feedMotor->isRunning()) {
-            feedMotor->moveTo(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH + FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
+            // Move to working position
+            feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
             feedMotorHomingStep = 3;
         }
         return false; // Not complete yet
@@ -273,8 +270,8 @@ bool homeFeedMotorNonBlocking(Bounce& homingSwitch) {
     // Step 3: Wait for positioning to complete
     if (feedMotorHomingStep == 3) {
         if (!feedMotor->isRunning()) {
-            // Re-zero so this offset position is labeled -FEED_TRAVEL_DISTANCE
-            feedMotor->setCurrentPosition(-FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
+            // Set working position as zero
+            feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
             configureFeedMotorForNormalOperation();
             feedMotorHomingInProgress = false;
             return true; // Complete!

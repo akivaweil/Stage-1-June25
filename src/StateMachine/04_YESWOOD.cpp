@@ -324,7 +324,7 @@ void handleFeedMotorReturnSequence() {
                 // Add FEED_PULLBACK_FEED_COMPENSATION so the wood lands at the
                 // same final position as a non-pullback cycle (it was retreated
                 // by FEED_PULLBACK_DISTANCE at YESWOOD entry).
-                moveFeedMotorToPosition(-(FEED_TRAVEL_DISTANCE + FEED_PULLBACK_FEED_COMPENSATION));
+                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE + FEED_PULLBACK_FEED_COMPENSATION);
                 yeswoodSubStep = 1;
             }
             break;
@@ -355,7 +355,7 @@ static void handleYeswoodPullback() {
                 if (feedMotor) {
                     float currentInches =
                         (float)feedMotor->getCurrentPosition() / FEED_MOTOR_STEPS_PER_INCH;
-                    moveFeedMotorToPosition(currentInches + FEED_PULLBACK_DISTANCE);
+                    moveFeedMotorToPosition(currentInches - FEED_PULLBACK_DISTANCE);
                 }
                 yeswoodPullbackStep = 3;
             }

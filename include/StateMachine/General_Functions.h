@@ -124,9 +124,7 @@ void moveCutMotorToCut();
 void moveCutMotorToHome();
 void moveFeedMotorToTravel();
 // NOTE: feed-motor coordinate 0 is the pulled-back / load end. Physical
-// "home" (the home sensor) is at coordinate -FEED_TRAVEL_DISTANCE.
-// Convention: NEGATIVE coordinates are toward the home sensor; POSITIVE
-// coordinates are away from it (toward the load end).
+// "home" (the home sensor) is at coordinate FEED_TRAVEL_DISTANCE.
 void moveFeedMotorToZero();
 void moveFeedMotorToPosition(float targetPositionInches);
 void stopCutMotor();

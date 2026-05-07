@@ -17,7 +17,7 @@ void activateRotationServo() {
         Servo* servo = getRotationServo();
         if (servo) {
             // Force servo write with robust control - no attach checks, just send the command
-            servo->write(ROTATION_SERVO_ACTIVE_POSITION);
+            servo->write(ROTATION_SERVO_HOME_POSITION + ROTATION_SERVO_ACTIVE_OFFSET);
         }
 
         rotationServoActiveStartTime = millis();

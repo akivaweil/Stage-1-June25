@@ -31,7 +31,7 @@ int reloadTimeCount = 0; // Number of reload times recorded
 float CUT_TRAVEL_DISTANCE = 9.2;
 float FEED_TRAVEL_DISTANCE = 3.43;
 int ROTATION_SERVO_HOME_POSITION = 14;   // Servo home position (degrees), adjustable via dashboard
-int ROTATION_SERVO_ACTIVE_POSITION = 108; // Servo active position (degrees), adjustable via dashboard
+const int ROTATION_SERVO_ACTIVE_OFFSET = 100; // Active position is always HOME + 100 degrees
 
 // EEPROM configuration constants
 const int CONFIG_EEPROM_SIZE = 2048; // Increase EEPROM size for configuration
@@ -39,7 +39,6 @@ const int CONFIG_OFFSET_3INCH = 0; // 3 Inch configuration at start
 const int CONFIG_OFFSET_MINIS = 512; // Minis configuration at offset 512
 const int CONFIG_MODE_ADDRESS = 1024; // Store active mode at 1024
 const int SERVO_HOME_EEPROM_ADDRESS = 1028;   // Rotation servo home position (independent of 3in/minis)
-const int SERVO_ACTIVE_EEPROM_ADDRESS = 1032; // Rotation servo active position (independent of 3in/minis)
 const float MINIS_ROTATION_CLAMP_ACTIVATION_DISTANCE_DEFAULT = 6.5;
 const float MINIS_CLAMP_EXTRA_BUFFER = 0.5;
 
@@ -91,8 +90,8 @@ String getStateName(SystemState state) {
         case ERROR_RESET: return "ERROR_RESET";
         case SUCTION_ERROR: return "SUCTION_ERROR";
         case Cut_Motor_Homing_Error: return "CUT_MOTOR_ERROR";
-        case RETURNING_YES_2x4: return "RETURNING_YES_2x4";
-        case RETURNING_NO_2x4: return "RETURNING_NO_2x4";
+        case YESWOOD: return "YESWOOD";
+        case NOWOOD: return "NOWOOD";
         case FEED_FIRST_CUT: return "FEED_FIRST_CUT";
         case FEED_WOOD_FWD_ONE: return "FEED_WOOD_FWD_ONE";
         case RELOAD: return "RELOAD";
@@ -133,7 +132,7 @@ bool hasSensorStatusChanged() {
 
 bool hasClampStatusChanged() {
     return (clampStatus.feedClamp != previousClampStatus.feedClamp ||
-            clampStatus._2x4SecureClamp != previousClampStatus._2x4SecureClamp ||
+            clampStatus.topClamp != previousClampStatus.topClamp ||
             clampStatus.rotationClamp != previousClampStatus.rotationClamp);
 }
 
@@ -231,7 +230,11 @@ struct ConfigurationData {
     unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS;
     unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
     unsigned long SENSOR_STABILIZATION_DELAY_MS;
-    
+
+    // Feed Pullback (YESWOOD entry — wood-present path only)
+    float FEED_PULLBACK_DISTANCE;
+    float FEED_PULLBACK_FEED_COMPENSATION;
+
     // Version and checksum
     uint32_t version;
     uint32_t checksum;
@@ -290,7 +293,11 @@ ConfigurationData getDefaultConfiguration() {
     config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
     config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
     config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
-    
+
+    // Feed Pullback defaults
+    config.FEED_PULLBACK_DISTANCE = FEED_PULLBACK_DISTANCE;
+    config.FEED_PULLBACK_FEED_COMPENSATION = FEED_PULLBACK_FEED_COMPENSATION;
+
     config.version = 2;
     config.checksum = 0; // Will be calculated
     
@@ -385,7 +392,16 @@ void applyConfiguration(const ConfigurationData& config) {
     CUT_MOTOR_NORMAL_SPEED = config.CUT_MOTOR_NORMAL_SPEED;
     FEED_MOTOR_OFFSET_FROM_SENSOR = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
     ROTATION_CLAMP_EXTEND_DURATION_MS = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
-    
+
+    // Feed pullback (apply only when stored values look sane; old EEPROM
+    // layouts predating these fields may contain garbage in this region)
+    if (config.FEED_PULLBACK_DISTANCE >= 0.0f && config.FEED_PULLBACK_DISTANCE <= 5.0f) {
+        FEED_PULLBACK_DISTANCE = config.FEED_PULLBACK_DISTANCE;
+    }
+    if (config.FEED_PULLBACK_FEED_COMPENSATION >= 0.0f && config.FEED_PULLBACK_FEED_COMPENSATION <= 5.0f) {
+        FEED_PULLBACK_FEED_COMPENSATION = config.FEED_PULLBACK_FEED_COMPENSATION;
+    }
+
     // Update dynamic configuration after applying basic settings
     updateDynamicConfig();
 }
@@ -472,11 +488,17 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
     for (size_t i = 0; i < sizeof(config.CUT_MOTOR_VERIFICATION_DELAY_MS); i++) checksum += data[i];
     data = (const uint8_t*)&config.SENSOR_STABILIZATION_DELAY_MS;
     for (size_t i = 0; i < sizeof(config.SENSOR_STABILIZATION_DELAY_MS); i++) checksum += data[i];
-    
+
+    // Feed Pullback
+    data = (const uint8_t*)&config.FEED_PULLBACK_DISTANCE;
+    for (size_t i = 0; i < sizeof(config.FEED_PULLBACK_DISTANCE); i++) checksum += data[i];
+    data = (const uint8_t*)&config.FEED_PULLBACK_FEED_COMPENSATION;
+    for (size_t i = 0; i < sizeof(config.FEED_PULLBACK_FEED_COMPENSATION); i++) checksum += data[i];
+
     // Version
     data = (const uint8_t*)&config.version;
     for (size_t i = 0; i < sizeof(config.version); i++) checksum += data[i];
-    
+
     return checksum;
 }
 
@@ -536,7 +558,56 @@ void loadConfiguration() {
     }
     
     if (!isValid) {
-        config = getDefaultConfiguration();
+        // ╔═══╗ Graceful schema migration ════════════════════════════════════
+        // If the magic number is intact, the EEPROM was written by an older
+        // firmware whose struct layout differed (e.g. fewer fields). Rather
+        // than nuking every setting, keep each field whose value falls in a
+        // sane range and default only those that look like garbage. New
+        // fields appended to the struct read whatever bytes follow the old
+        // data, so they'll usually fail the range check and get defaulted —
+        // exactly what we want. Old fields whose offset was preserved across
+        // the schema change keep their user-set values.
+        ConfigurationData migrated = getDefaultConfiguration();
+        if (config.magic == CONFIG_MAGIC) {
+            #define KEEP_OR_DEFAULT(field, lo, hi) \
+                do { if (config.field >= (lo) && config.field <= (hi)) migrated.field = config.field; } while(0)
+
+            KEEP_OR_DEFAULT(CUT_MOTOR_STEPS_PER_INCH,            50.0f,  10000.0f);
+            KEEP_OR_DEFAULT(FEED_MOTOR_STEPS_PER_INCH,           50.0f,  10000.0f);
+            KEEP_OR_DEFAULT(CUT_TRAVEL_DISTANCE,                  0.1f,     20.0f);
+            KEEP_OR_DEFAULT(FEED_TRAVEL_DISTANCE,                 0.1f,     10.0f);
+            KEEP_OR_DEFAULT(CUT_MOTOR_INCREMENTAL_MOVE_INCHES,    0.01f,     2.0f);
+            KEEP_OR_DEFAULT(CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES,0.05f,     5.0f);
+            KEEP_OR_DEFAULT(CUT_MOTOR_NORMAL_SPEED,               0.1f,     50.0f);
+            KEEP_OR_DEFAULT(CUT_MOTOR_NORMAL_ACCELERATION,        0.5f,    500.0f);
+            KEEP_OR_DEFAULT(CUT_MOTOR_RETURN_SPEED,             100.0f, 200000.0f);
+            KEEP_OR_DEFAULT(CUT_MOTOR_HOMING_SPEED,             100.0f, 200000.0f);
+            KEEP_OR_DEFAULT(FEED_MOTOR_NORMAL_SPEED,            100.0f, 200000.0f);
+            KEEP_OR_DEFAULT(FEED_MOTOR_NORMAL_ACCELERATION,     100.0f, 500000.0f);
+            KEEP_OR_DEFAULT(FEED_MOTOR_RETURN_SPEED,            100.0f, 200000.0f);
+            KEEP_OR_DEFAULT(FEED_MOTOR_RETURN_ACCELERATION,     100.0f, 500000.0f);
+            KEEP_OR_DEFAULT(FEED_MOTOR_HOMING_SPEED,            100.0f, 200000.0f);
+            KEEP_OR_DEFAULT(ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS, 100UL, 60000UL);
+            KEEP_OR_DEFAULT(ROTATION_CLAMP_EXTEND_DURATION_MS,      200UL,  5000UL);
+            KEEP_OR_DEFAULT(CUT_HOME_TIMEOUT,                       100UL, 60000UL);
+            KEEP_OR_DEFAULT(TA_SIGNAL_DURATION,                     100UL, 60000UL);
+            KEEP_OR_DEFAULT(ROTATION_CLAMP_ACTIVATION_DISTANCE,      0.1f,    20.0f);
+            KEEP_OR_DEFAULT(ROTATION_SERVO_ACTIVATION_DISTANCE,      0.1f,    20.0f);
+            KEEP_OR_DEFAULT(TA_SIGNAL_OFFSET_FROM_END,               0.01f,    5.0f);
+            KEEP_OR_DEFAULT(ROTATION_SERVO_RETURN_DELAY_MS,           0UL,  60000UL);
+            KEEP_OR_DEFAULT(FEED_MOTOR_RETURN_DISTANCE,              0.1f,    20.0f);
+            KEEP_OR_DEFAULT(FEED_MOTOR_OFFSET_FROM_SENSOR,           0.01f,    1.0f);
+            KEEP_OR_DEFAULT(CUT_MOTOR_RECOVERY_TIMEOUT_MS,           50UL,  60000UL);
+            KEEP_OR_DEFAULT(CUT_MOTOR_VERIFICATION_DELAY_MS,          1UL,   5000UL);
+            KEEP_OR_DEFAULT(SENSOR_STABILIZATION_DELAY_MS,            1UL,   5000UL);
+            KEEP_OR_DEFAULT(FEED_PULLBACK_DISTANCE,                   0.0f,    1.0f);
+            KEEP_OR_DEFAULT(FEED_PULLBACK_FEED_COMPENSATION,          0.0f,    1.0f);
+            #undef KEEP_OR_DEFAULT
+            Serial.println("Configuration migrated from older firmware schema (sane fields preserved)");
+        } else {
+            Serial.println("Configuration loaded: Using default values");
+        }
+        config = migrated;
 
         if (currentConfigMode == 1) {
             ConfigurationData baselineConfig;
@@ -554,7 +625,6 @@ void loadConfiguration() {
 
         applyConfiguration(config);
         saveConfiguration();
-        Serial.println("Configuration loaded: Using default values");
     } else {
         Serial.println("Configuration loaded: Using stored values");
         applyConfiguration(config);
@@ -611,7 +681,10 @@ void saveConfiguration() {
     config.CUT_MOTOR_RECOVERY_TIMEOUT_MS = CUT_MOTOR_RECOVERY_TIMEOUT_MS;
     config.CUT_MOTOR_VERIFICATION_DELAY_MS = CUT_MOTOR_VERIFICATION_DELAY_MS;
     config.SENSOR_STABILIZATION_DELAY_MS = SENSOR_STABILIZATION_DELAY_MS;
-    
+
+    config.FEED_PULLBACK_DISTANCE = FEED_PULLBACK_DISTANCE;
+    config.FEED_PULLBACK_FEED_COMPENSATION = FEED_PULLBACK_FEED_COMPENSATION;
+
     config.version = 2;
     config.checksum = calculateChecksum(config);
     
@@ -684,20 +757,17 @@ void setFeedTravelDistance(float value) {
     }
 }
 
-// Load/save rotation servo positions from EEPROM (separate from 3 Inch/Minis config)
+// Load/save rotation servo home position from EEPROM (separate from 3 Inch/Minis config)
 void loadServoPositionsFromEEPROM() {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
-    int storedHome = 14, storedActive = 108;
+    int storedHome = 14;
     EEPROM.get(SERVO_HOME_EEPROM_ADDRESS, storedHome);
-    EEPROM.get(SERVO_ACTIVE_EEPROM_ADDRESS, storedActive);
     if (storedHome >= 0 && storedHome <= 180) ROTATION_SERVO_HOME_POSITION = storedHome;
-    if (storedActive >= 0 && storedActive <= 180) ROTATION_SERVO_ACTIVE_POSITION = storedActive;
 }
 
 void saveServoPositionsToEEPROM() {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
     EEPROM.put(SERVO_HOME_EEPROM_ADDRESS, ROTATION_SERVO_HOME_POSITION);
-    EEPROM.put(SERVO_ACTIVE_EEPROM_ADDRESS, ROTATION_SERVO_ACTIVE_POSITION);
     EEPROM.commit();
 }
 
@@ -813,7 +883,7 @@ void updateSensorStatus() {
 // Update clamp status
 void updateClampStatus() {
     clampStatus.feedClamp = digitalRead(FEED_CLAMP) == HIGH;
-    clampStatus._2x4SecureClamp = digitalRead(_2x4_SECURE_CLAMP) == HIGH;
+    clampStatus.topClamp = digitalRead(TOP_CLAMP) == HIGH;
     clampStatus.rotationClamp = digitalRead(ROTATION_CLAMP) == HIGH;
 }
 
@@ -1036,7 +1106,7 @@ void broadcastClampStatus() {
             JsonDocument doc;
             doc["type"] = "clamp_status";
             doc["feedClamp"] = clampStatus.feedClamp;
-            doc["_2x4SecureClamp"] = clampStatus._2x4SecureClamp;
+            doc["topClamp"] = clampStatus.topClamp;
             doc["rotationClamp"] = clampStatus.rotationClamp;
             
             String message;
@@ -1278,9 +1348,14 @@ void setupWebSocketDashboard() {
     // Initialize dashboard data
     initializeDashboardData();
     
-    // Setup web server to serve the dashboard
+    // Setup web server to serve the dashboard.
+    // Use beginResponse_P with explicit length so PROGMEM-stored HTML serves
+    // correctly even when strlen() of the symbol is unreliable at runtime.
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse(200, "text/html", dashboardHTML);
+        AsyncWebServerResponse *response = request->beginResponse_P(
+            200, "text/html",
+            (const uint8_t*)dashboardHTML,
+            sizeof(dashboardHTML) - 1);
         response->addHeader("Connection", "close");
         request->send(response);
     });
@@ -1299,16 +1374,24 @@ void setupWebSocketDashboard() {
     Serial.println("/");
 }
 
-// Helper to populate JsonObject with config data
+// Helper to populate JsonObject with config data — order matches the
+// Configuration card on the dashboard (Motion → Rotation → Transfer Arm → Pullback).
 void populateConfigJson(const ConfigurationData& config, JsonObject obj) {
-    obj["cut_travel_distance"] = config.CUT_TRAVEL_DISTANCE;
-    obj["feed_travel_distance"] = config.FEED_TRAVEL_DISTANCE;
-    obj["feed_motor_offset_from_sensor"] = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
-    obj["cut_motor_normal_speed"] = config.CUT_MOTOR_NORMAL_SPEED;
-    obj["rotation_clamp_extend_ms"] = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
+    // Motion
+    obj["cut_travel_distance"]              = config.CUT_TRAVEL_DISTANCE;
+    obj["cut_motor_normal_speed"]           = config.CUT_MOTOR_NORMAL_SPEED;
+    obj["feed_travel_distance"]             = config.FEED_TRAVEL_DISTANCE;
+    obj["feed_motor_offset_from_sensor"]    = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
+    // Rotation (rotation_servo_home_position lives in its own EEPROM region;
+    // download_all_configs appends it at the top level as `servo_home_position`)
     obj["rotation_clamp_activation_distance"] = config.ROTATION_CLAMP_ACTIVATION_DISTANCE;
     obj["rotation_servo_activation_distance"] = config.ROTATION_SERVO_ACTIVATION_DISTANCE;
-    obj["ta_signal_offset_from_end"] = config.TA_SIGNAL_OFFSET_FROM_END;
+    obj["rotation_clamp_extend_ms"]         = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
+    // Transfer Arm
+    obj["ta_signal_offset_from_end"]        = config.TA_SIGNAL_OFFSET_FROM_END;
+    // Pullback
+    obj["feed_pullback_distance"]           = config.FEED_PULLBACK_DISTANCE;
+    obj["feed_pullback_feed_compensation"]  = config.FEED_PULLBACK_FEED_COMPENSATION;
 }
 
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -1456,16 +1539,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             } else {
                                 response["error"] = "Value out of range (0-180)";
                             }
-                        } else if (configKey == "rotation_servo_active_position") {
-                            int newValue = doc["value"];
-                            if (newValue >= 0 && newValue <= 180) {
-                                ROTATION_SERVO_ACTIVE_POSITION = newValue;
-                                saveServoPositionsToEEPROM();
-                                response["value"] = newValue;
-                                addEventToLog("Configuration updated: ROTATION_SERVO_ACTIVE_POSITION = " + String(newValue) + " deg");
-                            } else {
-                                response["error"] = "Value out of range (0-180)";
-                            }
                         } else if (configKey == "ta_signal_offset_from_end") {
                             float newValue = doc["value"];
                             if (newValue >= 0.01 && newValue <= 5.0) {
@@ -1475,6 +1548,26 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                                 addEventToLog("Configuration updated: TA_SIGNAL_OFFSET_FROM_END = " + String(newValue) + " in");
                             } else {
                                 response["error"] = "Value out of range (0.01-5.0)";
+                            }
+                        } else if (configKey == "feed_pullback_distance") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.0 && newValue <= 1.0) {
+                                FEED_PULLBACK_DISTANCE = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: FEED_PULLBACK_DISTANCE = " + String(newValue) + " in");
+                            } else {
+                                response["error"] = "Value out of range (0.0-1.0)";
+                            }
+                        } else if (configKey == "feed_pullback_feed_compensation") {
+                            float newValue = doc["value"];
+                            if (newValue >= 0.0 && newValue <= 1.0) {
+                                FEED_PULLBACK_FEED_COMPENSATION = newValue;
+                                saveConfiguration();
+                                response["value"] = newValue;
+                                addEventToLog("Configuration updated: FEED_PULLBACK_FEED_COMPENSATION = " + String(newValue) + " in");
+                            } else {
+                                response["error"] = "Value out of range (0.0-1.0)";
                             }
                         } else {
                             response["error"] = "Unknown configuration key";
@@ -1510,21 +1603,22 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             serializeJson(response, message);
                             client->text(message);
                             
-                            // Also send updated config values
+                            // Also send updated config values (dashboard order)
                             JsonDocument configDoc;
                             configDoc["type"] = "all_config";
                             configDoc["config_mode"] = currentConfigMode;
-                            configDoc["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
-                            configDoc["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
-                            configDoc["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
-                            configDoc["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
-                            configDoc["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                            configDoc["cut_travel_distance"]              = CUT_TRAVEL_DISTANCE;
+                            configDoc["cut_motor_normal_speed"]           = CUT_MOTOR_NORMAL_SPEED;
+                            configDoc["feed_travel_distance"]             = FEED_TRAVEL_DISTANCE;
+                            configDoc["feed_motor_offset_from_sensor"]    = FEED_MOTOR_OFFSET_FROM_SENSOR;
+                            configDoc["rotation_servo_home_position"]     = ROTATION_SERVO_HOME_POSITION;
                             configDoc["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
                             configDoc["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
-                            configDoc["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
-                            configDoc["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
-                            configDoc["ta_signal_offset_from_end"] = TA_SIGNAL_OFFSET_FROM_END;
-                            
+                            configDoc["rotation_clamp_extend_ms"]         = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                            configDoc["ta_signal_offset_from_end"]        = TA_SIGNAL_OFFSET_FROM_END;
+                            configDoc["feed_pullback_distance"]           = FEED_PULLBACK_DISTANCE;
+                            configDoc["feed_pullback_feed_compensation"]  = FEED_PULLBACK_FEED_COMPENSATION;
+
                             String configMessage;
                             serializeJson(configDoc, configMessage);
                             ws.textAll(configMessage); // Broadcast to all clients
@@ -1566,8 +1660,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             response["value"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
                         } else if (configKey == "rotation_servo_home_position") {
                             response["value"] = ROTATION_SERVO_HOME_POSITION;
-                        } else if (configKey == "rotation_servo_active_position") {
-                            response["value"] = ROTATION_SERVO_ACTIVE_POSITION;
                         } else if (configKey == "ta_signal_offset_from_end") {
                             response["value"] = TA_SIGNAL_OFFSET_FROM_END;
                         } else {
@@ -1579,21 +1671,27 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         client->text(message);
                         
                     } else if (type == "request_all_config") {
-                        // Send all configuration values at once
+                        // Send all configuration values at once. Field order
+                        // matches the Configuration card on the dashboard.
                         JsonDocument response;
                         response["type"] = "all_config";
                         response["config_mode"] = currentConfigMode;
-                        response["cut_travel_distance"] = CUT_TRAVEL_DISTANCE;
-                        response["feed_travel_distance"] = FEED_TRAVEL_DISTANCE;
-                        response["feed_motor_offset_from_sensor"] = FEED_MOTOR_OFFSET_FROM_SENSOR;
-                        response["cut_motor_normal_speed"] = CUT_MOTOR_NORMAL_SPEED;
-                        response["rotation_clamp_extend_ms"] = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                        // Motion
+                        response["cut_travel_distance"]              = CUT_TRAVEL_DISTANCE;
+                        response["cut_motor_normal_speed"]           = CUT_MOTOR_NORMAL_SPEED;
+                        response["feed_travel_distance"]             = FEED_TRAVEL_DISTANCE;
+                        response["feed_motor_offset_from_sensor"]    = FEED_MOTOR_OFFSET_FROM_SENSOR;
+                        // Rotation
+                        response["rotation_servo_home_position"]     = ROTATION_SERVO_HOME_POSITION;
                         response["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
                         response["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
-                        response["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
-                        response["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
-                        response["ta_signal_offset_from_end"] = TA_SIGNAL_OFFSET_FROM_END;
-                        
+                        response["rotation_clamp_extend_ms"]         = ROTATION_CLAMP_EXTEND_DURATION_MS;
+                        // Transfer Arm
+                        response["ta_signal_offset_from_end"]        = TA_SIGNAL_OFFSET_FROM_END;
+                        // Pullback
+                        response["feed_pullback_distance"]           = FEED_PULLBACK_DISTANCE;
+                        response["feed_pullback_feed_compensation"]  = FEED_PULLBACK_FEED_COMPENSATION;
+
                         String message;
                         serializeJson(response, message);
                         client->text(message);
@@ -1613,7 +1711,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         if (configMinis.magic == CONFIG_MAGIC) populateConfigJson(configMinis, objMinis);
                         
                         response["servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
-                        response["servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
                         
                         String message;
                         serializeJson(response, message);
@@ -1664,11 +1761,9 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         
                         // Parse servo config
                         if (!doc["servo_home_position"].isNull()) ROTATION_SERVO_HOME_POSITION = doc["servo_home_position"];
-                        if (!doc["servo_active_position"].isNull()) ROTATION_SERVO_ACTIVE_POSITION = doc["servo_active_position"];
-                        
+
                         EEPROM.put(SERVO_HOME_EEPROM_ADDRESS, ROTATION_SERVO_HOME_POSITION);
-                        EEPROM.put(SERVO_ACTIVE_EEPROM_ADDRESS, ROTATION_SERVO_ACTIVE_POSITION);
-                        
+
                         EEPROM.commit();
                         
                         // Reload and apply the new configuration
@@ -1693,7 +1788,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                         configDoc["rotation_clamp_activation_distance"] = ROTATION_CLAMP_ACTIVATION_DISTANCE;
                         configDoc["rotation_servo_activation_distance"] = ROTATION_SERVO_ACTIVATION_DISTANCE;
                         configDoc["rotation_servo_home_position"] = ROTATION_SERVO_HOME_POSITION;
-                        configDoc["rotation_servo_active_position"] = ROTATION_SERVO_ACTIVE_POSITION;
                         configDoc["ta_signal_offset_from_end"] = TA_SIGNAL_OFFSET_FROM_END;
                         
                         String configMessage;
@@ -1754,7 +1848,7 @@ void incrementCuttingCycleCounter() {
     broadcastPerformanceMetrics();
 }
 
-// Start reload time timer when exiting RETURNING_NO_2x4 state
+// Start reload time timer when exiting NOWOOD state
 void startReloadTimer() {
     reloadTimeStart = millis();
     reloadTimeActive = true;
@@ -1808,7 +1902,7 @@ void onStateChange(SystemState newState) {
     // Skip immediate broadcast during critical motor transitions to avoid blocking
     // The periodic update will catch it within 1 second
     bool isCriticalTransition = (oldState == CUTTING && 
-                                 (newState == RETURNING_YES_2x4 || newState == RETURNING_NO_2x4));
+                                 (newState == YESWOOD || newState == NOWOOD));
     
     if (!isCriticalTransition) {
         broadcastSystemStatus();

@@ -43,8 +43,8 @@ enum SystemState {
     ERROR_RESET,
     SUCTION_ERROR,
     Cut_Motor_Homing_Error,
-    RETURNING_YES_2x4,
-    RETURNING_NO_2x4,
+    YESWOOD,
+    NOWOOD,
     FEED_FIRST_CUT,
     FEED_WOOD_FWD_ONE,
     RELOAD
@@ -72,7 +72,7 @@ extern unsigned long errorStartTime;
 // Pin definitions and constants
 extern const int TRANSFER_ARM_SIGNAL_PIN;
 extern const int FEED_CLAMP;
-extern const int _2x4_SECURE_CLAMP;
+extern const int TOP_CLAMP;
 extern const int ROTATION_CLAMP;
 extern const int STATUS_LED_RED;
 extern const int STATUS_LED_YELLOW;
@@ -90,8 +90,8 @@ void sendSignalToTA();
 //* ************************************************************************
 void extendFeedClamp();
 void retractFeedClamp();
-void extend2x4SecureClamp();
-void retract2x4SecureClamp();
+void extendTopClamp();
+void retractTopClamp();
 void extendRotationClamp();
 void retractRotationClamp();
 
@@ -123,7 +123,9 @@ void configureFeedMotorForSlowOperation(float speedMultiplier);
 void moveCutMotorToCut();
 void moveCutMotorToHome();
 void moveFeedMotorToTravel();
-void moveFeedMotorToHome();
+// NOTE: feed-motor coordinate 0 is the pulled-back / load end. Physical
+// "home" (the home sensor) is at coordinate FEED_TRAVEL_DISTANCE.
+void moveFeedMotorToZero();
 void moveFeedMotorToPosition(float targetPositionInches);
 void stopCutMotor();
 void stopFeedMotor();
@@ -147,7 +149,7 @@ bool shouldStartCycle();
 void activateRotationServo();
 void returnRotationServoHome();
 void handleTASignalTiming();
-void moveFeedMotorToPostCutHome();
+void moveFeedMotorToPostCutZero();
 
 //* ************************************************************************
 //* ************************* FLAG MANAGEMENT FUNCTIONS ********************

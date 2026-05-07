@@ -1,6 +1,7 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
 #include "StateMachine/00_STARTUP.h"
+#include "StateMachine/04_YESWOOD.h"
 #include "StateMachine/ErrorHandlers.h"
 #include "StateMachine/11_ERROR_RESET.h"
 #include "StateMachine/09_SUCTION_ERROR.h"
@@ -39,8 +40,8 @@ void executeIdleState();
 void executeFeedFirstCutState();
 void executeFeedWoodFwdOneState();
 void executeCuttingState();
-void executeReturningYes2x4State();
-void executeReturningNo2x4State();
+void executeYeswoodState();
+void executeNowoodState();
 void executeReloadState();
 
 // Forward declarations for state lifecycle functions
@@ -50,8 +51,8 @@ void onEnterIdleState();
 void onEnterFeedFirstCutState();
 void onEnterFeedWoodFwdOneState();
 void onEnterCuttingState();
-void onEnterReturningYes2x4State();
-void onEnterReturningNo2x4State();
+void onEnterYeswoodState();
+void onEnterNowoodState();
 void onEnterReloadState();
 
 void onExitStartupState();
@@ -60,8 +61,8 @@ void onExitIdleState();
 void onExitFeedFirstCutState();
 void onExitFeedWoodFwdOneState();
 void onExitCuttingState();
-void onExitReturningYes2x4State();
-void onExitReturningNo2x4State();
+void onExitYeswoodState();
+void onExitNowoodState();
 void onExitReloadState();
 
 void executeStateMachine() {
@@ -91,11 +92,11 @@ void executeStateMachine() {
         case CUTTING:
             executeCuttingState();
             break;
-        case RETURNING_YES_2x4:
-            executeReturningYes2x4State();
+        case YESWOOD:
+            executeYeswoodState();
             break;
-        case RETURNING_NO_2x4:
-            executeReturningNo2x4State();
+        case NOWOOD:
+            executeNowoodState();
             break;
         case RELOAD:
             executeReloadState();
@@ -113,6 +114,11 @@ void executeStateMachine() {
             handleCutMotorErrorState();
             break;
     }
+
+    // Run autonomous post-forward feed pullback prep. Armed by YESWOOD's
+    // continuous-mode branch, it ticks here so the feed clamp retract +
+    // 0.5" backstep + re-extend overlaps with CUTTING step 0's setup.
+    tickYeswoodPullbackPrep();
 }
 
 void changeState(SystemState newState) {
@@ -125,8 +131,8 @@ void changeState(SystemState newState) {
             case FEED_FIRST_CUT: onExitFeedFirstCutState(); break;
             case FEED_WOOD_FWD_ONE: onExitFeedWoodFwdOneState(); break;
             case CUTTING: onExitCuttingState(); break;
-            case RETURNING_YES_2x4: onExitReturningYes2x4State(); break;
-            case RETURNING_NO_2x4: onExitReturningNo2x4State(); break;
+            case YESWOOD: onExitYeswoodState(); break;
+            case NOWOOD: onExitNowoodState(); break;
             case RELOAD: onExitReloadState(); break;
             // Error states don't have onExit handlers
             default: break;
@@ -146,8 +152,8 @@ void changeState(SystemState newState) {
             case FEED_FIRST_CUT: onEnterFeedFirstCutState(); break;
             case FEED_WOOD_FWD_ONE: onEnterFeedWoodFwdOneState(); break;
             case CUTTING: onEnterCuttingState(); break;
-            case RETURNING_YES_2x4: onEnterReturningYes2x4State(); break;
-            case RETURNING_NO_2x4: onEnterReturningNo2x4State(); break;
+            case YESWOOD: onEnterYeswoodState(); break;
+            case NOWOOD: onEnterNowoodState(); break;
             case RELOAD: onEnterReloadState(); break;
             // Error states don't have onEnter handlers
             default: break;
@@ -386,8 +392,8 @@ void printStateChange() {
         //     case FEED_FIRST_CUT: Serial.println("FEED_FIRST_CUT"); break;
         //     case FEED_WOOD_FWD_ONE: Serial.println("FEED_WOOD_FWD_ONE"); break;
         //     case CUTTING: Serial.println("CUTTING"); break;
-        //     case RETURNING_YES_2x4: Serial.println("RETURNING_YES_2x4"); break;
-        //     case RETURNING_NO_2x4: Serial.println("RETURNING_NO_2x4"); break;
+        //     case YESWOOD: Serial.println("YESWOOD"); break;
+        //     case NOWOOD: Serial.println("NOWOOD"); break;
         //     case ERROR: Serial.println("ERROR"); break;
         //     case ERROR_RESET: Serial.println("ERROR_RESET"); break;
         //     case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
@@ -416,10 +422,10 @@ void handleCommonOperations() {
     // Flip rotationServoKnownHome true once the post-command travel buffer elapses.
     updateRotationServoHomeStatus();
     
-    // Check for cut motor hitting home sensor during RETURNING_YES_2x4 return
-    extern bool cutMotorInReturningYes2x4Return; // This global flag is still in main.cpp
-    if (cutMotorInReturningYes2x4Return && cutMotor && cutMotor->isRunning() && cutHomingSwitch.read() == HIGH) {
-        //serial.println("Cut motor hit homing sensor during RETURNING_YES_2x4 return - stopping immediately!");
+    // Check for cut motor hitting home sensor during YESWOOD return
+    extern bool cutMotorInYeswoodReturn; // This global flag is still in main.cpp
+    if (cutMotorInYeswoodReturn && cutMotor && cutMotor->isRunning() && cutHomingSwitch.read() == HIGH) {
+        //serial.println("Cut motor hit homing sensor during YESWOOD return - stopping immediately!");
         cutMotor->forceStopAndNewPosition(0);  // Stop immediately and set position to 0
         delay(50); // Allow sensor to settle after force-stop to prevent false negative verification
     }
@@ -494,25 +500,29 @@ void handleCommonOperations() {
         }
     }
 
-    // Handle Rotation Clamp retraction after configured duration (later for NO_2x4 state)
-    // Check if wood present to determine if we'll need extra time
-    // Only retract if either: 1) wood present (normal timing), or 2) no wood AND extra time has passed
-    if (rotationClampIsExtended) {
+    // Handle Rotation Clamp retraction after configured hold duration.
+    // Hold time is measured from when the servo rotates to ACTIVE — not from when
+    // the clamp extends — so the dashboard "Rotation Clamp Hold (ms)" represents
+    // post-rotation hold, not extension-to-retraction span.
+    // Gate: rotationServoActiveStartTime must be > rotationClampExtendTime, which is
+    // only true once the servo has activated AFTER this cycle's clamp extension
+    // (since servo activation distance > clamp activation distance during cutting).
+    if (rotationClampIsExtended && rotationServoActiveStartTime > rotationClampExtendTime) {
         unsigned long rotationClampRetractDelay = ROTATION_CLAMP_EXTEND_DURATION_MS;
-        
+
         // In Minis mode (config mode 1), add an additional fixed 50ms
         // so the catcher stays engaged longer than in 3 Inch mode.
         if (getCurrentConfigMode() == 1) {
             rotationClampRetractDelay += 50;
         }
-        
-        // Add extra delay if no wood detected (applies during CUTTING and RETURNING_NO_2x4)
+
+        // Add extra delay if no wood detected (applies during CUTTING and NOWOOD)
         if (!get2x4Present()) {
-            extern unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS; // From 05_RETURNING_No_2x4.cpp
+            extern unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS; // From 05_NOWOOD.cpp
             rotationClampRetractDelay += ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS; // Extra time for NO_2x4 scenario
         }
-        
-        if (millis() - rotationClampExtendTime >= rotationClampRetractDelay) {
+
+        if (millis() - rotationServoActiveStartTime >= rotationClampRetractDelay) {
             retractRotationClamp();
             //serial.println("Rotation Clamp retracted after configured duration.");
         }

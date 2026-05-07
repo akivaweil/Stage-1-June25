@@ -13,6 +13,9 @@
 unsigned long taSignalDelayStartTime = 0;
 bool taSignalDelayPending = false;
 
+// Tracks when the TA signal last went LOW (set by us when it transitions HIGH→LOW)
+extern unsigned long taSignalOffTime;
+
 void sendSignalToTA() {
   // Instead of setting HIGH immediately, start a non-blocking delay
   // Check config mode: if Minis mode (1), add 500ms delay. Otherwise no delay.
@@ -55,5 +58,6 @@ void handleTASignalTiming() {
   if (taSignalActive && millis() - signalTAStartTime >= TA_SIGNAL_DURATION) {
     digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)
     taSignalActive = false;
+    taSignalOffTime = millis();
   }
 }

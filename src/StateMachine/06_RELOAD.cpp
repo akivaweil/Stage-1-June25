@@ -1,7 +1,12 @@
+#include <Arduino.h>
 #include "StateMachine/06_RELOAD.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
+
+// Stagger timing for reload-mode clamp transitions
+static const unsigned long RELOAD_TOP_CLAMP_RETRACT_LEAD_MS = 100; // On entry: top clamp retracts this many ms before feed clamp
+static const unsigned long RELOAD_FEED_CLAMP_EXTEND_LEAD_MS = 100; // On exit:  feed clamp extends this many ms before top clamp (matches top clamp extension duration so feed is fully seated throughout)
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔄 RELOAD STATE                                                      ║
@@ -32,9 +37,10 @@ void onEnterReloadState() {
     // Set flag
     setIsReloadMode(true);
 
-    // Ensure clamps are properly positioned for reload mode
+    // Stagger clamp retraction: top clamp first, then feed clamp 100ms later
+    retractTopClamp();
+    delay(RELOAD_TOP_CLAMP_RETRACT_LEAD_MS);
     retractFeedClamp();
-    retract2x4SecureClamp();
     showBlueLed();
 
     // Reset any state flags that might be set
@@ -42,6 +48,12 @@ void onEnterReloadState() {
 }
 
 void onExitReloadState() {
+    // Stagger clamp extension on exit: feed clamp first, then top clamp after the lead time
+    // (lead matches top clamp's ~100ms extension stroke so feed is fully seated throughout)
+    extendFeedClamp();
+    delay(RELOAD_FEED_CLAMP_EXTEND_LEAD_MS);
+    extendTopClamp();
+
     // Cleanup when exiting reload mode
     setIsReloadMode(false);
     turnBlueLedOff();

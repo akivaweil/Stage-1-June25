@@ -43,7 +43,7 @@ const int WOOD_SUCTION_CONFIRM_SENSOR = 39;  // Confirms wood is grabbed by tran
 //╚═══╝ ════════════════════════════════════════════════════════ ╚═══╝
 // Pneumatic clamp control pins (HIGH = extend, LOW = retract)
 const int FEED_CLAMP = 36;         // Clamps wood during feed positioning
-const int _2x4_SECURE_CLAMP = 48;       // Secures 2x4 during cutting
+const int TOP_CLAMP = 48;               // Top clamp - secures 2x4 during cutting
 const int ROTATION_CLAMP = 42;          // Clamps cut pieces for rotation
 
 //╔═══╗ ════════════════════════════════════════════════════════ ╔═══╗

@@ -44,6 +44,12 @@ unsigned long SUCTION_RETRY_SUCCESS_WAIT_MS = 1000;
 unsigned long SUCTION_RETRY_INTER_PULSE_GAP_MS = 200;
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ ⏪ FEED PULLBACK (YESWOOD entry — wood-present path only)            ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+float FEED_PULLBACK_DISTANCE = 0.3;
+float FEED_PULLBACK_FEED_COMPENSATION = 0.3;
+
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔄 CUT MOTOR TIMING                                                  ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 unsigned long CUT_HOME_TIMEOUT = 5000;

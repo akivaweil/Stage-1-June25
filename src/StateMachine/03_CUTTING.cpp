@@ -18,7 +18,8 @@
 // All post-cutting logic (return sequences, homing, continuous mode) is handled by RETURNING states.
 
 // LED Wave Pattern (cutting-state local; not a system-wide config)
-const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs RETURNING_NO_2x4 state when no wood detected during cut
+const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs NOWOOD state when no wood detected during cut
+const float RELOAD_INTERRUPT_MAX_CUT_FRACTION = 0.75f;            // Reload switch only cancels cut if motor is below this fraction of total cut distance
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 📊 STATE VARIABLES ║
@@ -66,7 +67,7 @@ void updateWoodPresentLed() {
         if (woodPresent) {
             showYellowLed();
         } else {
-            // Show LED wave pattern when no wood is present (5x slower than RETURNING_NO_2x4 state)
+            // Show LED wave pattern when no wood is present (5x slower than NOWOOD state)
             handleNoWoodLedWavePattern(NO_WOOD_LED_WAVE_SPEED_MULTIPLIER);
         }
     }
@@ -113,6 +114,10 @@ void startCutMotorReturnSequence() {
     configureCutMotorForReturn();
     moveCutMotorToHome();
     cuttingContext.transferArmSignalSent = false;
+}
+
+bool cuttingClampsExtended() {
+    return cuttingContext.clampsExtended;
 }
 
 void updateLedsForReturnState(bool no2x4Detected) {
@@ -175,22 +180,28 @@ void onExitCuttingState() {
 }
 
 void executeCuttingState() {
-    // Check if reload switch is activated - if so, return motor to home and transition to reload state
+    // Check if reload switch is activated - only cancel if cut is less than 75% complete
     if (getReloadSwitch()->read() == HIGH && cuttingContext.step != 3) {
         FastAccelStepper* cutMotor = getCutMotor();
-        FastAccelStepper* feedMotor = getFeedMotor();
-        
-        if (cutMotor) cutMotor->stopMove();
-        if (feedMotor) feedMotor->stopMove();
-        
-        // Retract secondary components
-        retractRotationClamp();
-        returnRotationServoHome();
-        
-        // Initiate return
-        startCutMotorReturnSequence();
-        
-        cuttingContext.step = 3;
+        extern float getCutTravelDistance();
+        long cutThresholdSteps = (long)(RELOAD_INTERRUPT_MAX_CUT_FRACTION * getCutTravelDistance() * CUT_MOTOR_STEPS_PER_INCH);
+        bool pastThreshold = cutMotor && (cutMotor->getCurrentPosition() >= cutThresholdSteps);
+
+        if (!pastThreshold) {
+            FastAccelStepper* feedMotor = getFeedMotor();
+
+            if (cutMotor) cutMotor->stopMove();
+            if (feedMotor) feedMotor->stopMove();
+
+            // Retract secondary components
+            retractRotationClamp();
+            returnRotationServoHome();
+
+            // Initiate return
+            startCutMotorReturnSequence();
+
+            cuttingContext.step = 3;
+        }
     }
 
     if (homePositionErrorDetected) {
@@ -225,7 +236,7 @@ void handleCuttingStep0() {
     //! Retractions only happen on state exit / reload interrupt, and resetCuttingSteps
     //! on entry zeroes the flag, so this is safe and removes redundant digitalWrites.
     if (!cuttingContext.clampsExtended) {
-        extend2x4SecureClamp();
+        extendTopClamp();
         extendFeedClamp();
         cuttingContext.clampsExtended = true;
     }
@@ -287,6 +298,8 @@ void handleCuttingStep0() {
                         //! and the TA only sees one long merged pulse instead of two triggers.
                         digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
                         taSignalActive = false;
+                        extern unsigned long taSignalOffTime;
+                        taSignalOffTime = millis();
                         taSignalDelayPending = false;
                         cuttingContext.suctionRetryPhase = SuctionRetryPhase::Gap;
                         cuttingContext.suctionRetryTimer = millis();
@@ -373,14 +386,28 @@ void handleCuttingStep2() {
     //! Check if cut is complete
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && !cutMotor->isRunning()) {
-        startCutMotorReturnSequence();
-
         const bool no2x4Detected = !isWoodPresent();
+
+        // When wood is present AND pullback is enabled, defer the cut motor
+        // return to YESWOOD's pullback FSM (pullback runs first; the cut
+        // motor return starts 150 ms after the top clamp re-extends).
+        // Otherwise, start the return immediately as before.
+        if (!no2x4Detected && FEED_PULLBACK_DISTANCE > 0.0f) {
+            // YESWOOD-with-pullback path: leave the cut motor parked at the
+            // cut endpoint so the pullback can drag the wood back without
+            // any cut-side motion. Reset the transfer-arm-signal flag here
+            // since startCutMotorReturnSequence() (which usually does it)
+            // is being skipped in this branch.
+            cuttingContext.transferArmSignalSent = false;
+        } else {
+            startCutMotorReturnSequence();
+        }
+
         updateLedsForReturnState(no2x4Detected);
         if (no2x4Detected) {
-            changeState(RETURNING_NO_2x4);
+            changeState(NOWOOD);
         } else {
-            changeState(RETURNING_YES_2x4);
+            changeState(YESWOOD);
         }
     }
 }
@@ -419,7 +446,7 @@ void handleHomePositionError() {
     if (cutMotor) cutMotor->forceStopAndNewPosition(cutMotor->getCurrentPosition());
     if (feedMotor) feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
     
-    extend2x4SecureClamp();
+    extendTopClamp();
     
     if (getReloadSwitch()->rose()) {
         homePositionErrorDetected = false;

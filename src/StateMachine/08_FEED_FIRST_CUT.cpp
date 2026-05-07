@@ -11,10 +11,13 @@
 const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
 const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end
 const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
-const float FEED_MOTOR_SECOND_RUN_END_POSITION = 0.5; // inches - absolute position for second run end
-const unsigned long FEED_CLAMP_DELAY_MS = 400; // Delay after extending feed clamp and retracting secure clamp
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = 0.35; // inches - absolute position for second run end
+const float FEED_MOTOR_MINIS_SECOND_RUN_OFFSET = -0.25; // inches - in Minis mode (2.65" squares), advance 0.25" less while clamped
+const unsigned long FEED_CLAMP_DELAY_MS = 400; // Delay after extending feed clamp and retracting top clamp
 
-// Note: FEED_TRAVEL_DISTANCE, FEED_MOTOR_STEPS_PER_INCH, FEED_CLAMP, _2x4_SECURE_CLAMP, 
+extern int getCurrentConfigMode();
+
+// Note: FEED_TRAVEL_DISTANCE, FEED_MOTOR_STEPS_PER_INCH, FEED_CLAMP, TOP_CLAMP,
 // and START_CYCLE_SWITCH are already defined in Config files and accessible via includes
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
@@ -32,7 +35,7 @@ const unsigned long FEED_CLAMP_DELAY_MS = 400; // Delay after extending feed cla
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 3: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP              ║
+//║ STEP 3: EXTEND FEED CLAMP AND RETRACT TOP CLAMP                      ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
@@ -129,11 +132,11 @@ void executeFeedFirstCutStep() {
         case EXTEND_FEED_CLAMP_RETRACT_SECURE:
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
-                // Only retract secure clamp if not coming from no-wood situation
+                // Only retract top clamp if not coming from no-wood situation
                 if (!getComingFromNoWoodWithSensorsClear()) {
-                    retract2x4SecureClamp();
+                    retractTopClamp();
                 }
-                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted");
+                //serial.println("FeedFirstCut: Feed clamp extended, top clamp retracted");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
             }
@@ -178,7 +181,7 @@ void executeFeedFirstCutStep() {
         case EXTEND_FEED_CLAMP_RETRACT_SECURE_SECOND:
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
-                retract2x4SecureClamp();
+                retractTopClamp();
                 //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
@@ -194,8 +197,12 @@ void executeFeedFirstCutStep() {
 
         case MOVE_TO_SECOND_RUN_END_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_END_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to second run end position (2.0 inches)");
+                float endPos = FEED_MOTOR_SECOND_RUN_END_POSITION;
+                if (getCurrentConfigMode() == 1) {
+                    endPos += FEED_MOTOR_MINIS_SECOND_RUN_OFFSET;
+                }
+                moveFeedMotorToPosition(endPos);
+                //serial.println("FeedFirstCut: Moving feed motor to second run end position");
                 advanceToNextFeedFirstCutStep();
             }
             break;

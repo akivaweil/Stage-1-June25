@@ -72,6 +72,17 @@ void setupOTA() {
 
   ArduinoOTA
     .onStart([]() {
+      // Force the TA signal LOW before flashing. OTA suspends the main loop's
+      // signal-timing handler, so an in-flight pulse would otherwise stay HIGH
+      // for the duration of the upload and confuse the Transfer Arm.
+      digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
+      extern bool taSignalActive;
+      extern bool taSignalDelayPending;
+      extern unsigned long taSignalOffTime;
+      taSignalActive = false;
+      taSignalDelayPending = false;
+      taSignalOffTime = millis();
+
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH) {
         type = "sketch";
@@ -80,7 +91,7 @@ void setupOTA() {
       }
       // NOTE: if updating SPIFFS, ensure SPIFFS is mounted via SPIFFS.begin()
       //serial.println("Start updating " + type);
-      
+
       // Flash all LEDs 3 times to clearly indicate upload start
       for(int i = 0; i < 3; i++) {
         digitalWrite(STATUS_LED_RED, HIGH);

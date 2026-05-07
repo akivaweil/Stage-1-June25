@@ -22,5 +22,11 @@ void handleHomePositionError();
 void resetCuttingSteps();
 bool isCuttingStateStep0();
 int getCuttingStateStep();
+void startCutMotorReturnSequence();
+bool isWoodPresent();
+// True once CUTTING step 0 has fired its one-shot clamp-extension; used by
+// the YESWOOD post-forward pullback prep to avoid a race where CUTTING
+// step 0 re-extends the feed clamp right after prep retracts it.
+bool cuttingClampsExtended();
 
 #endif // CUTTING_STATE_H 

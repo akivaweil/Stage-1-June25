@@ -83,7 +83,7 @@ struct SensorStatus {
 
 struct ClampStatus {
     bool feedClamp;
-    bool _2x4SecureClamp;
+    bool topClamp;
     bool rotationClamp;
 };
 

@@ -4,7 +4,7 @@
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔧 CLAMP CONTROL                                                     ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
-// Feed/2x4-secure clamps: LOW = extended, HIGH = retracted (inverted logic).
+// Feed/top clamps: LOW = extended, HIGH = retracted (inverted logic).
 // Rotation clamp: HIGH = extended, LOW = retracted.
 
 void extendFeedClamp() {
@@ -15,12 +15,12 @@ void retractFeedClamp() {
     digitalWrite(FEED_CLAMP, HIGH); // Retracted
 }
 
-void extend2x4SecureClamp() {
-    digitalWrite(_2x4_SECURE_CLAMP, LOW); // Extended
+void extendTopClamp() {
+    digitalWrite(TOP_CLAMP, LOW); // Extended
 }
 
-void retract2x4SecureClamp() {
-    digitalWrite(_2x4_SECURE_CLAMP, HIGH); // Retracted
+void retractTopClamp() {
+    digitalWrite(TOP_CLAMP, HIGH); // Retracted
 }
 
 void extendRotationClamp() {

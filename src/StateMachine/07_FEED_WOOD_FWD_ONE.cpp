@@ -17,7 +17,7 @@
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 3: EXTEND FEED CLAMP AND RETRACT SECURE WOOD CLAMP            ║
+//║ STEP 3: EXTEND FEED CLAMP AND RETRACT TOP CLAMP                    ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
@@ -36,7 +36,7 @@
 enum FeedWoodFwdOneStep {
     RETRACT_FEED_CLAMP,
     MOVE_POSITION_MOTOR_TO_ZERO,
-    EXTEND_FEED_CLAMP_RETRACT_SECURE,
+    EXTEND_FEED_CLAMP_RETRACT_TOP,
     WAIT_200MS,
     MOVE_TO_TRAVEL_DISTANCE,
     CHECK_START_CYCLE_SWITCH
@@ -73,17 +73,17 @@ void executeFeedWoodFwdOneStep() {
 
         case MOVE_POSITION_MOTOR_TO_ZERO:
             if (feedMotor && !feedMotor->isRunning()) {
-                moveFeedMotorToHome();
+                moveFeedMotorToZero();
                 //serial.println("FeedWoodFwdOne: Moving feed motor to 0");
                 advanceToNextFeedWoodFwdOneStep();
             }
             break;
 
-        case EXTEND_FEED_CLAMP_RETRACT_SECURE:
+        case EXTEND_FEED_CLAMP_RETRACT_TOP:
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
-                retract2x4SecureClamp();
-                //serial.println("FeedWoodFwdOne: Feed clamp extended, secure 2x4 clamp retracted");
+                retractTopClamp();
+                //serial.println("FeedWoodFwdOne: Feed clamp extended, top clamp retracted");
                 stepStartTime = millis();
                 advanceToNextFeedWoodFwdOneStep();
             }

@@ -80,7 +80,11 @@ void moveFeedMotorToTravel() {
     }
 }
 
-void moveFeedMotorToHome() {
+// NOTE: feed-motor "home" (the physical home sensor / post-homing rest pose)
+// is at coordinate FEED_TRAVEL_DISTANCE — NOT at position 0. Position 0 is
+// the fully pulled-back / load end, opposite the home sensor. The helpers
+// below move to position 0, which is NOT home.
+void moveFeedMotorToZero() {
     if (feedMotor) {
         feedMotor->moveTo(0);
     }
@@ -92,7 +96,7 @@ void moveFeedMotorToPosition(float targetPositionInches) {
     }
 }
 
-void moveFeedMotorToPostCutHome() {
+void moveFeedMotorToPostCutZero() {
     if (feedMotor) {
         feedMotor->moveTo(0);
     }
@@ -287,7 +291,7 @@ bool homeFeedMotorNonBlocking(Bounce& homingSwitch) {
 void moveFeedMotorToInitialAfterHoming() {
     if (feedMotor) {
         configureFeedMotorForNormalOperation();
-        moveFeedMotorToHome();
+        moveFeedMotorToZero();
     }
 }
 

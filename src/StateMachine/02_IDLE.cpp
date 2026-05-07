@@ -77,7 +77,7 @@ static bool checkWoodPresentActiveAutoFeedFirstCut() {
 // Set cuttingCycleInProgress flag to true
 // Transition to CUTTING state
 // Configure cut motor for cutting speed
-// Ensure position and wood secure clamps are engaged
+// Ensure position and top clamps are engaged
 // If no wood detected, turn on blue LED for NO_WOOD mode
 
 void executeIdleState() {
@@ -101,16 +101,16 @@ void onEnterIdleState() {
 
     // Cycle counter is now incremented in RETURNING states to handle continuous mode properly
 
-    // Check if coming from no2x4 with no wood detected - if so, keep secure clamp extended
+    // Check if coming from no2x4 with no wood detected - if so, keep top clamp extended
     bool comingFromNoWood = getComingFromNoWoodWithSensorsClear();
 
-    // Handle 2x4 secure clamp logic
+    // Handle top clamp logic
     if (comingFromNoWood) {
-        // Coming from no2x4 with no wood - keep secure clamp extended
-        // Don't retract the secure clamp, it should stay extended
+        // Coming from no2x4 with no wood - keep top clamp extended
+        // Don't retract the top clamp, it should stay extended
     } else {
-        // Normal case - extend secure clamp
-        extend2x4SecureClamp();
+        // Normal case - extend top clamp
+        extendTopClamp();
     }
 
     // Always retract other clamps
@@ -188,7 +188,7 @@ void checkStartConditions() {
         configureCutMotorForCutting();
         
         extendFeedClamp();
-        extend2x4SecureClamp();
+        extendTopClamp();
         
         // LED status will be handled by cutting state based on wood sensor
     }

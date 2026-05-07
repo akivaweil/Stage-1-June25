@@ -14,7 +14,7 @@
 //║ ⚙️ ROTATION SERVO                                                   ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 extern int ROTATION_SERVO_HOME_POSITION;
-extern int ROTATION_SERVO_ACTIVE_POSITION;
+extern const int ROTATION_SERVO_ACTIVE_OFFSET; // Active position = HOME + this offset (degrees)
 extern unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
 extern unsigned long ROTATION_SERVO_RETURN_DELAY_MS;
 extern unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS;
@@ -41,6 +41,12 @@ extern unsigned long SUCTION_RETRY_PHASE1_WAIT_MS;
 extern unsigned long SUCTION_RETRY_PHASE2_WAIT_MS;
 extern unsigned long SUCTION_RETRY_SUCCESS_WAIT_MS;
 extern unsigned long SUCTION_RETRY_INTER_PULSE_GAP_MS;
+
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ ⏪ FEED PULLBACK (YESWOOD entry — wood-present path only)           ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+extern float FEED_PULLBACK_DISTANCE;             // inches — how far feed motor retreats with feed clamp gripping wood
+extern float FEED_PULLBACK_FEED_COMPENSATION;    // inches — added to FEED_TRAVEL_DISTANCE on next forward stroke
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔄 CUT MOTOR TIMING                                                 ║

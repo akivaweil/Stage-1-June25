@@ -11,109 +11,89 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table Saw Dashboard</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Lighter Dark Theme (Slate 800/700) */
-            --bg-main: #1e293b;   /* Slate 800 */
-            --bg-card: #334155;   /* Slate 700 */
-            --bg-card-gradient: linear-gradient(145deg, #334155 0%, #273548 100%);
-            --bg-card-hover: #475569; /* Slate 600 */
-            
-            --accent-primary: #60a5fa;   /* Lighter Blue */
-            --accent-secondary: #a78bfa; /* Lighter Purple */
-            --accent-success: #34d399;   /* Emerald 400 */
-            --accent-warning: #fbbf24;   /* Amber 400 */
-            --accent-danger: #f87171;    /* Red 400 */
-            
-            --text-main: #f8fafc;     /* Slate 50 */
-            --text-muted: #cbd5e1;    /* Slate 300 */
-            --text-dim: #94a3b8;      /* Slate 400 */
-            
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-active: rgba(255, 255, 255, 0.25);
-            
-            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
-            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-            --shadow-glow: 0 0 20px rgba(96, 165, 250, 0.15);
-            
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 8px;
+            /* Tuesday — Navy Forced-Dark Palette (HSL) */
+            /* Hue 222–225 = the saturated navy from Tuesday's sidebar (hsl(225 64% 14%)).
+               Saturation lifted from ~10% to ~28% so the surfaces actually read blue. */
+            --bg-main: hsl(222 32% 8%);            /* deep navy page bg (#0d1320-ish) */
+            --bg-card: hsl(222 28% 12%);           /* clearly lifted card */
+            --bg-elevated: hsl(222 24% 17%);       /* chips / inputs / hovers */
+            --bg-input: hsl(222 32% 9%);           /* recessed input */
+            --bg-deepest: hsl(222 40% 4%);         /* logs / terminal */
+
+            --border-default: hsl(217 25% 22%);    /* bluish hairline */
+            --border-strong: hsl(217 30% 32%);     /* hover state */
+            --border-glass: hsl(0 0% 100% / 0.08);
+
+            --text-main: hsl(0 0% 98%);            /* foreground */
+            --text-muted: hsl(217 16% 70%);        /* slate-300-ish */
+            --text-dim: hsl(217 14% 52%);          /* slate-400 */
+
+            /* Tuesday status palette */
+            --accent-primary: hsl(217 91% 60%);    /* blue-500 */
+            --accent-primary-soft: hsl(213 94% 78%);/* blue-300 — gradient endpoint */
+            --accent-primary-deep: hsl(225 64% 14%);/* sidebar navy */
+            --accent-secondary: hsl(258 90% 66%);  /* violet-500 */
+            --accent-success: hsl(142 71% 45%);    /* green-500 */
+            --accent-warning: hsl(38 92% 50%);     /* amber-500 */
+            --accent-danger: hsl(0 72% 51%);       /* red-500 */
+
+            --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.45),
+                               0 2px 4px rgba(0, 0, 0, 0.3);
+            --shadow-focus: 0 0 0 3px hsl(217 91% 60% / 0.25);
+            --shadow-blue-glow: 0 0 24px hsl(217 91% 60% / 0.25);
+
+            /* Tuesday radius scale — tight & purposeful */
+            --radius-lg: 0.75rem;   /* 12px — cards */
+            --radius-md: 0.5rem;    /* 8px  — chips, dropdowns */
+            --radius-sm: 0.375rem;  /* 6px  — buttons, inputs */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
+        /* Scales every rem-based size across the dashboard. */
+        html { font-size: 22px; }
+
         body {
-            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-main);
             color: var(--text-main);
             min-height: 100vh;
-            line-height: 1.5;
+            line-height: 1.45;
             overflow-x: hidden;
-            padding: 2rem;
+            padding: 0.875rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: "ss01", "cv11";
         }
 
-        /* Dropdown Styles */
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: var(--bg-card);
-            min-width: 220px;
-            box-shadow: var(--shadow-hover);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-subtle);
-            z-index: 100;
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-            backdrop-filter: blur(10px);
-            animation: fadeIn 0.2s ease;
-        }
-
-        .history-header {
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            padding: 0.5rem;
-            border-bottom: 1px solid var(--border-subtle);
-            margin-bottom: 0.25rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-        }
-
-        .history-item {
-            padding: 0.5rem;
-            color: var(--text-main);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.85rem;
-            display: flex;
-            justify-content: space-between;
-            border-radius: var(--radius-sm);
-            transition: background 0.2s;
-        }
-
-        .history-item:hover {
-            background: var(--bg-card-hover);
-        }
-
-        .history-index {
-            color: var(--text-dim);
-            font-size: 0.75rem;
-        }
-
-        .dimmed {
-            color: var(--text-dim) !important;
-            opacity: 0.5;
+        /* Background ambience — strong blue bloom, like the Tuesday sidebar bleeding into the page */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 55% at 0% 0%,    hsl(225 64% 22% / 0.55), transparent 60%),
+                radial-gradient(ellipse 60% 50% at 100% 0%,  hsl(217 91% 50% / 0.18), transparent 65%),
+                radial-gradient(ellipse 90% 60% at 50% 110%, hsl(225 60% 18% / 0.4),  transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* Layout */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 1.5rem;
+            gap: 0.625rem;
             max-width: 1600px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         .col-span-4 { grid-column: span 4; }
@@ -121,466 +101,737 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .col-span-8 { grid-column: span 8; }
         .col-span-12 { grid-column: span 12; }
 
-        /* Header */
+        /* ╔═══╗ Header ═══════════════════════════════════════════ ╔═══╗ */
         header {
             grid-column: 1 / -1;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            padding: 0 0.5rem;
+            padding: 0.5rem 0.875rem;
+            position: sticky;
+            top: 0.5rem;
+            z-index: 50;
+            background: linear-gradient(135deg,
+                hsl(225 50% 14% / 0.75) 0%,
+                hsl(222 35% 10% / 0.75) 100%);
+            backdrop-filter: blur(16px) saturate(160%);
+            -webkit-backdrop-filter: blur(16px) saturate(160%);
+            border: 1px solid hsl(217 35% 30% / 0.55);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card),
+                        inset 0 1px 0 hsl(0 0% 100% / 0.06);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        .accent-bar {
+            width: 3px;
+            height: 22px;
+            border-radius: 999px;
+            background: linear-gradient(to bottom, var(--accent-primary), hsl(217 91% 45%));
+            box-shadow: 0 0 14px hsl(217 91% 60% / 0.55);
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.125rem;
             font-weight: 700;
-            letter-spacing: -0.02em;
-            color: var(--text-main);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(213 94% 78%) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
         }
 
-        /* Cards */
+        /* ╔═══╗ Status Badge ════════════════════════════════════ ╔═══╗ */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.7rem;
+            background: hsl(240 5% 10% / 0.6);
+            border: 1px solid var(--border-default);
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: border-color 0.18s ease, background 0.18s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .status-badge:hover {
+            border-color: var(--border-strong);
+            background: hsl(240 5% 12% / 0.8);
+        }
+
+        .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            transition: all 0.25s;
+        }
+
+        .status-badge.connected {
+            color: var(--text-main);
+        }
+        .status-badge.connected .status-dot {
+            background: var(--accent-success);
+            box-shadow: 0 0 0 3px hsl(142 71% 45% / 0.18),
+                        0 0 8px hsl(142 71% 45% / 0.5);
+        }
+
+        .status-badge.disconnected .status-dot {
+            background: var(--accent-danger);
+            box-shadow: 0 0 0 3px hsl(0 72% 51% / 0.18);
+        }
+
+        /* ╔═══╗ Cards ═══════════════════════════════════════════ ╔═══╗ */
         .card {
-            background: var(--bg-card-gradient);
-            border: 1px solid var(--border-subtle);
+            background: linear-gradient(180deg,
+                hsl(222 28% 13%) 0%,
+                hsl(222 30% 11%) 100%);
+            border: 1px solid var(--border-default);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
+            padding: 0.875rem;
             position: relative;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: var(--shadow-card);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: var(--shadow-card),
+                        inset 0 1px 0 hsl(0 0% 100% / 0.04);
             display: flex;
             flex-direction: column;
-            overflow: visible; /* Changed to visible for dropdown */
-        }
-
-        @keyframes systemStateBootFlash {
-            0%, 100% { box-shadow: var(--shadow-card); border-color: var(--border-subtle); }
-            50% { box-shadow: 0 0 24px rgba(248, 113, 113, 0.6); border-color: var(--accent-danger); }
-        }
-        .system-state-card-flash {
-            animation: systemStateBootFlash 0.5s ease-out;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-            opacity: 0.6;
-            pointer-events: none;
+            overflow: visible;
         }
 
         .card:hover {
-            transform: translateY(-5px) scale(1.01);
-            border-color: var(--border-active);
-            box-shadow: var(--shadow-hover);
-            z-index: 10;
+            border-color: hsl(217 50% 38%);
+            box-shadow: var(--shadow-card),
+                        inset 0 1px 0 hsl(0 0% 100% / 0.05),
+                        0 0 0 1px hsl(217 91% 60% / 0.06);
         }
+
+        @keyframes systemStateBootFlash {
+            0%, 100% { box-shadow: var(--shadow-card); border-color: var(--border-default); }
+            50%      { box-shadow: 0 0 0 1px var(--accent-danger), 0 0 24px hsl(0 72% 51% / 0.4);
+                       border-color: var(--accent-danger); }
+        }
+        .system-state-card-flash { animation: systemStateBootFlash 0.5s ease-out; }
 
         .card-header {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.68rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.08em;
         }
 
-        .card-header svg { width: 18px; height: 18px; stroke-width: 2.5; }
-
-        /* Status Badge */
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-subtle);
-            border-radius: 100px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        .card-header svg {
+            width: 13px;
+            height: 13px;
+            stroke-width: 2;
+            color: var(--text-dim);
         }
 
-        .status-badge:hover { 
-            background: rgba(255, 255, 255, 0.1); 
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-        
-        .status-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--text-dim);
-            transition: all 0.3s;
-        }
-
-        .status-badge.connected .status-dot {
-            background: var(--accent-success);
-            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
-        }
-        
-        .status-badge.disconnected .status-dot {
-            background: var(--accent-danger);
-            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
-        }
-
-        /* Typography Utilities */
+        /* ╔═══╗ Typography ══════════════════════════════════════ ╔═══╗ */
         .value-huge {
-            font-size: 3rem;
+            font-size: 2rem;
             font-weight: 700;
             line-height: 1;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.04em;
             color: var(--text-main);
             font-variant-numeric: tabular-nums;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
         .value-large {
-            font-size: 1.75rem;
+            font-size: 1.25rem;
             font-weight: 600;
             letter-spacing: -0.02em;
             color: var(--text-main);
+            font-variant-numeric: tabular-nums;
         }
 
         .label-sm {
-            font-size: 0.75rem;
+            font-size: 0.62rem;
             color: var(--text-dim);
             font-weight: 600;
             margin-top: 0.25rem;
             text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
-        /* Specific Components */
-        
-        /* System Status */
+        .dimmed {
+            color: var(--text-dim) !important;
+            opacity: 0.55;
+        }
+
+        /* ╔═══╗ System State ════════════════════════════════════ ╔═══╗ */
         .state-display {
             text-align: center;
-            padding: 2rem 0;
-            background: radial-gradient(circle at center, rgba(96, 165, 250, 0.08) 0%, transparent 70%);
+            padding: 0.75rem 0 0.5rem;
             border-radius: var(--radius-md);
-            margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+            position: relative;
         }
         .state-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--accent-primary);
-            text-shadow: 0 0 25px rgba(96, 165, 250, 0.4);
-            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--accent-primary-soft);
+            letter-spacing: 0.04em;
+            margin-bottom: 0.125rem;
         }
 
-        /* Sensor Matrix */
+        /* ╔═══╗ Sensor Matrix ═══════════════════════════════════ ╔═══╗ */
         .sensor-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+            gap: 0.375rem;
         }
 
         .sensor-item {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 1rem;
-            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            padding: 0.45rem 0.625rem;
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid transparent;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-default);
+            transition: border-color 0.18s ease, background 0.18s ease;
         }
 
         .sensor-item:hover {
-            background: rgba(255, 255, 255, 0.03);
-            transform: translateY(-1px);
+            border-color: var(--border-strong);
         }
 
         .sensor-item.active {
-            background: rgba(52, 211, 153, 0.1);
-            border-color: rgba(52, 211, 153, 0.3);
-            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.1);
+            background: hsl(142 71% 45% / 0.08);
+            border-color: hsl(142 71% 45% / 0.45);
         }
 
-        .sensor-label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); }
-        .sensor-item.active .sensor-label { color: var(--text-main); font-weight: 600; }
-        
+        .sensor-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .sensor-item.active .sensor-label {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
         .sensor-led {
-            width: 12px; height: 6px;
-            border-radius: 10px;
-            background: var(--bg-card-hover);
-            transition: all 0.3s;
+            width: 9px; height: 4px;
+            border-radius: 999px;
+            background: hsl(240 4% 22%);
+            transition: all 0.25s;
         }
 
         .sensor-item.active .sensor-led {
             background: var(--accent-success);
-            box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+            box-shadow: 0 0 8px hsl(142 71% 45% / 0.7);
         }
 
-        /* Metrics */
+        /* ╔═══╗ Metrics ═════════════════════════════════════════ ╔═══╗ */
         .metrics-container {
             display: flex;
-            gap: 2rem;
+            gap: 1.25rem;
             align-items: flex-end;
         }
-        
+
         .metric-block { flex: 1; }
-        
+
         .mini-charts {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .mini-chart-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: var(--radius-sm);
-            padding: 0.75rem 0.5rem;
-            text-align: center;
-            transition: all 0.2s;
-        }
-        
-        .mini-chart-card:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: scale(1.05);
-        }
-        
-        .mini-chart-card.status-red {
-            background: rgba(248, 113, 113, 0.15);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            box-shadow: 0 0 12px rgba(248, 113, 113, 0.4);
-        }
-        
-        .mini-chart-card.status-yellow {
-            background: rgba(251, 191, 36, 0.15);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
-        }
-        
-        .mini-chart-card.status-green {
-            background: rgba(52, 211, 153, 0.15);
-            border: 1px solid rgba(52, 211, 153, 0.3);
-            box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+            gap: 0.375rem;
+            margin-top: 0.5rem;
         }
 
-        /* Errors */
+        .mini-chart-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            padding: 0.45rem 0.375rem;
+            text-align: center;
+            transition: border-color 0.15s ease;
+        }
+
+        .mini-chart-card:hover {
+            border-color: var(--border-strong);
+        }
+
+        .mini-chart-card.status-red {
+            background: hsl(0 72% 51% / 0.08);
+            border-color: hsl(0 72% 51% / 0.45);
+        }
+
+        .mini-chart-card.status-yellow {
+            background: hsl(38 92% 50% / 0.08);
+            border-color: hsl(38 92% 50% / 0.45);
+        }
+
+        .mini-chart-card.status-green {
+            background: hsl(142 71% 45% / 0.08);
+            border-color: hsl(142 71% 45% / 0.45);
+        }
+
+        /* ╔═══╗ Errors ══════════════════════════════════════════ ╔═══╗ */
         .error-stat {
             display: flex;
             align-items: baseline;
-            gap: 0.5rem;
-            padding: 0.75rem;
-            background: rgba(248, 113, 113, 0.1);
-            border-radius: var(--radius-md);
+            gap: 0.4rem;
+            padding: 0.45rem 0.625rem;
+            background: hsl(0 72% 51% / 0.06);
+            border-radius: var(--radius-sm);
             color: var(--accent-danger);
-            border: 1px solid rgba(248, 113, 113, 0.1);
-            transition: all 0.2s;
-        }
-        
-        .error-stat:hover {
-            background: rgba(248, 113, 113, 0.15);
-            border-color: rgba(248, 113, 113, 0.3);
+            border: 1px solid hsl(0 72% 51% / 0.25);
+            transition: border-color 0.18s ease, background 0.18s ease;
         }
 
-        /* Config Inputs */
-        .input-group { margin-bottom: 1.25rem; }
-        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-        
-        .input-row { display: flex; gap: 0.75rem; }
-        
+        .error-stat:hover {
+            background: hsl(0 72% 51% / 0.1);
+            border-color: hsl(0 72% 51% / 0.45);
+        }
+
+        /* ╔═══╗ Inputs / Buttons ═══════════════════════════════ ╔═══╗ */
+        .input-group { margin-bottom: 0.5rem; }
+        .input-group label {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .input-row { display: flex; gap: 0.375rem; }
+
+        /* Strip the native number-input spinner arrows in config rows */
+        .input-group input[type="number"]::-webkit-outer-spin-button,
+        .input-group input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .input-group input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         input[type="number"] {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-subtle);
+            background: var(--bg-input);
+            border: 1px solid var(--border-default);
             color: var(--text-main);
-            padding: 0.75rem 1rem;
+            padding: 0.35rem 0.625rem;
             border-radius: var(--radius-sm);
             width: 100%;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            font-family: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+            font-size: 0.78rem;
+            font-variant-numeric: tabular-nums;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
-        
-        input:focus { 
-            outline: none; 
-            border-color: var(--accent-primary); 
-            background: rgba(0, 0, 0, 0.5);
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+
+        input[type="number"]::placeholder { color: var(--text-dim); }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-focus);
         }
 
         button.btn {
-            background: var(--bg-card-hover);
-            border: 1px solid var(--border-subtle);
-            color: var(--accent-primary);
-            padding: 0 1.25rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            color: var(--text-main);
+            padding: 0.35rem 0.7rem;
             border-radius: var(--radius-sm);
-            font-weight: 600;
+            font-weight: 500;
+            font-size: 0.74rem;
+            font-family: inherit;
+            letter-spacing: 0.02em;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
         }
-        
-        button.btn:hover {
-            background: var(--accent-primary);
-            color: white;
-            border-color: transparent;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
-        }
-        
-        button.btn:active { transform: translateY(0); }
 
-        /* Logs */
-        .log-terminal {
-            background: #0f172a; /* Darker than card for contrast */
-            border-radius: var(--radius-md);
-            padding: 1rem;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8rem;
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid var(--border-subtle);
-            color: #f1f5f9;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        button.btn:hover {
+            border-color: var(--border-strong);
+            background: hsl(240 5% 13%);
         }
+
+        button.btn:active { transform: scale(0.98); }
+
+        /* Primary action variant — Tuesday's "New Order" blue glass button */
+        button.btn-primary {
+            background: hsl(217 91% 60% / 0.32);
+            color: hsl(0 0% 100%);
+            border: 1px solid hsl(217 91% 65% / 0.45);
+            box-shadow: 0 2px 6px hsl(217 91% 50% / 0.25),
+                        inset 0 1px 0 hsl(0 0% 100% / 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            font-weight: 600;
+            border-radius: 999px;
+            transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        button.btn-primary:hover {
+            background: hsl(217 91% 60% / 0.5);
+            border-color: hsl(217 91% 65% / 0.65);
+            box-shadow: 0 4px 14px hsl(217 91% 50% / 0.4),
+                        inset 0 1px 0 hsl(0 0% 100% / 0.2);
+            transform: translateY(-1px);
+        }
+        button.btn-primary:active { transform: translateY(0); }
+
+        /* ╔═══╗ Logs ════════════════════════════════════════════ ╔═══╗ */
+        .log-terminal {
+            background: var(--bg-deepest);
+            border-radius: var(--radius-md);
+            padding: 0.625rem;
+            font-family: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+            font-size: 0.7rem;
+            height: 220px;
+            overflow-y: auto;
+            border: 1px solid var(--border-default);
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .log-terminal::-webkit-scrollbar { width: 6px; }
+        .log-terminal::-webkit-scrollbar-track { background: transparent; }
+        .log-terminal::-webkit-scrollbar-thumb {
+            background: hsl(240 4% 22%);
+            border-radius: 999px;
+        }
+        .log-terminal::-webkit-scrollbar-thumb:hover { background: hsl(240 4% 30%); }
 
         .log-line {
             display: flex;
-            gap: 1rem;
-            padding: 2px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            gap: 0.875rem;
+            padding: 1px 0;
         }
-        
-        .log-time { color: #64748b; min-width: 60px; }
-        .log-msg { color: #e2e8f0; word-break: break-all; }
-        
-        .log-line.error .log-msg { color: var(--accent-danger); }
+
+        .log-time { color: var(--text-dim); min-width: 56px; }
+        .log-msg  { color: var(--text-muted); word-break: break-all; }
+
+        .log-line.error   .log-msg { color: var(--accent-danger); }
         .log-line.success .log-msg { color: var(--accent-success); }
-        .log-line.warn .log-msg { color: var(--accent-warning); }
+        .log-line.warn    .log-msg { color: var(--accent-warning); }
+
+        /* ╔═══╗ Mode Toggle — Tuesday PageToggle (gray pill + pill-squish) ═══ ╔═══╗ */
+        .mode-toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Container — Tuesday: rounded-full bg-gray-800/60 p-1 ring-1 ring-inset ring-gray-700/60 */
+        .mode-toggle {
+            position: relative;
+            display: inline-grid;
+            grid-template-columns: repeat(2, 1fr);
+            padding: 4px;
+            border-radius: 999px;
+            background: hsl(220 13% 18% / 0.6);                  /* gray-800/60 */
+            box-shadow: inset 0 0 0 1px hsl(220 9% 36% / 0.6);   /* ring-gray-700/60 */
+        }
+
+        /* Track holds the bubble's translateX — separated so squish (scale) can compose */
+        .mode-bubble-track {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            transition: transform 216ms cubic-bezier(0.32, 1.2, 0.55, 1);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .mode-toggle.mode-1 .mode-bubble-track {
+            transform: translateX(100%);
+        }
+
+        /* Bubble — blue glass, matches .state-pill and .btn-primary */
+        .mode-bubble {
+            width: 100%;
+            height: 100%;
+            border-radius: 999px;
+            background: hsl(217 91% 60% / 0.32);                  /* same alpha as btn-primary */
+            border: 1px solid hsl(217 91% 65% / 0.45);
+            box-shadow: 0 2px 6px hsl(217 91% 50% / 0.28),
+                        inset 0 1px 0 hsl(0 0% 100% / 0.15),
+                        0 0 14px hsl(217 91% 60% / 0.22);
+            transform-origin: center;
+        }
+
+        .mode-bubble.squish {
+            animation: pill-squish 420ms cubic-bezier(0.32, 1.2, 0.55, 1);
+        }
+
+        /* Tuesday's exact pill-squish keyframes */
+        @keyframes pill-squish {
+            0%   { transform: scaleX(1)    scaleY(1); }
+            30%  { transform: scaleX(0.78) scaleY(1.12); }
+            60%  { transform: scaleX(1.06) scaleY(0.95); }
+            82%  { transform: scaleX(0.98) scaleY(1.02); }
+            100% { transform: scaleX(1)    scaleY(1); }
+        }
+
+        /* Pill items — h-8 px-4 rounded-full text-sm font-medium */
+        .mode-option {
+            position: relative;
+            z-index: 2;
+            height: 32px;                                          /* h-8 */
+            padding: 0 16px;                                       /* px-4 */
+            border-radius: 999px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;                                   /* text-sm */
+            font-weight: 500;                                      /* font-medium */
+            color: hsl(220 9% 65%);                                /* gray-400 */
+            transition: color 150ms ease;
+            user-select: none;
+        }
+
+        .mode-option.active {
+            color: hsl(0 0% 100%);                                 /* white */
+        }
+
+        .mode-option:hover:not(.active) {
+            color: hsl(220 14% 83%);                               /* gray-200 */
+        }
+
+        /* ╔═══╗ Dropdown ═══════════════════════════════════════ ╔═══╗ */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: hsl(240 6% 8% / 0.92);
+            min-width: 220px;
+            box-shadow: var(--shadow-elevated);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-default);
+            z-index: 100;
+            padding: 0.375rem;
+            margin-top: 0.5rem;
+            backdrop-filter: blur(14px) saturate(150%);
+            -webkit-backdrop-filter: blur(14px) saturate(150%);
+            animation: fadeIn 0.18s ease;
+        }
+
+        .history-header {
+            font-size: 0.66rem;
+            color: var(--text-dim);
+            padding: 0.5rem 0.625rem 0.4rem;
+            border-bottom: 1px solid var(--border-default);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .history-item {
+            padding: 0.45rem 0.625rem;
+            color: var(--text-main);
+            font-family: 'Geist Mono', ui-monospace, monospace;
+            font-size: 0.8rem;
+            font-variant-numeric: tabular-nums;
+            display: flex;
+            justify-content: space-between;
+            border-radius: var(--radius-sm);
+            transition: background 0.15s;
+        }
+
+        .history-item:hover {
+            background: var(--bg-elevated);
+        }
+
+        .history-index {
+            color: var(--text-dim);
+            font-size: 0.72rem;
+        }
+
+        /* ╔═══╗ Hero Status Card ═══════════════════════════════ ╔═══╗ */
+        .hero-card {
+            background:
+                radial-gradient(ellipse 90% 100% at 0% 0%, hsl(217 91% 60% / 0.07), transparent 60%),
+                linear-gradient(180deg, hsl(222 28% 13%) 0%, hsl(222 30% 11%) 100%);
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            padding: 0.625rem 0 0.5rem;
+        }
+
+        .hero-stat {
+            text-align: center;
+            padding: 0.25rem 0.75rem;
+            position: relative;
+        }
+
+        .hero-stat + .hero-stat {
+            border-left: 1px solid var(--border-default);
+        }
+
+        .hero-stat-clickable {
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: background 0.18s ease;
+        }
+        .hero-stat-clickable:hover {
+            background: hsl(217 91% 60% / 0.05);
+        }
+
+        .hero-divider {
+            border-top: 1px solid var(--border-default);
+            margin: 0.5rem 0 0.625rem;
+        }
+
+        .state-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.28rem 0.7rem;
+            background: hsl(217 91% 60% / 0.14);
+            border: 1px solid hsl(217 91% 60% / 0.4);
+            color: var(--accent-primary-soft);
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-family: 'Geist Mono', ui-monospace, monospace;
+            box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.08),
+                        0 0 14px hsl(217 91% 60% / 0.18);
+        }
+
+        /* Pin the tall Config card to the right column, spanning 2 rows so
+           Sensors + Diagnostics nest neatly below the Hero (header is row 1,
+           Config takes rows 2–3, Logs lands on row 4). */
+        .config-card {
+            grid-column: 9 / -1;
+            grid-row: 2 / span 2;
+        }
+
+        /* ╔═══╗ Section Heading inside cards (e.g. "Motion") ═══ ╔═══╗ */
+        .section-heading {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin: 0.625rem 0 0.4rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-default);
+        }
+        .section-heading:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+
+        /* ╔═══╗ Misc ═══════════════════════════════════════════ ╔═══╗ */
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.45s ease forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
 
         /* Responsive */
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: 1fr 1fr; }
             .col-span-4, .col-span-6, .col-span-8, .col-span-12 { grid-column: span 2; }
+            .config-card { grid-row: auto; }
         }
-        
+
         @media (max-width: 768px) {
             body { padding: 1rem; }
-            .dashboard-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .dashboard-grid { grid-template-columns: 1fr; gap: 0.75rem; }
             .col-span-4, .col-span-6, .col-span-8, .col-span-12 { grid-column: span 1; }
-            .metrics-container { flex-direction: column; gap: 1rem; }
+            .metrics-container { flex-direction: column; gap: 1rem; align-items: stretch; }
             .sensor-grid { grid-template-columns: 1fr; }
-        }
-        
-        .hidden { display: none; }
-        .fade-in { animation: fadeIn 0.5s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            header { top: 0; border-radius: var(--radius-md); }
+            h1 { font-size: 1.125rem; }
+            .hero-stats { grid-template-columns: 1fr; }
 
-        /* Mode Toggle */
-        .mode-toggle-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .mode-toggle {
-            display: flex;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 4px;
-            border-radius: 12px; /* Soft rounded edges */
-            border: 1px solid var(--border-subtle);
-        }
-
-        .mode-option {
-            padding: 8px 16px;
-            cursor: pointer;
-            border-radius: 8px; /* Inner soft rounded edges */
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-dim);
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-        }
-
-        .mode-option.active {
-            background: var(--accent-primary);
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .mode-option:hover:not(.active) {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
+            /* Mobile card order: System Overview → Configuration → everything else */
+            #systemStateCard { order: 1; }
+            .config-card     { order: 2; }
+            .card            { order: 3; }
+            .hero-stat + .hero-stat {
+                border-left: 0;
+                border-top: 1px solid var(--border-default);
+                margin-top: 0.5rem;
+                padding-top: 0.75rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="dashboard-grid">
         <header>
-            <h1>Stage 1 Controller</h1>
+            <div class="header-title">
+                <div class="accent-bar"></div>
+                <h1>Stage 1 Controller</h1>
+            </div>
             <div class="status-badge disconnected" id="connectionStatus">
                 <div class="status-dot"></div>
                 <span id="connectionText">Offline</span>
             </div>
         </header>
 
-        <!-- System Status -->
-        <div class="card col-span-4 fade-in" id="systemStateCard" style="animation-delay: 0.1s">
-            <div class="card-header">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
-                System State
-            </div>
-            <div class="state-display">
-                <div class="value-large" id="uptime" style="font-size: 3rem; font-weight: 700; font-family: 'Space Mono'; color: var(--text-main);">00:00:00</div>
-                <div class="label-sm">UPTIME</div>
-            </div>
-            <div style="margin-top: auto; display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
-                <div>
-                    <div class="state-value" id="currentState" style="font-size: 1rem; text-shadow: none; margin-bottom: 0.25rem;">INITIALIZING</div>
-                    <div class="label-sm">CURRENT PROCESS</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Performance -->
-        <div class="card col-span-8 fade-in" style="animation-delay: 0.2s">
+        <!-- Hero Status -->
+        <div class="card hero-card col-span-8 fade-in" id="systemStateCard" style="animation-delay: 0.1s">
             <div class="card-header" style="justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    Performance Metrics
+                    System Overview
                 </div>
-                <button class="btn" onclick="triggerStartCycle()" style="font-size: 0.7rem; padding: 0.4rem 0.8rem; background: var(--accent-primary); color: white; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">START CYCLE</button>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="state-pill" id="currentState">INITIALIZING</div>
+                    <button class="btn btn-primary" onclick="triggerStartCycle()" style="font-size: 0.66rem; padding: 0.3rem 0.7rem; letter-spacing: 0.05em;">START CYCLE</button>
+                </div>
             </div>
-            <div class="metrics-container">
-                <div id="reloadTimeContainer" style="position: relative; cursor: pointer;" onclick="toggleReloadHistory()">
-                    <div class="value-huge" id="reloadTime">-</div>
-                    <div class="label-sm">LAST RELOAD TIME <span style="font-size: 0.8em; opacity: 0.7;">▼</span></div>
-                    
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="value-huge" id="uptime" style="font-family: 'Geist Mono', ui-monospace, monospace; font-feature-settings: 'tnum';">00:00:00</div>
+                    <div class="label-sm">UPTIME</div>
+                </div>
+                <div class="hero-stat hero-stat-clickable" id="reloadTimeContainer" onclick="toggleReloadHistory()">
+                    <div class="value-huge" id="reloadTime" style="font-family: 'Geist Mono', ui-monospace, monospace;">-</div>
+                    <div class="label-sm">LAST RELOAD <span style="font-size: 0.7em; color: var(--text-dim); margin-left: 0.25rem;">▼</span></div>
                     <div id="reloadHistoryDropdown" class="dropdown-content" onclick="event.stopPropagation()">
                         <div class="history-header">HISTORY (LAST 10)</div>
                         <div id="reloadHistoryList"></div>
                     </div>
                 </div>
-                <div class="metric-block">
-                    <div class="label-sm" style="margin-bottom: 0.5rem">CYCLES / MIN (AVG)</div>
-                    <div class="mini-charts">
-                        <div class="mini-chart-card">
-                            <div class="value-large dimmed" id="avgCycles1Min" style="font-size: 1.5rem">0.0</div>
-                            <div class="label-sm">1M</div>
-                        </div>
-                        <div class="mini-chart-card" id="card-avgCycles3Min">
-                            <div class="value-large dimmed" id="avgCycles3Min" style="font-size: 1.5rem">0.0</div>
-                            <div class="label-sm">3M</div>
-                        </div>
-                        <div class="mini-chart-card" id="card-avgCycles5Min">
-                            <div class="value-large dimmed" id="avgCycles5Min" style="font-size: 1.5rem">0.0</div>
-                            <div class="label-sm">5M</div>
-                        </div>
-                        <div class="mini-chart-card" id="card-avgCycles15Min">
-                            <div class="value-large dimmed" id="avgCycles15Min" style="font-size: 1.5rem">0.0</div>
-                            <div class="label-sm">15M</div>
-                        </div>
+            </div>
+
+            <div class="hero-divider"></div>
+
+            <div>
+                <div class="label-sm" style="margin: 0 0 0.5rem;">CYCLES / MIN (AVG)</div>
+                <div class="mini-charts">
+                    <div class="mini-chart-card">
+                        <div class="value-large dimmed" id="avgCycles1Min" style="font-size: 1.25rem;">0.0</div>
+                        <div class="label-sm" style="margin-top: 0.125rem;">1M</div>
+                    </div>
+                    <div class="mini-chart-card" id="card-avgCycles3Min">
+                        <div class="value-large dimmed" id="avgCycles3Min" style="font-size: 1.25rem;">0.0</div>
+                        <div class="label-sm" style="margin-top: 0.125rem;">3M</div>
+                    </div>
+                    <div class="mini-chart-card" id="card-avgCycles5Min">
+                        <div class="value-large dimmed" id="avgCycles5Min" style="font-size: 1.25rem;">0.0</div>
+                        <div class="label-sm" style="margin-top: 0.125rem;">5M</div>
+                    </div>
+                    <div class="mini-chart-card" id="card-avgCycles15Min">
+                        <div class="value-large dimmed" id="avgCycles15Min" style="font-size: 1.25rem;">0.0</div>
+                        <div class="label-sm" style="margin-top: 0.125rem;">15M</div>
                     </div>
                 </div>
             </div>
@@ -626,130 +877,118 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--accent-danger)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 Diagnostics
             </div>
-            <div style="display: flex; flex-direction: column; gap: 1rem; height: 100%;">
+            <div style="display: flex; flex-direction: column; gap: 0.625rem; height: 100%;">
                 <div>
-                    <div class="label-sm">LATEST ERROR</div>
-                    <div id="lastError" style="color: var(--accent-danger); font-weight: 600; margin-top: 0.25rem;">None</div>
+                    <div class="label-sm" style="margin-top: 0;">LATEST ERROR</div>
+                    <div id="lastError" style="color: var(--accent-danger); font-weight: 500; margin-top: 0.25rem; font-size: 0.82rem;">None</div>
                 </div>
-                <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
-                    <div class="label-sm">LAST RESET CAUSE <span id="crashCountBadge" style="font-size: 0.75rem; opacity: 0.7;"></span></div>
-                    <div id="resetReason" style="font-weight: 700; margin-top: 0.25rem; font-family: 'Space Mono', monospace;">—</div>
-                    <div id="crashContext" style="font-size: 0.75rem; opacity: 0.85; margin-top: 0.25rem; font-family: 'Space Mono', monospace; line-height: 1.4;"></div>
+                <div style="border-top: 1px solid var(--border-default); padding-top: 0.5rem;">
+                    <div class="label-sm" style="margin-top: 0;">LAST RESET CAUSE <span id="crashCountBadge" style="font-size: 0.66rem; color: var(--text-dim); margin-left: 0.25rem;"></span></div>
+                    <div id="resetReason" style="font-weight: 600; margin-top: 0.25rem; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.78rem;">—</div>
+                    <div id="crashContext" style="font-size: 0.66rem; color: var(--text-dim); margin-top: 0.25rem; font-family: 'Geist Mono', ui-monospace, monospace; line-height: 1.45;"></div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: auto;">
                     <div class="error-stat">
-                        <div style="font-weight: 700; font-size: 1.5rem;" id="cutMotorErrorCount">0</div>
-                        <div class="label-sm" style="color: var(--accent-danger)">CUT ERR</div>
+                        <div style="font-weight: 600; font-size: 1.05rem; font-variant-numeric: tabular-nums;" id="cutMotorErrorCount">0</div>
+                        <div class="label-sm" style="color: var(--accent-danger); margin-top: 0;">CUT ERR</div>
                     </div>
                     <div class="error-stat">
-                        <div style="font-weight: 700; font-size: 1.5rem;" id="suctionErrorCount">0</div>
-                        <div class="label-sm" style="color: var(--accent-danger)">SUC ERR</div>
+                        <div style="font-weight: 600; font-size: 1.05rem; font-variant-numeric: tabular-nums;" id="suctionErrorCount">0</div>
+                        <div class="label-sm" style="color: var(--accent-danger); margin-top: 0;">SUC ERR</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Config -->
-        <div class="card col-span-4 fade-in" style="animation-delay: 0.5s">
+        <div class="card col-span-4 config-card fade-in" style="animation-delay: 0.5s">
             <div class="card-header">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Configuration
             </div>
             
             <div class="mode-toggle-container">
-                <div class="mode-toggle">
+                <div class="mode-toggle mode-0" id="modeToggle">
+                    <div class="mode-bubble-track">
+                        <div class="mode-bubble" id="modeBubble"></div>
+                    </div>
                     <div class="mode-option active" id="mode-3inch" onclick="setMode(0)">3 Inch</div>
                     <div class="mode-option" id="mode-minis" onclick="setMode(1)">Minis</div>
                 </div>
             </div>
 
-            <div class="label-sm" style="margin-top: 1rem; margin-bottom: 0.5rem;">Rotation Servo</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-                <div class="input-group">
-                    <label>Home (deg)</label>
-                    <div class="input-row">
-                        <input type="number" id="rotationServoHomePosition" min="0" max="180" step="1" placeholder="14">
-                        <button class="btn" onclick="updateConfig('rotation_servo_home_position')">SAVE</button>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Active (deg)</label>
-                    <div class="input-row">
-                        <input type="number" id="rotationServoActivePosition" min="0" max="180" step="1" placeholder="108">
-                        <button class="btn" onclick="updateConfig('rotation_servo_active_position')">SAVE</button>
-                    </div>
-                </div>
-            </div>
-            
+            <!-- Motion -->
+            <div class="section-heading">Motion</div>
+
             <div class="input-group">
                 <label>Cut Distance (in)</label>
-                <div class="input-row">
-                    <input type="number" id="cutTravelDistance" step="0.1" placeholder="9.2">
-                    <button class="btn" onclick="updateConfig('cut_travel_distance')">SAVE</button>
-                </div>
-            </div>
-            
-            <div class="input-group">
-                <label>Feed Distance (in) (controls second square size)</label>
-                <div class="input-row">
-                    <input type="number" id="feedTravelDistance" step="0.01" placeholder="3.43">
-                    <button class="btn" onclick="updateConfig('feed_travel_distance')">SAVE</button>
-                </div>
-            </div>
-            
-            <div class="input-group">
-                <label>Feed Motor Offset from Sensor (in)</label>
-                <div class="input-row">
-                    <input type="number" id="feedMotorOffsetFromSensor" step="0.01" placeholder="0.15">
-                    <button class="btn" onclick="updateConfig('feed_motor_offset_from_sensor')">SAVE</button>
-                </div>
-            </div>
-            
-            <div class="input-group">
-                <label>Cut Motor Speed (inches/sec)</label>
-                <div class="input-row">
-                    <input type="number" id="cutMotorNormalSpeed" step="0.1" placeholder="1.28">
-                    <button class="btn" onclick="updateConfig('cut_motor_normal_speed')">SAVE</button>
-                </div>
+                <input type="number" id="cutTravelDistance" step="0.1" placeholder="9.2">
             </div>
 
             <div class="input-group">
-                <label>Rotation Clamp Hold (ms)</label>
-                <div class="input-row">
-                    <input type="number" id="rotationClampExtendMs" step="50" placeholder="2200">
-                    <button class="btn" onclick="updateConfig('rotation_clamp_extend_ms')">SAVE</button>
-                </div>
+                <label>Cut Motor Speed (in/s)</label>
+                <input type="number" id="cutMotorNormalSpeed" step="0.1" placeholder="1.28">
             </div>
 
             <div class="input-group">
-                <label>Rotation Clamp Activation (in from start)</label>
-                <div class="input-row">
-                    <input type="number" id="rotationClampActivationDistance" step="0.1" placeholder="6.5">
-                    <button class="btn" onclick="updateConfig('rotation_clamp_activation_distance')">SAVE</button>
-                </div>
+                <label>Feed Distance (in) <span style="opacity:0.7;font-weight:normal;">— controls 2nd square size</span></label>
+                <input type="number" id="feedTravelDistance" step="0.01" placeholder="3.43">
             </div>
 
             <div class="input-group">
-                <label>Rotation Servo Activation (in from start)</label>
-                <div class="input-row">
-                    <input type="number" id="rotationServoActivationDistance" step="0.1" placeholder="8.2">
-                    <button class="btn" onclick="updateConfig('rotation_servo_activation_distance')">SAVE</button>
-                </div>
+                <label>Feed Offset from Sensor (in)</label>
+                <input type="number" id="feedMotorOffsetFromSensor" step="0.01" placeholder="0.15">
+            </div>
+
+            <!-- Rotation -->
+            <div class="section-heading">Rotation</div>
+
+            <div class="input-group">
+                <label>Servo Home (deg) <span style="opacity:0.7;font-weight:normal;">— active = Home + 100&deg;</span></label>
+                <input type="number" id="rotationServoHomePosition" min="0" max="180" step="1" placeholder="14">
             </div>
 
             <div class="input-group">
-                <label>TA Signal Before End (in)</label>
-                <div class="input-row">
-                    <input type="number" id="taSignalOffsetFromEnd" step="0.01" placeholder="0.2">
-                    <button class="btn" onclick="updateConfig('ta_signal_offset_from_end')">SAVE</button>
-                </div>
+                <label>Clamp Activation (in from cut start)</label>
+                <input type="number" id="rotationClampActivationDistance" step="0.1" placeholder="6.5">
             </div>
 
-            <div id="configStatus" style="font-size: 0.8rem; text-align: center; min-height: 1.2em; transition: color 0.3s; margin-bottom: 0.5rem;"></div>
+            <div class="input-group">
+                <label>Servo Activation (in from cut start)</label>
+                <input type="number" id="rotationServoActivationDistance" step="0.1" placeholder="8.2">
+            </div>
 
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 1rem; justify-content: center;">
-                <button class="btn" style="flex: 1; padding: 0.75rem;" onclick="downloadAllConfigs()">↓ Download Config Data</button>
-                <button class="btn" style="flex: 1; padding: 0.75rem;" onclick="document.getElementById('configUploadInput').click()">↑ Upload Config Data</button>
+            <div class="input-group">
+                <label>Clamp Hold After Servo Rotation (ms)</label>
+                <input type="number" id="rotationClampExtendMs" step="50" placeholder="2200">
+            </div>
+
+            <!-- Transfer Arm -->
+            <div class="section-heading">Transfer Arm</div>
+
+            <div class="input-group">
+                <label>TA Signal Offset (in before cut end)</label>
+                <input type="number" id="taSignalOffsetFromEnd" step="0.01" placeholder="0.2">
+            </div>
+
+            <!-- Pullback (YESWOOD-only) -->
+            <div class="section-heading">Pullback</div>
+
+            <div class="input-group">
+                <label>Feed Pullback Distance (in)</label>
+                <input type="number" id="feedPullbackDistance" step="0.05" placeholder="0.3">
+            </div>
+
+            <div class="input-group">
+                <label>Feed Forward Compensation (in)</label>
+                <input type="number" id="feedPullbackFeedCompensation" step="0.05" placeholder="0.3">
+            </div>
+
+            <div id="configStatus" style="font-size: 0.72rem; text-align: center; min-height: 1.2em; transition: color 0.25s; margin: 0.25rem 0;"></div>
+
+            <div style="margin-top: 0.75rem; padding-top: 0.625rem; border-top: 1px solid var(--border-default); display: flex; gap: 0.375rem;">
+                <button class="btn" style="flex: 1;" onclick="downloadAllConfigs()">↓ Download</button>
+                <button class="btn" style="flex: 1;" onclick="document.getElementById('configUploadInput').click()">↑ Upload</button>
                 <input type="file" id="configUploadInput" style="display: none;" accept=".json" onchange="uploadConfigData(event)">
             </div>
         </div>
@@ -757,20 +996,20 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         <!-- Logs -->
         <div class="card col-span-12 fade-in" style="animation-delay: 0.6s">
             <div class="card-header clickable" onclick="toggleLogs(this)" style="cursor: pointer; margin-bottom: 0; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.625rem;">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
                     System Logs
                 </div>
-                <svg id="logToggleIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(0deg); transition: transform 0.3s;"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                <svg id="logToggleIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px; transform: rotate(0deg); transition: transform 0.25s; color: var(--text-dim);"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </div>
-            
-            <div id="logContent" style="display: none; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+
+            <div id="logContent" style="display: none; grid-template-columns: 1fr 1fr; gap: 0.625rem; margin-top: 0.75rem;">
                 <div>
-                    <div class="label-sm" style="margin-bottom: 0.5rem;">EVENTS</div>
+                    <div class="label-sm" style="margin: 0 0 0.4rem;">EVENTS</div>
                     <div class="log-terminal" id="eventLog"></div>
                 </div>
                 <div>
-                    <div class="label-sm" style="margin-bottom: 0.5rem;">SERIAL</div>
+                    <div class="label-sm" style="margin: 0 0 0.4rem;">SERIAL</div>
                     <div class="log-terminal" id="serialLog"></div>
                 </div>
             </div>
@@ -1047,8 +1286,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 if(data.rotation_clamp_activation_distance !== undefined) document.getElementById('rotationClampActivationDistance').value = formatConfigValue(data.rotation_clamp_activation_distance);
                 if(data.rotation_servo_activation_distance !== undefined) document.getElementById('rotationServoActivationDistance').value = formatConfigValue(data.rotation_servo_activation_distance);
                 if(data.rotation_servo_home_position !== undefined) document.getElementById('rotationServoHomePosition').value = formatConfigValue(data.rotation_servo_home_position);
-                if(data.rotation_servo_active_position !== undefined) document.getElementById('rotationServoActivePosition').value = formatConfigValue(data.rotation_servo_active_position);
                 if(data.ta_signal_offset_from_end !== undefined) document.getElementById('taSignalOffsetFromEnd').value = formatConfigValue(data.ta_signal_offset_from_end);
+                if(data.feed_pullback_distance !== undefined) document.getElementById('feedPullbackDistance').value = formatConfigValue(data.feed_pullback_distance);
+                if(data.feed_pullback_feed_compensation !== undefined) document.getElementById('feedPullbackFeedCompensation').value = formatConfigValue(data.feed_pullback_feed_compensation);
             }
             else if (data.type === 'config_updated') {
                 showConfigStatus(data.error ? data.error : 'Configuration saved successfully', data.error ? 'error' : 'success');
@@ -1213,8 +1453,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             'rotation_clamp_activation_distance': 'rotationClampActivationDistance',
             'rotation_servo_activation_distance': 'rotationServoActivationDistance',
             'rotation_servo_home_position': 'rotationServoHomePosition',
-            'rotation_servo_active_position': 'rotationServoActivePosition',
-            'ta_signal_offset_from_end': 'taSignalOffsetFromEnd'
+            'ta_signal_offset_from_end': 'taSignalOffsetFromEnd',
+            'feed_pullback_distance': 'feedPullbackDistance',
+            'feed_pullback_feed_compensation': 'feedPullbackFeedCompensation'
         };
 
         function updateConfig(key) {
@@ -1255,13 +1496,34 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         function updateModeUI(mode) {
             const btn3Inch = document.getElementById('mode-3inch');
             const btnMinis = document.getElementById('mode-minis');
-            
+            const toggle  = document.getElementById('modeToggle');
+
             if (mode === 0) {
                 btn3Inch.classList.add('active');
                 btnMinis.classList.remove('active');
             } else {
                 btn3Inch.classList.remove('active');
                 btnMinis.classList.add('active');
+            }
+
+            if (toggle) {
+                const wasMode1 = toggle.classList.contains('mode-1');
+                const wasMode0 = toggle.classList.contains('mode-0');
+                const prevMode = wasMode1 ? 1 : (wasMode0 ? 0 : null);
+
+                toggle.classList.remove('mode-0', 'mode-1');
+                toggle.classList.add('mode-' + mode);
+
+                // Fire pill-squish only on an actual change (not on initial sync)
+                if (prevMode !== null && prevMode !== mode) {
+                    const bubble = toggle.querySelector('.mode-bubble');
+                    if (bubble) {
+                        bubble.classList.remove('squish');
+                        void bubble.offsetWidth;  /* reflow → restart animation */
+                        bubble.classList.add('squish');
+                        setTimeout(() => bubble.classList.remove('squish'), 440);
+                    }
+                }
             }
         }
 
@@ -1302,6 +1564,13 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             };
             reader.readAsText(file);
         }
+
+        // Save each config field automatically when it loses focus with a changed
+        // value (the native 'change' event also fires on Enter, which is what we want).
+        Object.entries(configMap).forEach(([key, id]) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => updateConfig(key));
+        });
 
         // Init
         connect();

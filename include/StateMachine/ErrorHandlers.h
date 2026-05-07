@@ -19,8 +19,8 @@ void sendSignalToTA();
 // Clamp Control Functions
 void extendFeedClamp();
 void retractFeedClamp();
-void extend2x4SecureClamp();
-void retract2x4SecureClamp();
+void extendTopClamp();
+void retractTopClamp();
 void extendRotationClamp();
 void retractRotationClamp();
 
@@ -46,7 +46,7 @@ void configureFeedMotorForReturn();
 void moveCutMotorToCut();
 void moveCutMotorToHome();
 void moveFeedMotorToTravel();
-void moveFeedMotorToHome();
+void moveFeedMotorToZero();
 void moveFeedMotorToPosition(float targetPositionInches);
 void stopCutMotor();
 void stopFeedMotor();
@@ -55,7 +55,7 @@ void homeFeedMotorBlocking(Bounce& homingSwitch);
 bool homeFeedMotorNonBlocking(Bounce& homingSwitch);
 void moveFeedMotorToInitialAfterHoming();
 bool checkAndRecalibrateCutMotorHome(int attempts);
-void moveFeedMotorToPostCutHome();
+void moveFeedMotorToPostCutZero();
 
 // Switch Logic Functions
 void handleReloadMode();
@@ -81,7 +81,7 @@ struct CutMotorHomeErrorResult {
 
 void performCutMotorRealTimeHomeSensorCheck(FastAccelStepper* cutMotor, Bounce& cutHomingSwitch, bool& cutMotorInYes2x4Return);
 CutMotorHomeErrorResult handleCutMotorHomeError(Bounce& cutHomingSwitch, FastAccelStepper* cutMotor, const String& contextDescription, bool allowSlowRecovery);
-void executeCutMotorErrorStateTransition(FastAccelStepper* cutMotor, FastAccelStepper* positionMotor, SystemState& currentState, int& cuttingStep, int& cuttingSubStep7, int& fixPositionStep, int& fixPositionSubStep2, unsigned long& errorStartTime, bool shouldExtend2x4SecureClamp);
+void executeCutMotorErrorStateTransition(FastAccelStepper* cutMotor, FastAccelStepper* positionMotor, SystemState& currentState, int& cuttingStep, int& cuttingSubStep7, int& fixPositionStep, int& fixPositionSubStep2, unsigned long& errorStartTime, bool shouldExtendTopClamp);
 void logCutMotorHomeErrorResult(const CutMotorHomeErrorResult& result);
 
 // Result creation helpers
@@ -121,7 +121,7 @@ extern FastAccelStepper* feedMotor;
 // Pin definitions and constants (defined in main.cpp)
 extern const int TRANSFER_ARM_SIGNAL_PIN;
 extern const int FEED_CLAMP;
-extern const int _2x4_SECURE_CLAMP;
+extern const int TOP_CLAMP;
 extern const int ROTATION_CLAMP;
 extern const int STATUS_LED_RED;
 extern const int STATUS_LED_YELLOW;

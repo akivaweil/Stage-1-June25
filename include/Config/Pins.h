@@ -44,7 +44,7 @@ extern const int WOOD_SUCTION_CONFIRM_SENSOR;  // Transfer Arm suction sensor (H
 //* ************************************************************************
 // Pneumatic clamp control pins (HIGH = extend, LOW = retract)
 extern const int FEED_CLAMP;      // Clamps wood during feed positioning
-extern const int _2x4_SECURE_CLAMP;    // Secures 2x4 during cutting
+extern const int TOP_CLAMP;    // Top clamp - secures 2x4 during cutting
 extern const int ROTATION_CLAMP;        // Clamps cut pieces for rotation
 
 //* ************************************************************************

@@ -338,7 +338,7 @@ void executeCutMotorErrorStateTransition(
     int& fixPositionStep,
     int& fixPositionSubStep2,
     unsigned long& errorStartTime,
-    bool shouldExtend2x4SecureClamp
+    bool shouldExtendTopClamp
 ) {
     //serial.println("EXECUTING CUT MOTOR ERROR STATE TRANSITION");
     
@@ -354,9 +354,9 @@ void executeCutMotorErrorStateTransition(
     
     //! EXTEND SAFETY CLAMPS - Secure all mechanical systems
     extendFeedClamp();  // Always extend feed clamp for safety
-    if (shouldExtend2x4SecureClamp) {
-        extend2x4SecureClamp();
-        //serial.println("2x4 secure clamp extended for safety.");
+    if (shouldExtendTopClamp) {
+        extendTopClamp();
+        //serial.println("Top clamp extended for safety.");
     }
     
     //! SET ERROR INDICATION LEDS - Visual status indicators

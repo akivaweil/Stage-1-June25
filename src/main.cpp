@@ -118,9 +118,10 @@ bool errorBlinkState = false;
 // Global variables for signal handling
 unsigned long signalTAStartTime = 0; // For Transfer Arm signal
 bool taSignalActive = false;      // For Transfer Arm signal
+unsigned long taSignalOffTime = 0; // millis() when TA signal last went LOW (used to gate OTA)
 
-// New flag to track cut motor return during RETURNING_YES_2x4 mode
-bool cutMotorInReturningYes2x4Return = false;
+// New flag to track cut motor return during YESWOOD mode
+bool cutMotorInYeswoodReturn = false;
 
 // Additional variables needed by states - declarations moved to above
 
@@ -156,8 +157,8 @@ static String stateIdToName(uint32_t s) {
     case FEED_FIRST_CUT:         return "FEED_FIRST_CUT";
     case FEED_WOOD_FWD_ONE:      return "FEED_WOOD_FWD_ONE";
     case CUTTING:                return "CUTTING";
-    case RETURNING_YES_2x4:      return "RETURNING_YES_2x4";
-    case RETURNING_NO_2x4:       return "RETURNING_NO_2x4";
+    case YESWOOD:      return "YESWOOD";
+    case NOWOOD:       return "NOWOOD";
     case RELOAD:                 return "RELOAD";
     case ERROR:                  return "ERROR";
     case ERROR_RESET:            return "ERROR_RESET";
@@ -258,7 +259,7 @@ void setup() {
   
   pinMode(ROTATION_CLAMP, OUTPUT);
   pinMode(FEED_CLAMP, OUTPUT);
-  pinMode(_2x4_SECURE_CLAMP, OUTPUT);
+  pinMode(TOP_CLAMP, OUTPUT);
   
   pinMode(STATUS_LED_RED, OUTPUT);
   pinMode(STATUS_LED_YELLOW, OUTPUT);
@@ -270,7 +271,7 @@ void setup() {
   
   //! Initialize clamps and LEDs
   extendFeedClamp();
-  extend2x4SecureClamp();
+  extendTopClamp();
   retractRotationClamp();
   allLedsOff();
   showBlueLed();
@@ -355,12 +356,19 @@ void loop() {
 
   // Handle OTA requests when in IDLE, HOMING, RELOAD states, or at the beginning of CUTTING state (step 0)
   bool allowOTA = (currentState == IDLE || currentState == HOMING || currentState == RELOAD);
-  
+
   // Also allow OTA at the beginning of cutting state (step 0 only)
   if (currentState == CUTTING) {
     allowOTA = isCuttingStateStep0();
   }
-  
+
+  // Require the TA signal to have been LOW for at least 500ms before allowing OTA.
+  // OTA stalls block the TransferArm timing handler and can leave the signal stuck HIGH.
+  static const unsigned long OTA_TA_SIGNAL_OFF_GUARD_MS = 500;
+  if (taSignalActive || millis() - taSignalOffTime < OTA_TA_SIGNAL_OFF_GUARD_MS) {
+    allowOTA = false;
+  }
+
   if (allowOTA) {
     handleOTA();
   }

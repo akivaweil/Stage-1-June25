@@ -4,18 +4,16 @@
 #include <esp_system.h>
 #include <esp_attr.h>
 #include <ESP32Servo.h>
-#include "Config/Pins.h"
+#include "Config/Pins_Definitions.h"
 #include "Config/Config.h"
-#include "OTAUpdater/ota_updater.h"
+#include "OTA/OTA_Upload.h"
 #include "StateMachine/General_Functions.h"
 #include "StateMachine/ErrorHandlers.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/03_CUTTING.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 
-//* ************************************************************************
-//* ************************ AUTOMATED TABLE SAW **************************
-//* ************************************************************************
+// Automated Table Saw
 // Main control system for Stage 1 of the automated table saw.
 // Handles state machine logic, motor control, sensor monitoring, and safety systems.
 
@@ -62,7 +60,7 @@ unsigned long rotationClampExtendTime = 0;
 bool rotationClampIsExtended = false;
 
 // SystemStates Enum is now in Functions.h
-SystemState currentState = STARTUP;
+SystemState currentState = STATE_STARTUP;
 
 // Motor configuration constants moved to Config/system_config.h
 
@@ -140,19 +138,19 @@ static String resetReasonToString(esp_reset_reason_t reason) {
 
 static String stateIdToName(uint32_t s) {
   switch ((SystemState)s) {
-    case STARTUP:                return "STARTUP";
-    case HOMING:                 return "HOMING";
-    case IDLE:                   return "IDLE";
-    case FEED_FIRST_CUT:         return "FEED_FIRST_CUT";
-    case FEED_WOOD_FWD_ONE:      return "FEED_WOOD_FWD_ONE";
-    case CUTTING:                return "CUTTING";
-    case YESWOOD:      return "YESWOOD";
-    case NOWOOD:       return "NOWOOD";
-    case RELOAD:                 return "RELOAD";
-    case ERROR:                  return "ERROR";
-    case ERROR_RESET:            return "ERROR_RESET";
-    case SUCTION_ERROR:          return "SUCTION_ERROR";
-    case Cut_Motor_Homing_Error: return "CUT_MOTOR_HOMING_ERROR";
+    case STATE_STARTUP:                return "STARTUP";
+    case STATE_HOMING:                 return "HOMING";
+    case STATE_IDLE:                   return "IDLE";
+    case STATE_FEED_FIRST_CUT:         return "FEED_FIRST_CUT";
+    case STATE_FEED_WOOD_FWD_ONE:      return "FEED_WOOD_FWD_ONE";
+    case STATE_CUTTING:                return "CUTTING";
+    case STATE_YESWOOD:      return "YESWOOD";
+    case STATE_NOWOOD:       return "NOWOOD";
+    case STATE_RELOAD:                 return "RELOAD";
+    case STATE_ERROR:                  return "ERROR";
+    case STATE_ERROR_RESET:            return "ERROR_RESET";
+    case STATE_SUCTION_ERROR:          return "SUCTION_ERROR";
+    case STATE_CUT_MOTOR_HOMING_ERROR: return "CUT_MOTOR_HOMING_ERROR";
     default:                     return "UNKNOWN";
   }
 }
@@ -188,7 +186,7 @@ static void captureCrashDiagnostics() {
   }
 
   crashBreadcrumbMagic       = CRASH_BREADCRUMB_MAGIC;
-  crashBreadcrumbState       = (uint32_t)STARTUP;
+  crashBreadcrumbState       = (uint32_t)STATE_STARTUP;
   crashBreadcrumbCuttingStep = 0xFFFFFFFF;
   crashBreadcrumbLastAliveMs = 0;
 
@@ -207,7 +205,7 @@ static void captureCrashDiagnostics() {
 
 static inline void updateCrashBreadcrumbs() {
   crashBreadcrumbState       = (uint32_t)currentState;
-  crashBreadcrumbCuttingStep = (currentState == CUTTING) ? (uint32_t)getCuttingStateStep() : 0xFFFFFFFF;
+  crashBreadcrumbCuttingStep = (currentState == STATE_CUTTING) ? (uint32_t)getCuttingStateStep() : 0xFFFFFFFF;
   crashBreadcrumbLastAliveMs = millis();
 }
 
@@ -219,10 +217,10 @@ void setup() {
   
   setupOTA();
   
-  //! Setup websocket dashboard
+  // Setup websocket dashboard
   setupWebSocketDashboard();
 
-  //! Configure pin modes
+  // Configure pin modes
   pinMode(CUT_MOTOR_STEP_PIN, OUTPUT);
   pinMode(CUT_MOTOR_DIR_PIN, OUTPUT);
   pinMode(FEED_MOTOR_STEP_PIN, OUTPUT);
@@ -249,14 +247,14 @@ void setup() {
   pinMode(TRANSFER_ARM_SIGNAL_PIN, OUTPUT);
   digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
   
-  //! Initialize clamps and LEDs
+  // Initialize clamps and LEDs
   extendFeedClamp();
   extendTopClamp();
   retractRotationClamp();
   allLedsOff();
   showBlueLed();
   
-  //! Configure switch debouncing
+  // Configure switch debouncing
   cutHomingSwitch.attach(CUT_MOTOR_HOME_SWITCH);
   cutHomingSwitch.interval(3);
   
@@ -278,7 +276,7 @@ void setup() {
   woodPresentSensorBounce.attach(_2x4_PRESENT_SENSOR);
   woodPresentSensorBounce.interval(10);
   
-  //! Initialize motors
+  // Initialize motors
   engine.init();
 
   cutMotor = engine.stepperConnectToPin(CUT_MOTOR_STEP_PIN);
@@ -299,7 +297,7 @@ void setup() {
     //serial.println("Failed to init feedMotor");
   }
   
-  //! Initialize servo with robust attachment
+  // Initialize servo with robust attachment
   //Serial.printf("Initializing servo on pin %d with robust attachment\n", ROTATION_SERVO_PIN);
   
   // Force servo attachment using multiple methods to ensure proper initialization
@@ -318,8 +316,8 @@ void setup() {
   // The servo will only be positioned when manually starting a cut cycle
   //Serial.println("Servo initialization complete - no initial position set for safety");
   
-  //! Configure initial state
-  currentState = STARTUP;
+  // Configure initial state
+  currentState = STATE_STARTUP;
   
   startCycleSwitch.update();
   if (startCycleSwitch.read() == HIGH) {
@@ -335,10 +333,10 @@ void loop() {
   updateCrashBreadcrumbs();
 
   // Handle OTA requests when in IDLE, HOMING, RELOAD states, or at the beginning of CUTTING state (step 0)
-  bool allowOTA = (currentState == IDLE || currentState == HOMING || currentState == RELOAD);
+  bool allowOTA = (currentState == STATE_IDLE || currentState == STATE_HOMING || currentState == STATE_RELOAD);
 
   // Also allow OTA at the beginning of cutting state (step 0 only)
-  if (currentState == CUTTING) {
+  if (currentState == STATE_CUTTING) {
     allowOTA = isCuttingStateStep0();
   }
 

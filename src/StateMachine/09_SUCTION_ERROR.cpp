@@ -63,7 +63,7 @@ void handleSuctionErrorState() {
             sensorClearedTime = 0;
             
             turnRedLedOff(); // Turn off error LED
-            changeState(CUTTING); // Return to cutting state
+            changeState(STATE_CUTTING); // Return to cutting state
         }
     }
 
@@ -92,6 +92,6 @@ void handleSuctionErrorState() {
         sensorCleared = false;
         sensorClearedTime = 0;
         
-        changeState(HOMING);        // Go to HOMING to re-initialize using proper StateManager method
+        changeState(STATE_HOMING);        // Go to HOMING to re-initialize using proper StateManager method
     }
 } 

@@ -1,4 +1,4 @@
-#include "Config/Pins.h"
+#include "Config/Pins_Definitions.h"
 
 // PIN DEFINITIONS
 // Hardware pin assignments for the Automated Table Saw - Stage 1

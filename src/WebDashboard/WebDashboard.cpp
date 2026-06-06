@@ -1,17 +1,15 @@
-#include "WebSocketDashboard/websocket_dashboard.h"
-#include "WebSocketDashboard/dashboard_html.inc"
+#include "WebDashboard/WebDashboard.h"
+#include "WebDashboard/dashboard_html.inc"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
-#include "Config/Pins.h"
+#include "Config/Pins_Definitions.h"
 #include "Config/Config.h"
 #include "ConfigApi/MachineConfigApi.h"
 #include "ConfigApi/MachineSettings.h"
 #include <ArduinoJson.h>
 #include <EEPROM.h>
 
-//* ************************************************************************
-//* ********************** WEBSOCKET DASHBOARD ****************************
-//* ************************************************************************
+// Websocket Dashboard
 // Enhanced websocket dashboard for comprehensive table saw monitoring
 // Updates only when motors are not moving to avoid timing interference
 
@@ -84,28 +82,28 @@ void updateNetworkInfo();
 // Helper function to get state name
 String getStateName(SystemState state) {
     switch(state) {
-        case STARTUP: return "STARTUP";
-        case HOMING: return "HOMING";
-        case IDLE: return "IDLE";
-        case CUTTING: return "CUTTING";
-        case ERROR: return "ERROR";
-        case ERROR_RESET: return "ERROR_RESET";
-        case SUCTION_ERROR: return "SUCTION_ERROR";
-        case Cut_Motor_Homing_Error: return "CUT_MOTOR_ERROR";
-        case YESWOOD: return "YESWOOD";
-        case NOWOOD: return "NOWOOD";
-        case FEED_FIRST_CUT: return "FEED_FIRST_CUT";
-        case FEED_WOOD_FWD_ONE: return "FEED_WOOD_FWD_ONE";
-        case RELOAD: return "RELOAD";
+        case STATE_STARTUP: return "STARTUP";
+        case STATE_HOMING: return "HOMING";
+        case STATE_IDLE: return "IDLE";
+        case STATE_CUTTING: return "CUTTING";
+        case STATE_ERROR: return "ERROR";
+        case STATE_ERROR_RESET: return "ERROR_RESET";
+        case STATE_SUCTION_ERROR: return "SUCTION_ERROR";
+        case STATE_CUT_MOTOR_HOMING_ERROR: return "CUT_MOTOR_ERROR";
+        case STATE_YESWOOD: return "YESWOOD";
+        case STATE_NOWOOD: return "NOWOOD";
+        case STATE_FEED_FIRST_CUT: return "FEED_FIRST_CUT";
+        case STATE_FEED_WOOD_FWD_ONE: return "FEED_WOOD_FWD_ONE";
+        case STATE_RELOAD: return "RELOAD";
         default: return "UNKNOWN";
     }
 }
 
 // Helper function to get system health
 String getSystemHealth() {
-    if (getCurrentState() == ERROR || getCurrentState() == SUCTION_ERROR || getCurrentState() == Cut_Motor_Homing_Error) {
+    if (getCurrentState() == STATE_ERROR || getCurrentState() == STATE_SUCTION_ERROR || getCurrentState() == STATE_CUT_MOTOR_HOMING_ERROR) {
         return "ERROR";
-    } else if (getCurrentState() == ERROR_RESET) {
+    } else if (getCurrentState() == STATE_ERROR_RESET) {
         return "WARNING";
     } else {
         return "HEALTHY";
@@ -1662,7 +1660,7 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
                             addEventToLog("Config mode switched to: " + String(currentConfigMode == 0 ? "3 Inch" : "Minis"));
                         }
                     } else if (type == "trigger_start_cycle") {
-                        if (getCurrentState() == IDLE) {
+                        if (getCurrentState() == STATE_IDLE) {
                             dashboardStartCycleTrigger = true;
                             addEventToLog("Cycle start triggered from dashboard");
                         } else {
@@ -1854,7 +1852,7 @@ void updateTimeSinceLastCycle() {
     // During cutting and returning sequences, the system is actively working, not idle
     SystemState currentState = getCurrentState();
     
-    if (currentState != IDLE) {
+    if (currentState != STATE_IDLE) {
         return; // Don't update time counter during active operations
     }
     
@@ -1937,8 +1935,8 @@ void onStateChange(SystemState newState) {
     
     // Skip immediate broadcast during critical motor transitions to avoid blocking
     // The periodic update will catch it within 1 second
-    bool isCriticalTransition = (oldState == CUTTING && 
-                                 (newState == YESWOOD || newState == NOWOOD));
+    bool isCriticalTransition = (oldState == STATE_CUTTING && 
+                                 (newState == STATE_YESWOOD || newState == STATE_NOWOOD));
     
     if (!isCriticalTransition) {
         broadcastSystemStatus();
@@ -1965,7 +1963,7 @@ void updateDashboardStatus() {
     
     // Only broadcast when motors are not moving to avoid timing interference
     // Now each broadcast function checks for changes internally
-    if (getCurrentState() != CUTTING) {
+    if (getCurrentState() != STATE_CUTTING) {
         broadcastSystemStatus();
         broadcastSensorStatus();
         broadcastClampStatus();

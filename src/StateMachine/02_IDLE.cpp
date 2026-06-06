@@ -1,7 +1,7 @@
 #include "StateMachine/02_IDLE.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 #include "ConfigApi/MachineConfigApi.h"
 
 const unsigned long IDLE_WOOD_PRESENT_ACTIVE_DELAY_MS = 1500;
@@ -29,7 +29,7 @@ static bool checkWoodPresentActiveAutoFeedFirstCut() {
         } else if ((millis() - idleWoodPresentDelayStartMs) >= IDLE_WOOD_PRESENT_ACTIVE_DELAY_MS) {
             idleWoodPresentDelayActive = false;
             setComingFromNoWoodWithSensorsClear(false);
-            changeState(FEED_FIRST_CUT);
+            changeState(STATE_FEED_FIRST_CUT);
             idleWoodPresentPreviousState = woodPresentNow;
             return true;
         }
@@ -69,10 +69,10 @@ static bool checkWoodPresentActiveAutoFeedFirstCut() {
 // Ensure position and top clamps are engaged
 // If no wood detected, turn on blue LED for NO_WOOD mode
 
-void executeIdleState() {
+void handleIdleState() {
     // Check if reload switch is activated - if so, transition to reload state
     if (getReloadSwitch()->read() == HIGH) {
-        changeState(RELOAD);
+        changeState(STATE_RELOAD);
         return;
     }
 
@@ -134,13 +134,13 @@ void checkFirstCutConditions() {
         //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor HIGH - transitioning to FEED_FIRST_CUT");
         // Reset the no-wood flag when feed button is pressed
         setComingFromNoWoodWithSensorsClear(false);
-        changeState(FEED_FIRST_CUT);
+        changeState(STATE_FEED_FIRST_CUT);
     }
     else if (pushwoodPressed && firstCutSensorLow) {
         //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor LOW - transitioning to FEED_WOOD_FWD_ONE");
         // Reset the no-wood flag when feed button is pressed
         setComingFromNoWoodWithSensorsClear(false);
-        changeState(FEED_WOOD_FWD_ONE);
+        changeState(STATE_FEED_WOOD_FWD_ONE);
     }
 }
 
@@ -176,7 +176,7 @@ void checkStartConditions() {
         setComingFromNoWoodWithSensorsClear(false);
         
         setCuttingCycleInProgress(true);
-        changeState(CUTTING);
+        changeState(STATE_CUTTING);
         configureCutMotorForCutting();
         
         extendFeedClamp();

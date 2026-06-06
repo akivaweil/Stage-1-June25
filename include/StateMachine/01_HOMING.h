@@ -1,16 +1,11 @@
-#ifndef HOMING_STATE_H
-#define HOMING_STATE_H
+#pragma once
 
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* ************************** HOMING STATE ********************************
-//* ************************************************************************
+// Homing State
 // Function-based homing state handling.
 // Handles the homing sequence for all motors.
 
-void executeHomingState();
+void handleHomingState();
 void onEnterHomingState();
 void onExitHomingState();
-
-#endif // HOMING_STATE_H 

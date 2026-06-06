@@ -1,5 +1,4 @@
-#ifndef MACHINE_SETTINGS_H
-#define MACHINE_SETTINGS_H
+#pragma once
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -97,4 +96,3 @@ void flushStagedSettingsToLive();
 // batch of writes.
 void applySettingsSideEffects();
 
-#endif // MACHINE_SETTINGS_H

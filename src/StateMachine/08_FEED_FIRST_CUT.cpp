@@ -2,7 +2,7 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
 #include "Config/Config.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 
 // RELEVANT CONSTANTS
 // State-specific constants
@@ -65,7 +65,7 @@ enum FeedFirstCutStep {
 static FeedFirstCutStep currentStep = RETRACT_FEED_CLAMP;
 static unsigned long stepStartTime = 0;
 
-void executeFeedFirstCutState() {
+void handleFeedFirstCutState() {
     executeFeedFirstCutStep();
 }
 
@@ -192,14 +192,14 @@ void executeFeedFirstCutStep() {
                 // Check the start cycle switch state
                 if (getStartCycleSwitch()->read() == HIGH) {
                     //serial.println("FeedFirstCut: Start cycle switch HIGH - transitioning to CUTTING state");
-                    changeState(CUTTING);
+                    changeState(STATE_CUTTING);
                     setCuttingCycleInProgress(true);
                     configureCutMotorForCutting();
                     showYellowLed();
                     extendFeedClamp();
                 } else {
                     //serial.println("FeedFirstCut: Start cycle switch LOW - transitioning to IDLE state");
-                    changeState(IDLE);
+                    changeState(STATE_IDLE);
                 }
             }
             break;

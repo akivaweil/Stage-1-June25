@@ -37,9 +37,9 @@ void returnRotationServoHome() {
             delayMicroseconds(100); // Small delay between rapid writes
         }
     }
-    //! Start the travel buffer — rotationServoKnownHome will flip true once
-    //! ROTATION_SERVO_HOME_WAIT_DURATION_MS has elapsed, via
-    //! updateRotationServoHomeStatus() on the main loop tick.
+    // Start the travel buffer — rotationServoKnownHome will flip true once
+    // ROTATION_SERVO_HOME_WAIT_DURATION_MS has elapsed, via
+    // updateRotationServoHomeStatus() on the main loop tick.
     rotationServoHomePending = true;
     rotationServoHomeCommandTime = millis();
     rotationServoKnownHome = false; // becomes true only after the buffer

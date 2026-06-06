@@ -1,18 +1,14 @@
-#ifndef _05_NOWOOD_H
-#define _05_NOWOOD_H
+#pragma once
 
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* **************************** NOWOOD STATE *****************************
-//* ************************************************************************
+// Nowood State
 // Handles the NOWOOD sequence when no wood is detected.
 // Cut motor returns home in the background while feed motor runs its sequence.
 
-void executeNowoodState();
+void handleNowoodState();
 void onEnterNowoodState();
 void onExitNowoodState();
 void handleNowoodSequence();
 void resetNowoodSteps();
 
-#endif // _05_NOWOOD_H

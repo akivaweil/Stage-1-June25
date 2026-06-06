@@ -6,7 +6,7 @@
 #include "StateMachine/11_ERROR_RESET.h"
 #include "StateMachine/09_SUCTION_ERROR.h"
 #include "StateMachine/10_CUT_MOTOR_ERROR.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 #include "Config/Config.h"
 
 // Forward declaration (in case header resolution fails)
@@ -24,25 +24,23 @@ extern Bounce woodPresentSensorBounce;
 // External references to global variables from main.cpp
 extern bool comingFromNoWoodWithSensorsClear;
 
-//* ************************************************************************
-//* ************************* STATE MANAGER *******************************
-//* ************************************************************************
+// State Manager
 // Function-based state manager implementation that coordinates all state operations.
 
 // Global variables for state management
 static int consecutiveYeswoodCount = 0;
-static SystemState previousState = STARTUP;
+static SystemState previousState = STATE_STARTUP;
 
 // Forward declarations for state execution functions
-void executeStartupState();
-void executeHomingState();
-void executeIdleState();
-void executeFeedFirstCutState();
-void executeFeedWoodFwdOneState();
-void executeCuttingState();
-void executeYeswoodState();
-void executeNowoodState();
-void executeReloadState();
+void handleStartupState();
+void handleHomingState();
+void handleIdleState();
+void handleFeedFirstCutState();
+void handleFeedWoodFwdOneState();
+void handleCuttingState();
+void handleYeswoodState();
+void handleNowoodState();
+void handleReloadState();
 
 // Forward declarations for state lifecycle functions
 void onEnterStartupState();
@@ -69,48 +67,48 @@ void executeStateMachine() {
     handleCommonOperations();
     
     // Update error LED blinking for ERROR state
-    if (currentState == ERROR) {
+    if (currentState == STATE_ERROR) {
         handleErrorLedBlink();
     }
     
     switch (currentState) {
-        case STARTUP:
-            executeStartupState();
+        case STATE_STARTUP:
+            handleStartupState();
             break;
-        case HOMING:
-            executeHomingState();
+        case STATE_HOMING:
+            handleHomingState();
             break;
-        case IDLE:
-            executeIdleState();
+        case STATE_IDLE:
+            handleIdleState();
             break;
-        case FEED_FIRST_CUT:
-            executeFeedFirstCutState();
+        case STATE_FEED_FIRST_CUT:
+            handleFeedFirstCutState();
             break;
-        case FEED_WOOD_FWD_ONE:
-            executeFeedWoodFwdOneState();
+        case STATE_FEED_WOOD_FWD_ONE:
+            handleFeedWoodFwdOneState();
             break;
-        case CUTTING:
-            executeCuttingState();
+        case STATE_CUTTING:
+            handleCuttingState();
             break;
-        case YESWOOD:
-            executeYeswoodState();
+        case STATE_YESWOOD:
+            handleYeswoodState();
             break;
-        case NOWOOD:
-            executeNowoodState();
+        case STATE_NOWOOD:
+            handleNowoodState();
             break;
-        case RELOAD:
-            executeReloadState();
+        case STATE_RELOAD:
+            handleReloadState();
             break;
-        case ERROR:
+        case STATE_ERROR:
             handleStandardErrorState();
             break;
-        case ERROR_RESET:
+        case STATE_ERROR_RESET:
             handleErrorResetState();
             break;
-        case SUCTION_ERROR:
+        case STATE_SUCTION_ERROR:
             handleSuctionErrorState();
             break;
-        case Cut_Motor_Homing_Error:
+        case STATE_CUT_MOTOR_HOMING_ERROR:
             handleCutMotorErrorState();
             break;
     }
@@ -125,15 +123,15 @@ void changeState(SystemState newState) {
     if (currentState != newState) {
         // Call onExit for the current state before changing
         switch (currentState) {
-            case STARTUP: onExitStartupState(); break;
-            case HOMING: onExitHomingState(); break;
-            case IDLE: onExitIdleState(); break;
-            case FEED_FIRST_CUT: onExitFeedFirstCutState(); break;
-            case FEED_WOOD_FWD_ONE: onExitFeedWoodFwdOneState(); break;
-            case CUTTING: onExitCuttingState(); break;
-            case YESWOOD: onExitYeswoodState(); break;
-            case NOWOOD: onExitNowoodState(); break;
-            case RELOAD: onExitReloadState(); break;
+            case STATE_STARTUP: onExitStartupState(); break;
+            case STATE_HOMING: onExitHomingState(); break;
+            case STATE_IDLE: onExitIdleState(); break;
+            case STATE_FEED_FIRST_CUT: onExitFeedFirstCutState(); break;
+            case STATE_FEED_WOOD_FWD_ONE: onExitFeedWoodFwdOneState(); break;
+            case STATE_CUTTING: onExitCuttingState(); break;
+            case STATE_YESWOOD: onExitYeswoodState(); break;
+            case STATE_NOWOOD: onExitNowoodState(); break;
+            case STATE_RELOAD: onExitReloadState(); break;
             // Error states don't have onExit handlers
             default: break;
         }
@@ -146,24 +144,22 @@ void changeState(SystemState newState) {
         
         // Call onEnter for the new state after changing
         switch (newState) {
-            case STARTUP: onEnterStartupState(); break;
-            case HOMING: onEnterHomingState(); break;
-            case IDLE: onEnterIdleState(); break;
-            case FEED_FIRST_CUT: onEnterFeedFirstCutState(); break;
-            case FEED_WOOD_FWD_ONE: onEnterFeedWoodFwdOneState(); break;
-            case CUTTING: onEnterCuttingState(); break;
-            case YESWOOD: onEnterYeswoodState(); break;
-            case NOWOOD: onEnterNowoodState(); break;
-            case RELOAD: onEnterReloadState(); break;
+            case STATE_STARTUP: onEnterStartupState(); break;
+            case STATE_HOMING: onEnterHomingState(); break;
+            case STATE_IDLE: onEnterIdleState(); break;
+            case STATE_FEED_FIRST_CUT: onEnterFeedFirstCutState(); break;
+            case STATE_FEED_WOOD_FWD_ONE: onEnterFeedWoodFwdOneState(); break;
+            case STATE_CUTTING: onEnterCuttingState(); break;
+            case STATE_YESWOOD: onEnterYeswoodState(); break;
+            case STATE_NOWOOD: onEnterNowoodState(); break;
+            case STATE_RELOAD: onEnterReloadState(); break;
             // Error states don't have onEnter handlers
             default: break;
         }
     }
 }
 
-//* ************************************************************************
-//* ************************* ACCESS FUNCTIONS *****************************
-//* ************************************************************************
+// Access Functions
 
 SystemState getCurrentState() {
     return currentState;
@@ -367,9 +363,7 @@ void resetConsecutiveYeswoodCount() {
     consecutiveYeswoodCount = 0;
 }
 
-//* ************************************************************************
-//* ************************* UTILITY FUNCTIONS ****************************
-//* ************************************************************************
+// Utility Functions
 
 void updateSwitches() {
     // Update all debounced switches - moved from main loop
@@ -403,10 +397,10 @@ void handleCommonOperations() {
     // Only monitor suction sensor when in active cutting/returning states (not in error states)
     if (rotationServoActive && 
         millis() - rotationServoActiveStartTime >= ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS &&
-        currentState != SUCTION_ERROR && 
-        currentState != ERROR && 
-        currentState != ERROR_RESET &&
-        currentState != Cut_Motor_Homing_Error) {
+        currentState != STATE_SUCTION_ERROR && 
+        currentState != STATE_ERROR && 
+        currentState != STATE_ERROR_RESET &&
+        currentState != STATE_CUT_MOTOR_HOMING_ERROR) {
         extern const int WOOD_SUCTION_CONFIRM_SENSOR; // This is in main.cpp
         
         static unsigned long suctionHighDetectedTime = 0;
@@ -447,9 +441,9 @@ void handleCommonOperations() {
                     addSerialLog(message);
                     returnRotationServoHome();
                     rotationServoActive = false;
-                    //! rotationServoKnownHome is handled by the pending-buffer in
-                    //! returnRotationServoHome() — it flips true once the travel
-                    //! buffer elapses via updateRotationServoHomeStatus().
+                    // rotationServoKnownHome is handled by the pending-buffer in
+                    // returnRotationServoHome() — it flips true once the travel
+                    // buffer elapses via updateRotationServoHomeStatus().
                     rotationServoReturnCompleted = true; // Mark return as completed to prevent repeated calls
                     waitingForSuctionDelay = false; // Reset for next cycle
                     cooldownEntered = false; // Reset for next cycle
@@ -505,8 +499,8 @@ void handleCommonOperations() {
     }
     
     // Handle error acknowledgment separately
-    if (reloadSwitch.rose() && currentState == ERROR) {
-        changeState(ERROR_RESET);
+    if (reloadSwitch.rose() && currentState == STATE_ERROR) {
+        changeState(STATE_ERROR_RESET);
         errorAcknowledged = true;
     }
     
@@ -544,9 +538,7 @@ void handleCommonOperations() {
     }
 }
 
-//* ************************************************************************
-//* ************************* ERROR STATE HANDLERS ************************
-//* ************************************************************************
+// Error State Handlers
 
 void handleStandardErrorState() {
     // Handle standard error state with basic error LED blinking
@@ -554,7 +546,7 @@ void handleStandardErrorState() {
     
     // Check for error acknowledgment
     if (reloadSwitch.rose()) {
-        changeState(ERROR_RESET);
+        changeState(STATE_ERROR_RESET);
         errorAcknowledged = true;
         //serial.println("Standard error acknowledged by reload switch.");
     }

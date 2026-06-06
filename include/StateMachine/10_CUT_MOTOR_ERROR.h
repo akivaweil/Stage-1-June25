@@ -1,11 +1,6 @@
-#ifndef CUT_MOTOR_HOMING_ERROR_H
-#define CUT_MOTOR_HOMING_ERROR_H
+#pragma once
 
-//* ************************************************************************
-//* *********************** CUT MOTOR ERROR ********************************
-//* ************************************************************************
+// Cut Motor Error
 
 // Function declaration
 void handleCutMotorErrorState();
-
-#endif 

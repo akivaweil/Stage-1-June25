@@ -2,7 +2,7 @@
 #include "ConfigApi/MachineSettings.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
-#include "Config/Pins.h"
+#include "Config/Pins_Definitions.h"
 #include <ArduinoJson.h>
 #include <WiFi.h>
 
@@ -38,7 +38,7 @@ bool isSafeToApplyConfig() {
     // ONLY the truly-motionless IDLE state is safe to mutate live motion
     // variables. HOMING actively drives the steppers (speed-sensitive limit
     // seeks), so a mid-home edit could retarget an in-flight move; defer it.
-    return (getCurrentState() == IDLE);
+    return (getCurrentState() == STATE_IDLE);
 }
 
 // GET /api/status

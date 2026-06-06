@@ -1,17 +1,14 @@
-#ifndef _04_YESWOOD_H
-#define _04_YESWOOD_H
+#pragma once
 
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* *************************** YESWOOD STATE *****************************
-//* ************************************************************************
+// Yeswood State
 // Handles the simultaneous return sequence when wood sensor detects lumber.
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
 // Includes final feed wood movement to 3.4 inches before transitioning to next cycle or IDLE.
 
 // Function declarations for YESWOOD state
-void executeYeswoodState();
+void handleYeswoodState();
 void onEnterYeswoodState();
 void onExitYeswoodState();
 
@@ -31,5 +28,3 @@ void resetYeswoodSteps();
 // Designed to overlap with CUTTING step 0's setup; the wood is held by the
 // top clamp during the retract window.
 void tickYeswoodPullbackPrep();
-
-#endif // _04_YESWOOD_H

@@ -1,7 +1,7 @@
 #include "StateMachine/10_CUT_MOTOR_ERROR.h"
 #include "StateMachine/11_ERROR_RESET.h"  // For error timing constants
 #include "StateMachine/StateManager.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 
 // External references to functions from main.cpp (LED and motor functions only)
 extern void showRedLed();
@@ -36,7 +36,7 @@ void handleCutMotorErrorState() {
     // Wait for reload switch to acknowledge error using StateManager
     if (getErrorAcknowledged()) {
         addEventToLog("Cut motor homing error - acknowledged");
-        changeState(ERROR_RESET);
+        changeState(STATE_ERROR_RESET);
         //serial.println("Cut motor error acknowledged. Transitioning to ERROR_RESET.");
     }
 } 

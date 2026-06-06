@@ -1,30 +1,21 @@
-#ifndef PINS_H
-#define PINS_H
+#pragma once
 
-//* ************************************************************************
-//* ************************ PIN DEFINITIONS *****************************
-//* ************************************************************************
+// Pin Definitions
 // Hardware pin assignments for the Automated Table Saw - Stage 1
 // ESP32-S3 based system with stepper motors, servo, sensors, and switches
 
-//* ************************************************************************
-//* ************************ MOTOR PINS ***********************************
-//* ************************************************************************
+// Motor Pins
 // Stepper motor control pins
 extern const int CUT_MOTOR_STEP_PIN;         // Step pulse signal for cutting motor
 extern const int CUT_MOTOR_DIR_PIN;          // Direction control for cutting motor
 extern const int FEED_MOTOR_STEP_PIN;   // Step pulse signal for feed motor (pushes wood forward for angled cuts)
 extern const int FEED_MOTOR_DIR_PIN;    // Direction control for feed motor
 
-//* ************************************************************************
-//* ************************ SERVO PINS ***********************************
-//* ************************************************************************
+// Servo Pins
 // Servo control pins
 extern const int ROTATION_SERVO_PIN;
 
-//* ************************************************************************
-//* ************************ SWITCH & SENSOR PINS ************************
-//* ************************************************************************
+// Switch & Sensor Pins
   // Homing switches and sensors
   extern const int CUT_MOTOR_HOME_SWITCH;     // Active HIGH - input pulldown
   extern const int FEED_MOTOR_HOME_SENSOR;    // Active LOW - input pullup
@@ -39,28 +30,21 @@ extern const int FIRST_CUT_OR_WOOD_FWD_ONE;      // Decides state: LOW = wood_fw
 extern const int _2x4_PRESENT_SENSOR;
 extern const int WOOD_SUCTION_CONFIRM_SENSOR;  // Transfer Arm suction sensor (HIGH = Transfer Arm suction grabbed wood/active, LOW = Transfer Arm suction not active)
 
-//* ************************************************************************
-//* ************************ CLAMP PINS ***********************************
-//* ************************************************************************
+// Clamp Pins
 // Pneumatic clamp control pins (HIGH = extend, LOW = retract)
 extern const int FEED_CLAMP;      // Clamps wood during feed positioning
 extern const int TOP_CLAMP;    // Top clamp - secures 2x4 during cutting
 extern const int ROTATION_CLAMP;        // Clamps cut pieces for rotation
 
-//* ************************************************************************
-//* ************************ SIGNAL PINS **********************************
-//* ************************************************************************
+// Signal Pins
 // Communication pins for external systems
 extern const int TRANSFER_ARM_SIGNAL_PIN;  // Signal to Transfer Arm system
 
-//* ************************************************************************
-//* ************************ LED PINS *************************************
-//* ************************************************************************
+// LED Pins
 // Status indication LEDs
 extern const int STATUS_LED_RED;      // Error/fault indication
 extern const int STATUS_LED_YELLOW;   // Warning/caution indication
 extern const int STATUS_LED_GREEN;    // Ready/operation OK indication
 extern const int STATUS_LED_BLUE;     // Process active indication
 
-#endif // PINS_H
 

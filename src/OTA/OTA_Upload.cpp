@@ -1,13 +1,11 @@
-#include "OTAUpdater/ota_updater.h"
+#include "OTA/OTA_Upload.h"
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include "Config/Pins.h"
+#include "Config/Pins_Definitions.h"
 
-//* ************************************************************************
-//* *********************** OTA UPDATER IMPLEMENTATION *********************
-//* ************************************************************************
+// OTA Updater Implementation
 // Handles WiFi connection and Over-The-Air updates for the ESP32.
 
 const char* ssid = "Everwood";
@@ -51,10 +49,16 @@ void setupOTA() {
   //serial.println("Booting for OTA...");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    //serial.println("Connection Failed! Rebooting...");
-    delay(5000);
-    ESP.restart();
+  // Bounded connect attempt, then proceed so the machine still boots and runs
+  // on its locally-saved EEPROM settings if the network/TA is down. WiFi keeps
+  // retrying in the background after the loop falls through.
+  const uint32_t WIFI_CONNECT_TIMEOUT_MS = 15000;
+  const uint32_t WIFI_CONNECT_POLL_MS = 250;
+  WiFi.setAutoReconnect(true);
+  uint32_t wifiConnectStart = millis();
+  while (WiFi.status() != WL_CONNECTED &&
+         millis() - wifiConnectStart < WIFI_CONNECT_TIMEOUT_MS) {
+    delay(WIFI_CONNECT_POLL_MS);
   }
 
   // Port defaults to 3232

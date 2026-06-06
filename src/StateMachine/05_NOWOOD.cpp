@@ -1,9 +1,9 @@
 #include "StateMachine/05_NOWOOD.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
-#include "Config/Pins.h"
+#include "Config/Pins_Definitions.h"
 #include "Config/Config.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 
 // NOWOOD STATE — Config
 const float FEED_MOTOR_SPEED_MULTIPLIER      = 1.05;
@@ -67,7 +67,7 @@ static bool isStepTimerDone() {
 
 // NOWOOD STATE
 
-void executeNowoodState() {
+void handleNowoodState() {
     handleNowoodSequence();
 }
 
@@ -93,17 +93,17 @@ void handleNowoodSequence() {
 
     switch (nowoodStep) {
 
-        //! ************************************************************************
-        //! STEP 0: Retract feed clamp
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 0: Retract feed clamp
+        // ************************************************************************
         case STEP_RETRACT_FEED_CLAMP:
             retractFeedClamp();
             nowoodStep = STEP_WAIT_CUT_MOTOR_HOME;
             break;
 
-        //! ************************************************************************
-        //! STEP 1: Wait for cut motor to finish returning home
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 1: Wait for cut motor to finish returning home
+        // ************************************************************************
         case STEP_WAIT_CUT_MOTOR_HOME: {
             FastAccelStepper* cutMotor = getCutMotor();
             if (!cutMotor || !cutMotor->isRunning()) {
@@ -112,17 +112,17 @@ void handleNowoodSequence() {
             break;
         }
 
-        //! ************************************************************************
-        //! STEP 2: Start 150ms delay before moving feed motor
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 2: Start 150ms delay before moving feed motor
+        // ************************************************************************
         case STEP_INITIALIZE:
             startStepTimer(INITIAL_FEED_DELAY_MS);
             nowoodStep = STEP_WAIT_INITIAL_DELAY;
             break;
 
-        //! ************************************************************************
-        //! STEP 3: 150ms elapsed → move feed motor to FEED_TRAVEL_DISTANCE + 0.1"
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 3: 150ms elapsed → move feed motor to FEED_TRAVEL_DISTANCE + 0.1"
+        // ************************************************************************
         case STEP_WAIT_INITIAL_DELAY:
             if (isStepTimerDone()) {
                 configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
@@ -133,9 +133,9 @@ void handleNowoodSequence() {
             }
             break;
 
-        //! ************************************************************************
-        //! STEP 4: Feed motor reaches FEED_TRAVEL + 0.1" → extend feed clamp → 150ms timer
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 4: Feed motor reaches FEED_TRAVEL + 0.1" → extend feed clamp → 150ms timer
+        // ************************************************************************
         case STEP_WAIT_FEED_REACH_TRAVEL:
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
@@ -144,9 +144,9 @@ void handleNowoodSequence() {
             }
             break;
 
-        //! ************************************************************************
-        //! STEP 5: 150ms elapsed → retract top clamp → 100ms timer
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 5: 150ms elapsed → retract top clamp → 100ms timer
+        // ************************************************************************
         case STEP_WAIT_AFTER_EXTEND_CLAMP:
             if (isStepTimerDone()) {
                 retractTopClamp();
@@ -155,9 +155,9 @@ void handleNowoodSequence() {
             }
             break;
 
-        //! ************************************************************************
-        //! STEP 6: 100ms elapsed → extend feed clamp, move feed motor to -1.2"
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 6: 100ms elapsed → extend feed clamp, move feed motor to -1.2"
+        // ************************************************************************
         case STEP_WAIT_AFTER_RETRACT_2X4:
             if (isStepTimerDone()) {
                 configureFeedMotorForSlowOperation(FEED_MOTOR_SPEED_MULTIPLIER);
@@ -168,9 +168,9 @@ void handleNowoodSequence() {
             }
             break;
 
-        //! ************************************************************************
-        //! STEP 7: Feed motor reaches -1.2" → release clamp, skip return trip → FINAL
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 7: Feed motor reaches -1.2" → release clamp, skip return trip → FINAL
+        // ************************************************************************
         case STEP_WAIT_FEED_AT_NEG_1_2:
             if (feedMotor && !feedMotor->isRunning()) {
                 retractFeedClamp();
@@ -179,9 +179,9 @@ void handleNowoodSequence() {
             }
             break;
 
-        //! ************************************************************************
-        //! STEPS 8-12 (DISABLED): Return trip to 0.8" and back to -1.2" skipped
-        //! ************************************************************************
+        // ************************************************************************
+        // STEPS 8-12 (DISABLED): Return trip to 0.8" and back to -1.2" skipped
+        // ************************************************************************
         case STEP_RETRACT_CLAMP_MOVE_0_8:
         case STEP_WAIT_FEED_AT_0_8:
         case STEP_WAIT_AFTER_0_8:
@@ -190,9 +190,9 @@ void handleNowoodSequence() {
             nowoodStep = STEP_FINAL_COMPLETION;
             break;
 
-        //! ************************************************************************
-        //! STEP 13: Retract feed clamp → poll wood sensor → 300ms → extend 2x4 → IDLE
-        //! ************************************************************************
+        // ************************************************************************
+        // STEP 13: Retract feed clamp → poll wood sensor → 300ms → extend 2x4 → IDLE
+        // ************************************************************************
         case STEP_FINAL_COMPLETION:
             retractFeedClamp();
 
@@ -214,7 +214,7 @@ void handleNowoodSequence() {
                         setStartSwitchSafe(false);
                     }
 
-                    changeState(IDLE);
+                    changeState(STATE_IDLE);
                 }
             }
             break;

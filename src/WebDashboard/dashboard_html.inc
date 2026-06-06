@@ -1,5 +1,4 @@
-#ifndef DASHBOARD_HTML_H
-#define DASHBOARD_HTML_H
+#pragma once
 
 #include <Arduino.h>
 
@@ -1583,5 +1582,4 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-#endif // DASHBOARD_HTML_H
 

@@ -12,7 +12,7 @@
 
 // STEP 3: TRANSITION TO HOMING STATE
 
-void executeStartupState() {
+void handleStartupState() {
     showBlueLed();  // Blue LED on during startup/homing
     
     // Display IP address on startup
@@ -22,7 +22,7 @@ void executeStartupState() {
     // Small delay to ensure IP is visible
     delay(1000);
     
-    changeState(HOMING);
+    changeState(STATE_HOMING);
 }
 
 void onEnterStartupState() {

@@ -1,5 +1,4 @@
-#ifndef STATE_MANAGER_H
-#define STATE_MANAGER_H
+#pragma once
 
 #include <Arduino.h>
 #include <Bounce2.h>
@@ -7,9 +6,7 @@
 #include <ESP32Servo.h>
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* ************************* STATE MANAGER *******************************
-//* ************************************************************************
+// State Manager
 // Function-based state management that coordinates all state operations
 // and provides access to system resources.
 
@@ -109,5 +106,3 @@ void handleCommonOperations();
 void handleStandardErrorState();
 void handleErrorResetState();
 void handleSuctionErrorState();
-
-#endif // STATE_MANAGER_H 

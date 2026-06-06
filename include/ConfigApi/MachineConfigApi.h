@@ -1,5 +1,4 @@
-#ifndef MACHINE_CONFIG_API_H
-#define MACHINE_CONFIG_API_H
+#pragma once
 
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
@@ -42,4 +41,3 @@ bool isSafeToApplyConfig();
 // apply the persisted settings to the live runtime now.
 void applyDeferredConfigIfPending();
 
-#endif // MACHINE_CONFIG_API_H

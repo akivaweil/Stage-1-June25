@@ -1,5 +1,4 @@
-#ifndef WEBSOCKET_DASHBOARD_H
-#define WEBSOCKET_DASHBOARD_H
+#pragma once
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -8,9 +7,7 @@
 #include <SPIFFS.h>
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* ********************** WEBSOCKET DASHBOARD ****************************
-//* ************************************************************************
+// Websocket Dashboard
 // Simple websocket dashboard for tracking cutting cycles
 // Updates only when motors are not moving to avoid timing interference
 
@@ -160,4 +157,3 @@ extern NetworkInfo networkInfo;
 extern EventLog eventLog;
 extern SerialLog serialLog;
 
-#endif // WEBSOCKET_DASHBOARD_H

@@ -2,8 +2,8 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
 #include "Config/Config.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
-#include "OTAUpdater/ota_updater.h"
+#include "WebDashboard/WebDashboard.h"
+#include "OTA/OTA_Upload.h"
 
 // CUTTING STATE
 // Handles the wood cutting operation with a clean 4-step process:
@@ -100,7 +100,7 @@ void enterSuctionError(FastAccelStepper* cutMotor) {
 
     setCuttingCycleInProgress(false);
     onErrorOccurred("Wood suction not confirmed");
-    changeState(SUCTION_ERROR);
+    changeState(STATE_SUCTION_ERROR);
     resetCuttingSteps();
 }
 
@@ -173,7 +173,7 @@ void onExitCuttingState() {
     resetCuttingSteps();
 }
 
-void executeCuttingState() {
+void handleCuttingState() {
     // Check if reload switch is activated - only cancel if cut is less than 75% complete
     if (getReloadSwitch()->read() == HIGH && cuttingContext.step != 3) {
         FastAccelStepper* cutMotor = getCutMotor();
@@ -223,25 +223,25 @@ void executeCuttingState() {
 }
 
 void handleCuttingStep0() {
-    //! Check for OTA upload at the beginning of cutting state
+    // Check for OTA upload at the beginning of cutting state
     handleOTA();
 
-    //! Extend clamps to secure wood - once per CUTTING entry, not every tick.
-    //! Retractions only happen on state exit / reload interrupt, and resetCuttingSteps
-    //! on entry zeroes the flag, so this is safe and removes redundant digitalWrites.
+    // Extend clamps to secure wood - once per CUTTING entry, not every tick.
+    // Retractions only happen on state exit / reload interrupt, and resetCuttingSteps
+    // on entry zeroes the flag, so this is safe and removes redundant digitalWrites.
     if (!cuttingContext.clampsExtended) {
         extendTopClamp();
         extendFeedClamp();
         cuttingContext.clampsExtended = true;
     }
 
-    //! If retry was in progress and sensor just went HIGH, enforce minimum wait before proceeding
+    // If retry was in progress and sensor just went HIGH, enforce minimum wait before proceeding
     if (cuttingContext.suctionRetryInProgress && suctionConfirmed()) {
         cuttingContext.suctionRetryInProgress = false;
         cuttingContext.suctionRetrySucceeded = true;
         cuttingContext.suctionRetrySuccessTime = millis();
-        //! Drop phase state now so a sensor flutter during the grace period restarts
-        //! the retry clock cleanly instead of jumping back into an expired phase
+        // Drop phase state now so a sensor flutter during the grace period restarts
+        // the retry clock cleanly instead of jumping back into an expired phase
         cuttingContext.suctionRetryPhase = SuctionRetryPhase::Idle;
         cuttingContext.suctionRetryTimer = 0;
         cuttingContext.waitingForSuction = false;
@@ -255,10 +255,10 @@ void handleCuttingStep0() {
         // Fall through - sensor is HIGH so outer if below will be skipped and we proceed
     }
 
-    //! Check suction sensor before starting cut motor
-    //! Gate is the physical WOOD_SUCTION_CONFIRM_SENSOR only — no software-flag
-    //! bypass, so a reset with wood still presented can't sneak past this check
-    //! and command the servo home into a stuck piece.
+    // Check suction sensor before starting cut motor
+    // Gate is the physical WOOD_SUCTION_CONFIRM_SENSOR only — no software-flag
+    // bypass, so a reset with wood still presented can't sneak past this check
+    // and command the servo home into a stuck piece.
     if (!suctionConfirmed()) {
         // Sensor is LOW - start waiting if not already waiting
         if (!cuttingContext.waitingForSuction) {
@@ -287,9 +287,9 @@ void handleCuttingStep0() {
 
                 case SuctionRetryPhase::Phase2:
                     if (millis() - cuttingContext.suctionRetryTimer >= SUCTION_RETRY_PHASE2_WAIT_MS) {
-                        //! Force the TA line LOW so the second pulse is a distinct rising edge.
-                        //! Without this the first 5s pulse is still HIGH when the second call fires,
-                        //! and the TA only sees one long merged pulse instead of two triggers.
+                        // Force the TA line LOW so the second pulse is a distinct rising edge.
+                        // Without this the first 5s pulse is still HIGH when the second call fires,
+                        // and the TA only sees one long merged pulse instead of two triggers.
                         digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW);
                         taSignalActive = false;
                         extern unsigned long taSignalOffTime;
@@ -316,7 +316,7 @@ void handleCuttingStep0() {
         return;
     }
 
-    //! Sensor is HIGH (or went HIGH during wait) - clear waiting flags and proceed
+    // Sensor is HIGH (or went HIGH during wait) - clear waiting flags and proceed
     cuttingContext.waitingForSuction = false;
     cuttingContext.suctionWaitStartTime = 0;
     cuttingContext.suctionRetryPhase = SuctionRetryPhase::Idle;
@@ -325,14 +325,14 @@ void handleCuttingStep0() {
     cuttingContext.suctionRetrySucceeded = false;
     cuttingContext.suctionRetrySuccessTime = 0;
 
-    //! Ensure the rotation servo is home before moving the cut motor.
-    //! rotationServoKnownHome is the single source of truth:
-    //!   - false on boot (servo position unknown → always home-and-wait first cut)
-    //!   - cleared when activateRotationServo() moves the servo to ACTIVE
-    //!   - flipped true ROTATION_SERVO_HOME_WAIT_DURATION_MS after any
-    //!     returnRotationServoHome() call, via updateRotationServoHomeStatus()
-    //! Step 0 issues the return command once per entry (if needed) and simply
-    //! waits across ticks until the flag flips.
+    // Ensure the rotation servo is home before moving the cut motor.
+    // rotationServoKnownHome is the single source of truth:
+    //   - false on boot (servo position unknown → always home-and-wait first cut)
+    //   - cleared when activateRotationServo() moves the servo to ACTIVE
+    //   - flipped true ROTATION_SERVO_HOME_WAIT_DURATION_MS after any
+    //     returnRotationServoHome() call, via updateRotationServoHomeStatus()
+    // Step 0 issues the return command once per entry (if needed) and simply
+    // waits across ticks until the flag flips.
     if (!rotationServoKnownHome) {
         if (!cuttingContext.servoReturnStarted) {
             returnRotationServoHome();
@@ -342,7 +342,7 @@ void handleCuttingStep0() {
         return; // wait for the travel buffer to elapse
     }
 
-    //! Configure cut motor speed based on wood detection
+    // Configure cut motor speed based on wood detection
     configureCutMotorForCurrentCut();
     moveCutMotorToCut();
 
@@ -353,18 +353,18 @@ void handleCuttingStep0() {
 }
 
 void handleCuttingStep1() {
-    //! Update LED based on wood present sensor
+    // Update LED based on wood present sensor
     updateWoodPresentLed();
 
-    //! Continue to step 2
+    // Continue to step 2
     cuttingContext.step = 2;
 }
 
 void handleCuttingStep2() {
-    //! Update LED based on wood present sensor
+    // Update LED based on wood present sensor
     updateWoodPresentLed();
     
-    //! Activate components at their respective positions
+    // Activate components at their respective positions
     activateComponentAtDistanceFromStart(cuttingContext.rotationClampActivated, 
                                          ROTATION_CLAMP_ACTIVATION_DISTANCE,
                                          extendRotationClamp);
@@ -377,7 +377,7 @@ void handleCuttingStep2() {
                                TA_SIGNAL_OFFSET_FROM_END,
                                sendSignalToTA);
     
-    //! Check if cut is complete
+    // Check if cut is complete
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && !cutMotor->isRunning()) {
         const bool no2x4Detected = !isWoodPresent();
@@ -399,22 +399,22 @@ void handleCuttingStep2() {
 
         updateLedsForReturnState(no2x4Detected);
         if (no2x4Detected) {
-            changeState(NOWOOD);
+            changeState(STATE_NOWOOD);
         } else {
-            changeState(YESWOOD);
+            changeState(STATE_YESWOOD);
         }
     }
 }
 
 void handleCuttingStep3() {
-    //! ************************************************************************
-    //! STEP 3: WAIT FOR CUT MOTOR TO REACH HOME BEFORE TRANSITIONING TO RELOAD
-    //! ************************************************************************
+    // ************************************************************************
+    // STEP 3: WAIT FOR CUT MOTOR TO REACH HOME BEFORE TRANSITIONING TO RELOAD
+    // ************************************************************************
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && !cutMotor->isRunning()) {
         getCutHomingSwitch()->update();
         if (getCutHomingSwitch()->read() == HIGH) {
-            changeState(RELOAD);
+            changeState(STATE_RELOAD);
         } else {
             // If motor stopped but not at home, try moving home again
             moveCutMotorToHome();
@@ -445,7 +445,7 @@ void handleHomePositionError() {
     if (getReloadSwitch()->rose()) {
         homePositionErrorDetected = false;
         addEventToLog("Home position error - acknowledged");
-        changeState(ERROR_RESET);
+        changeState(STATE_ERROR_RESET);
         setErrorAcknowledged(true);
     }
 }

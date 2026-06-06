@@ -2,7 +2,7 @@
 #include "StateMachine/06_RELOAD.h"
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 
 // Stagger timing for reload-mode clamp transitions
 static const unsigned long RELOAD_TOP_CLAMP_RETRACT_LEAD_MS = 100; // On entry: top clamp retracts this many ms before feed clamp
@@ -19,12 +19,12 @@ static const unsigned long RELOAD_TOP_CLAMP_EXTEND_MS       = 100; // On exit:  
 // STEP 2: MONITOR RELOAD SWITCH STATE FOR EXIT CONDITION
 // When reload switch is turned OFF, exit reload mode and return to IDLE
 
-void executeReloadState() {
+void handleReloadState() {
     // Check if reload switch is turned off - if so, exit reload mode
     bool reloadSwitchOn = getReloadSwitch()->read() == HIGH;
     if (!reloadSwitchOn) {
         // Reload switch turned off - exit reload mode
-        changeState(IDLE);
+        changeState(STATE_IDLE);
     }
 }
 

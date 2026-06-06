@@ -36,7 +36,7 @@ void onEnterHomingState() {
     blinkTimer = 0;
 }
 
-void executeHomingState() {
+void handleHomingState() {
     // Blink blue LED to indicate homing in progress
     if (millis() - blinkTimer > 500) {
         bool blinkState = getBlinkState();
@@ -101,7 +101,7 @@ void executeHomingState() {
         //serial.println("Servo homing skipped on startup for safety - will home when cut cycle starts.");
         
         //serial.println("Changing state to IDLE...");
-        changeState(IDLE);
+        changeState(STATE_IDLE);
         //serial.println("State change to IDLE completed.");
     }
 }

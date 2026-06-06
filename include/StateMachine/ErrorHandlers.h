@@ -1,5 +1,4 @@
-#ifndef ERROR_HANDLERS_H
-#define ERROR_HANDLERS_H
+#pragma once
 
 #include <Arduino.h>
 #include <Bounce2.h>
@@ -9,9 +8,7 @@
 // Include the SystemState enum definition
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* *********************** ERROR FUNCTION DECLARATIONS ********************
-//* ************************************************************************
+// Error Function Declarations
 
 // Signaling Functions
 void sendSignalToTA();
@@ -132,5 +129,3 @@ extern const int STATUS_LED_BLUE;
 
 
 // currentState is declared in General_Functions.h
-
-#endif 

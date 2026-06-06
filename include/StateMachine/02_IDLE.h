@@ -1,20 +1,15 @@
-#ifndef IDLE_STATE_H
-#define IDLE_STATE_H
+#pragma once
 
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* ************************** IDLE STATE **********************************
-//* ************************************************************************
+// Idle State
 // Handles the idle state, awaiting user input or automatic cycle start.
 
 // Function declarations for IDLE state
-void executeIdleState();
+void handleIdleState();
 void onEnterIdleState();
 void onExitIdleState();
 
 // Helper function declarations
 void checkFirstCutConditions();
 void checkStartConditions();
-
-#endif // IDLE_STATE_H 

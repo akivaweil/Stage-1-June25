@@ -1,5 +1,4 @@
-#ifndef GENERAL_FUNCTIONS_H
-#define GENERAL_FUNCTIONS_H
+#pragma once
 
 #include <Arduino.h>
 #include <Bounce2.h>
@@ -35,19 +34,19 @@ extern bool dashboardStartCycleTrigger; // Flag to trigger a start cycle from th
 
 // System state enum
 enum SystemState {
-    STARTUP,
-    HOMING,
-    IDLE,
-    CUTTING,
-    ERROR,
-    ERROR_RESET,
-    SUCTION_ERROR,
-    Cut_Motor_Homing_Error,
-    YESWOOD,
-    NOWOOD,
-    FEED_FIRST_CUT,
-    FEED_WOOD_FWD_ONE,
-    RELOAD
+    STATE_STARTUP,
+    STATE_HOMING,
+    STATE_IDLE,
+    STATE_CUTTING,
+    STATE_ERROR,
+    STATE_ERROR_RESET,
+    STATE_SUCTION_ERROR,
+    STATE_CUT_MOTOR_HOMING_ERROR,
+    STATE_YESWOOD,
+    STATE_NOWOOD,
+    STATE_FEED_FIRST_CUT,
+    STATE_FEED_WOOD_FWD_ONE,
+    STATE_RELOAD
 };
 
 extern SystemState currentState;
@@ -80,14 +79,10 @@ extern const int STATUS_LED_GREEN;
 extern const int STATUS_LED_BLUE;
 // Configuration constants live in Config.h
 
-//* ************************************************************************
-//* *********************** SIGNALING FUNCTIONS ****************************
-//* ************************************************************************
+// Signaling Functions
 void sendSignalToTA();
 
-//* ************************************************************************
-//* ************************* CLAMP FUNCTIONS ******************************
-//* ************************************************************************
+// Clamp Functions
 void extendFeedClamp();
 void retractFeedClamp();
 void extendTopClamp();
@@ -95,9 +90,7 @@ void retractTopClamp();
 void extendRotationClamp();
 void retractRotationClamp();
 
-//* ************************************************************************
-//* *************************** LED FUNCTIONS ******************************
-//* ************************************************************************
+// LED Functions
 void showRedLed();
 void turnRedLedOff();
 void showYellowLed();
@@ -111,9 +104,7 @@ void handleHomingLedBlink();
 void handleNoWoodLedWavePattern(float speedMultiplier = 1.0f);
 void resetNoWoodLedWavePattern(bool preserveYellowLed = false);
 
-//* ************************************************************************
-//* *********************** MOTOR CONTROL FUNCTIONS ************************
-//* ************************************************************************
+// Motor Control Functions
 void configureCutMotorForCutting();
 void configureCutMotorForCuttingSlow();
 void configureCutMotorForReturn();
@@ -134,18 +125,12 @@ bool homeFeedMotorNonBlocking(Bounce& homingSwitch);
 void moveFeedMotorToInitialAfterHoming();
 bool checkAndRecalibrateCutMotorHome(int attempts);
 
-//* ************************************************************************
-//* ************************* STATE LOGIC HELPERS **************************
-//* ************************************************************************
+// State Logic Helpers
 bool shouldStartCycle();
 void activateRotationServo();
 void returnRotationServoHome();
 void handleTASignalTiming();
 
-//* ************************************************************************
-//* ************************* FLAG MANAGEMENT FUNCTIONS ********************
-//* ************************************************************************
+// Flag Management Functions
 bool getComingFromNoWoodWithSensorsClear();
 void setComingFromNoWoodWithSensorsClear(bool value);
-
-#endif // GENERAL_FUNCTIONS_H 

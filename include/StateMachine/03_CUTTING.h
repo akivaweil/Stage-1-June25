@@ -1,17 +1,14 @@
-#ifndef CUTTING_STATE_H
-#define CUTTING_STATE_H
+#pragma once
 
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* ************************** CUTTING STATE *******************************
-//* ************************************************************************
+// Cutting State
 // Handles the wood cutting operation with a clean 3-step process:
 // Step 0: Initialize cutting sequence - extend clamps and configure motors
 // Step 1: Check suction sensor and handle cut motor movement
 // Step 2: Monitor cut motor position, activate rotation components, and complete cut
 
-void executeCuttingState();
+void handleCuttingState();
 void onEnterCuttingState();
 void onExitCuttingState();
 void handleCuttingStep0();
@@ -28,5 +25,3 @@ bool isWoodPresent();
 // the YESWOOD post-forward pullback prep to avoid a race where CUTTING
 // step 0 re-extends the feed clamp right after prep retracts it.
 bool cuttingClampsExtended();
-
-#endif // CUTTING_STATE_H 

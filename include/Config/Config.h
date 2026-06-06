@@ -1,9 +1,6 @@
-#ifndef SYSTEM_CONFIG_H
-#define SYSTEM_CONFIG_H
+#pragma once
 
-//* ************************************************************************
-//* ************************ SYSTEM CONFIGURATION ************************
-//* ************************************************************************
+// System Configuration
 // Configuration constants for the Automated Table Saw - Stage 1
 // Single source of truth for all tunable timing/position/speed constants.
 // Motor-specific constants live in MotorConfig.h.
@@ -46,4 +43,3 @@ extern unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS;
 // GENERAL TIMING
 extern unsigned long SENSOR_STABILIZATION_DELAY_MS;
 
-#endif // SYSTEM_CONFIG_H

@@ -5,9 +5,9 @@
 #include "StateMachine/03_CUTTING.h"  // for isWoodPresent()
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
-#include "Config/Pins.h"
+#include "Config/Pins_Definitions.h"
 #include "Config/Config.h"
-#include "WebSocketDashboard/websocket_dashboard.h"
+#include "WebDashboard/WebDashboard.h"
 
 // YESWOOD STATE
 // Handles the simultaneous return sequence when wood sensor detects lumber.
@@ -91,7 +91,7 @@ static const unsigned long YESWOOD_RETURN_TOP_CLAMP_RELEASE_MS = 100;
 // (run-cycle switch on) timing.
 static const unsigned long YESWOOD_TO_IDLE_FEED_CLAMP_HOLD_MS = 400;
 
-void executeYeswoodState() {
+void handleYeswoodState() {
     handleYeswoodSequence();
 }
 
@@ -133,9 +133,7 @@ void onExitYeswoodState() {
     resetYeswoodSteps();
 }
 
-//* ************************************************************************
-//* ******************** MAIN SEQUENCE HANDLER ****************************
-//* ************************************************************************
+// Main Sequence Handler
 // Manages the complete YESWOOD sequence through multiple substeps
 
 // Forward declaration so handleYeswoodSequence can gate on it.
@@ -184,9 +182,9 @@ void handleYeswoodSequence() {
                 }
                 
                 if (sensorDetectedHome) {
-                //! ************************************************************************
-                //! STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED TO COMPLETION
-                //! ************************************************************************
+                // ************************************************************************
+                // STEP 4: HOMING VERIFIED - SET POSITION TO 0 AND PROCEED TO COMPLETION
+                // ************************************************************************
                     if (cutMotor) cutMotor->setCurrentPosition(0);
                     cutMotorIncrementalMoveTotalInches = 0.0; // Reset on success
                     
@@ -212,7 +210,7 @@ void handleYeswoodSequence() {
                         if (feedMotor) feedMotor->forceStop();
                         showRedLed();
                         turnYellowLedOff();
-                        changeState(ERROR);
+                        changeState(STATE_ERROR);
                         setErrorStartTime(millis());
                         resetYeswoodSteps();
                         return;
@@ -222,18 +220,18 @@ void handleYeswoodSequence() {
             break;
             
         case 3: // Feed motor already at travel distance - extend top clamp
-            //! ************************************************************************
-            //! STEP 4: EXTEND TOP CLAMP AFTER FEED WOOD MOVEMENT COMPLETE
-            //! ************************************************************************
+            // ************************************************************************
+            // STEP 4: EXTEND TOP CLAMP AFTER FEED WOOD MOVEMENT COMPLETE
+            // ************************************************************************
             extendTopClamp();
             yeswoodSubStep = 4;
             break;
             
         case 4: // Complete sequence - check for continuous operation or return to IDLE
             if (feedMotor && !feedMotor->isRunning()) {
-                //! ************************************************************************
-                //! STEP 5: SEQUENCE COMPLETE - CHECK FOR CONTINUOUS OPERATION OR RETURN TO IDLE
-                //! ************************************************************************
+                // ************************************************************************
+                // STEP 5: SEQUENCE COMPLETE - CHECK FOR CONTINUOUS OPERATION OR RETURN TO IDLE
+                // ************************************************************************
                 turnYellowLedOff();
                 incrementCuttingCycleCounter();
                 setCuttingCycleInProgress(false);
@@ -254,7 +252,7 @@ void handleYeswoodSequence() {
                     // To re-enable, restore: yeswoodPullbackPrepStep = 1;
                     // yeswoodPullbackPrepStep  = 1;
                     yeswoodPullbackPrepTimer = 0;
-                    changeState(CUTTING);
+                    changeState(STATE_CUTTING);
                     resetYeswoodSteps();
                 } else {
                     // Going to IDLE: keep feed clamp extended an extra 300ms so the
@@ -269,16 +267,14 @@ void handleYeswoodSequence() {
 
         case 5: // Hold feed clamp extended after top-clamp re-extension before IDLE transition
             if (millis() - stepStartTime >= YESWOOD_TO_IDLE_FEED_CLAMP_HOLD_MS) {
-                changeState(IDLE);
+                changeState(STATE_IDLE);
                 resetYeswoodSteps();
             }
             break;
     }
 }
 
-//* ************************************************************************
-//* ****************** FEED MOTOR RETURN SEQUENCE **************************
-//* ************************************************************************
+// Feed Motor Return Sequence
 // Handles the feed motor return sequence during simultaneous operation (no homing)
 
 void handleFeedMotorReturnSequence() {
@@ -286,18 +282,18 @@ void handleFeedMotorReturnSequence() {
     
     switch (feedMotorReturnSubStep) {
         case 0: // Retract feed clamp first
-            //! ************************************************************************
-            //! STEP 6: RETRACT FEED CLAMP
-            //! ************************************************************************
+            // ************************************************************************
+            // STEP 6: RETRACT FEED CLAMP
+            // ************************************************************************
             retractFeedClamp();
             feedMotorReturnSubStep = 1;
             break;
             
         case 1: // Move feed motor to position 0 (pulled-back / load end — opposite of physical home)
             if (feedMotor && !feedMotor->isRunning()) {
-                //! ************************************************************************
-                //! STEP 7: MOVE FEED MOTOR TO POSITION 0 (PULLED-BACK END)
-                //! ************************************************************************
+                // ************************************************************************
+                // STEP 7: MOVE FEED MOTOR TO POSITION 0 (PULLED-BACK END)
+                // ************************************************************************
                 configureFeedMotorForNormalOperation();
                 moveFeedMotorToZero();
                 feedMotorReturnSubStep = 2;
@@ -315,9 +311,9 @@ void handleFeedMotorReturnSequence() {
                 long prepThresholdSteps =
                     (long)(CUT_MOTOR_FEED_CLAMP_PREP_INCHES * CUT_MOTOR_STEPS_PER_INCH);
                 if (cutMotor && cutMotor->getCurrentPosition() <= prepThresholdSteps) {
-                    //! ************************************************************************
-                    //! STEP 8: CUT MOTOR NEAR HOME - EXTEND FEED CLAMP (TOP CLAMP STAYS)
-                    //! ************************************************************************
+                    // ************************************************************************
+                    // STEP 8: CUT MOTOR NEAR HOME - EXTEND FEED CLAMP (TOP CLAMP STAYS)
+                    // ************************************************************************
                     extendFeedClamp();
                     stepStartTime = millis();
                     feedMotorReturnSubStep = 3;
@@ -337,9 +333,9 @@ void handleFeedMotorReturnSequence() {
                 cutMotor && cutMotor->getCurrentPosition() <= topClampRetractSteps;
 
             if (minDelayMet && cutMotorAtRetractPoint) {
-                //! ************************************************************************
-                //! STEP 9: 0.25" FROM HOME - RETRACT TOP CLAMP (FEED CLAMP NOW HOLDS WOOD)
-                //! ************************************************************************
+                // ************************************************************************
+                // STEP 9: 0.25" FROM HOME - RETRACT TOP CLAMP (FEED CLAMP NOW HOLDS WOOD)
+                // ************************************************************************
                 retractTopClamp();
                 stepStartTime = millis();
                 feedMotorReturnSubStep = 4;
@@ -352,9 +348,9 @@ void handleFeedMotorReturnSequence() {
             if (millis() - stepStartTime >= YESWOOD_RETURN_TOP_CLAMP_RELEASE_MS &&
                 getCutHomingSwitch()->read() == HIGH &&
                 feedMotor && !feedMotor->isRunning()) {
-                //! ************************************************************************
-                //! STEP 10: TOP CLAMP RELEASED - MOVE TO TRAVEL DISTANCE
-                //! ************************************************************************
+                // ************************************************************************
+                // STEP 10: TOP CLAMP RELEASED - MOVE TO TRAVEL DISTANCE
+                // ************************************************************************
                 // TEMP: pullback disabled at YESWOOD entry, so no compensation
                 // needed here. Restore '+ FEED_PULLBACK_FEED_COMPENSATION' when
                 // the pullback is re-enabled in onEnterYeswoodState.
@@ -365,9 +361,7 @@ void handleFeedMotorReturnSequence() {
     }
 }
 
-//* ************************************************************************
-//* ******************** WOOD PULLBACK SEQUENCE ***************************
-//* ************************************************************************
+// Wood Pullback Sequence
 // At YESWOOD entry, retract the top clamp, pull the feed motor (and the wood
 // it's gripping via the still-extended feed clamp) back by FEED_PULLBACK_DISTANCE,
 // then re-extend the top clamp. Runs once per YESWOOD entry; gates the main
@@ -417,9 +411,7 @@ static void handleYeswoodPullback() {
     }
 }
 
-//* ************************************************************************
-//* ************ POST-FORWARD FEED PULLBACK PREP (parallel) ***************
-//* ************************************************************************
+// Post-forward Feed Pullback Prep (parallel)
 // Armed at the end of YESWOOD's continuous-mode branch and ticked from
 // executeStateMachine() each loop iteration. Runs concurrently with CUTTING
 // step 0 so the cut cycle isn't slowed down by this housekeeping.
@@ -433,7 +425,7 @@ void tickYeswoodPullbackPrep() {
         case 1: // Wait until CUTTING step 0 has done its one-shot clamp extension.
                 // If we retracted before that fired, step 0 would override and
                 // re-extend the clamp, dragging the wood when we move the motor.
-            if (getCurrentState() == CUTTING && cuttingClampsExtended()) {
+            if (getCurrentState() == STATE_CUTTING && cuttingClampsExtended()) {
                 retractFeedClamp();
                 yeswoodPullbackPrepTimer = millis();
                 yeswoodPullbackPrepStep = 2;
@@ -470,9 +462,7 @@ void tickYeswoodPullbackPrep() {
     }
 }
 
-//* ************************************************************************
-//* ************************ UTILITY FUNCTIONS ****************************
-//* ************************************************************************
+// Utility Functions
 
 void resetYeswoodSteps() {
     yeswoodSubStep = 0;

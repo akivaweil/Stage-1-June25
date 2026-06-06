@@ -1,16 +1,11 @@
-#ifndef STARTUP_STATE_H
-#define STARTUP_STATE_H
+#pragma once
 
 #include "StateMachine/General_Functions.h"
 
-//* ************************************************************************
-//* ************************** STARTUP STATE *******************************
-//* ************************************************************************
+// Startup State
 // Function-based startup state handling.
 // Executes the initial startup state, transitioning to HOMING.
 
-void executeStartupState();
+void handleStartupState();
 void onEnterStartupState();
 void onExitStartupState();
-
-#endif // STARTUP_STATE_H 

@@ -43,7 +43,7 @@ enum FeedWoodFwdOneStep {
 static FeedWoodFwdOneStep currentStep = RETRACT_FEED_CLAMP;
 static unsigned long stepStartTime = 0;
 
-void executeFeedWoodFwdOneState() {
+void handleFeedWoodFwdOneState() {
     executeFeedWoodFwdOneStep();
 }
 
@@ -109,7 +109,7 @@ void executeFeedWoodFwdOneStep() {
                 // Check the start cycle switch state
                 if (getStartCycleSwitch()->read() == HIGH) {
                     //serial.println("FeedWoodFwdOne: Start cycle switch HIGH - transitioning to CUTTING state");
-                    changeState(CUTTING);
+                    changeState(STATE_CUTTING);
                     setCuttingCycleInProgress(true);
                     configureCutMotorForCutting();
                     showYellowLed();
@@ -133,7 +133,7 @@ void executeFeedWoodFwdOneStep() {
             if (millis() - stepStartTime >= TOP_CLAMP_SETTLE_BEFORE_FEED_RETRACT_MS) {
                 retractFeedClamp();
                 //serial.println("FeedWoodFwdOne: Top clamp settled - feed clamp retracted, transitioning to IDLE");
-                changeState(IDLE);
+                changeState(STATE_IDLE);
             }
             break;
     }

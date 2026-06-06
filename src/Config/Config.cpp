@@ -31,22 +31,16 @@ unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 3000;
 unsigned long SUCTION_RETRY_SUCCESS_WAIT_MS = 1000;
 unsigned long SUCTION_RETRY_INTER_PULSE_GAP_MS = 200;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⏪ FEED PULLBACK (YESWOOD entry — wood-present path only)            ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// FEED PULLBACK (YESWOOD entry — wood-present path only)
 float FEED_PULLBACK_DISTANCE = 0.3;
 float FEED_PULLBACK_FEED_COMPENSATION = 0.3;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔄 CUT MOTOR TIMING                                                  ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CUT MOTOR TIMING
 unsigned long CUT_HOME_TIMEOUT = 5000;
 unsigned long CUT_MOTOR_RECOVERY_TIMEOUT_MS = 2000;
 unsigned long CUT_MOTOR_VERIFICATION_DELAY_MS = 20;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⏱️ GENERAL TIMING                                                    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// GENERAL TIMING
 unsigned long SENSOR_STABILIZATION_DELAY_MS = 20;
 const unsigned long CLAMP_FEED_MOTOR_DELAY_MS = 100;
 const unsigned long CYLINDER_ACTION_DELAY_MS = 150;

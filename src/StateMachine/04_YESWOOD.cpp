@@ -9,9 +9,7 @@
 #include "Config/Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ✅ YESWOOD STATE                                                     ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// YESWOOD STATE
 // Handles the simultaneous return sequence when wood sensor detects lumber.
 // Manages cut motor return to home while feed motor executes multi-step return sequence.
 // Includes final feed wood movement to configured distance before transitioning to next cycle or IDLE.
@@ -28,9 +26,7 @@ static unsigned long cutMotorHomingAttemptStartTime = 0;
 static bool cutMotorHomingAttemptInProgress = false;
 static float cutMotorIncrementalMoveTotalInches = 0.0;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⏪ FEED PULLBACK (YESWOOD-only)                                       ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// FEED PULLBACK (YESWOOD-only)
 // At YESWOOD entry, briefly pull the wood back via the feed motor while the
 // top (secure) clamp is retracted. The feed clamp stays extended so its grip
 // drags the wood with the motor. The forward feed stroke later in YESWOOD
@@ -50,9 +46,7 @@ static const unsigned long YESWOOD_TOP_CLAMP_RELEASE_DELAY_MS = 150;
 // engage so the wood is held secure during the return.
 static const unsigned long YESWOOD_CUT_MOTOR_RETURN_DELAY_MS = 150;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⏪ POST-FORWARD FEED PULLBACK PREP (parallel to CUTTING step 0)       ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// POST-FORWARD FEED PULLBACK PREP (parallel to CUTTING step 0)
 // Runs autonomously (driven by tickYeswoodPullbackPrep, called by
 // executeStateMachine after the state dispatch each loop). Armed at the end
 // of YESWOOD's continuous-mode branch right before changeState(CUTTING).
@@ -102,9 +96,7 @@ void executeYeswoodState() {
 }
 
 void onEnterYeswoodState() {
-    //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-    //║ STEP 1: START CUT MOTOR RETURN (TOP CLAMP REMAINS EXTENDED)          ║
-    //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+    // STEP 1: START CUT MOTOR RETURN (TOP CLAMP REMAINS EXTENDED)
 
     // Increment consecutive yeswood counter
     incrementConsecutiveYeswoodCount();
@@ -174,9 +166,7 @@ void handleYeswoodSequence() {
         case 2: // Wait for cut motor completion
             // Wait for cut motor to complete return home, then execute homing sequence
             if (cutMotor && !cutMotor->isRunning() && !cutMotorHomingAttemptInProgress) {
-                //╔═══╗ ══════════════════════════════════════════════════════════════════ ╔═══╗
-                //║ STEP 3: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE ║
-                //╚═══╝ ══════════════════════════════════════════════════════════════════ ╚═══╝
+                // STEP 3: CUT MOTOR RETURN COMPLETE - START HOMING VERIFICATION SEQUENCE
                 cutMotorInYeswoodReturn = false;
                 
                 bool sensorDetectedHome = false;

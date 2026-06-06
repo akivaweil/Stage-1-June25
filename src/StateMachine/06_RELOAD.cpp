@@ -9,20 +9,14 @@ static const unsigned long RELOAD_TOP_CLAMP_RETRACT_LEAD_MS = 100; // On entry: 
 static const unsigned long RELOAD_FEED_CLAMP_SETTLE_MS      = 150; // On exit:  feed clamp must already be extended this long before top clamp begins extending
 static const unsigned long RELOAD_TOP_CLAMP_EXTEND_MS       = 100; // On exit:  approximate time top clamp takes to fully extend; feed clamp stays in until this elapses
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔄 RELOAD STATE                                                      ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// RELOAD STATE
 // Handles reload mode operations when the reload switch is active.
 // Provides safe conditions for loading new wood pieces into the system.
 // Maintains clamps in retracted position for safe wood loading.
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 1: MAINTAIN BLUE LED TO INDICATE RELOAD MODE IS ACTIVE         ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 1: MAINTAIN BLUE LED TO INDICATE RELOAD MODE IS ACTIVE
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 2: MONITOR RELOAD SWITCH STATE FOR EXIT CONDITION              ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 2: MONITOR RELOAD SWITCH STATE FOR EXIT CONDITION
 // When reload switch is turned OFF, exit reload mode and return to IDLE
 
 void executeReloadState() {

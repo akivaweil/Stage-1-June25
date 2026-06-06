@@ -7,9 +7,7 @@
 #include "StateMachine/StateManager.h"
 #include "Config/Config.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔁 CYCLE-START GATE                                                  ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CYCLE-START GATE
 
 bool shouldStartCycle() {
     // Condition from IDLE state to start a cycle
@@ -17,9 +15,7 @@ bool shouldStartCycle() {
             && !woodSuctionError && startSwitchSafe);
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🚩 SHARED FLAG ACCESSORS                                             ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// SHARED FLAG ACCESSORS
 
 bool getComingFromNoWoodWithSensorsClear() {
     return comingFromNoWoodWithSensorsClear;

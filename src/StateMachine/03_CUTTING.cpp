@@ -5,9 +5,7 @@
 #include "WebSocketDashboard/websocket_dashboard.h"
 #include "OTAUpdater/ota_updater.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚔️ CUTTING STATE ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CUTTING STATE
 // Handles the wood cutting operation with a clean 4-step process:
 // Step 0: Initialize cutting sequence - extend clamps and configure motors
 // Step 1: Check suction sensor and start cut motor movement
@@ -21,9 +19,7 @@
 const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs NOWOOD state when no wood detected during cut
 const float RELOAD_INTERRUPT_MAX_CUT_FRACTION = 0.75f;            // Reload switch only cancels cut if motor is below this fraction of total cut distance
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 📊 STATE VARIABLES ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STATE VARIABLES
 namespace {
     // Phase of the suction-retry state machine. Mutually exclusive — replaces
     // the three separate inSuctionRetryPhase1/2/Gap booleans, so a single
@@ -55,9 +51,7 @@ namespace {
     bool homePositionErrorDetected = false;
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 HELPER FUNCTIONS ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// HELPER FUNCTIONS
 
 // Updates LED based on wood present sensor reading
 void updateWoodPresentLed() {

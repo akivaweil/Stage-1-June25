@@ -2,9 +2,7 @@
 #include "StateMachine/General_Functions.h"
 #include "Config/Config.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🤖 TRANSFER ARM SIGNALING                                            ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// TRANSFER ARM SIGNALING
 // Pulses the digital line that tells the Transfer Arm (separate machine) to
 // grab the cut diamond. In Minis mode, a 500 ms pre-delay is applied so the
 // TA is holding position before the pulse arrives.

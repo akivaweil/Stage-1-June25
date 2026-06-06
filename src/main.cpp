@@ -21,9 +21,7 @@
 
 // Pin definitions and configuration constants are now in Config/ header files
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💥 CRASH DIAGNOSTICS (RTC BREADCRUMBS)                              ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CRASH DIAGNOSTICS (RTC BREADCRUMBS)
 // RTC_NOINIT_ATTR variables persist across software resets / panics / WDTs
 // (but not across power cycles or hard resets). On boot, esp_reset_reason() +
 // these breadcrumbs tell us exactly what the firmware was doing when it died.
@@ -122,9 +120,7 @@ bool cutMotorInYeswoodReturn = false;
 
 // StateManager instance is created in StateManager.cpp
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💥 CRASH DIAGNOSTIC HELPERS                                          ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CRASH DIAGNOSTIC HELPERS
 
 static String resetReasonToString(esp_reset_reason_t reason) {
   switch (reason) {

@@ -2,43 +2,25 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🏠 HOMING STATE                                                     ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// HOMING STATE
 // Handles the homing sequence for all motors.
 // CUT_HOME_TIMEOUT now lives in Config.cpp along with the rest of the timings.
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 1: BLINK BLUE LED TO INDICATE HOMING IN PROGRESS               ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 1: BLINK BLUE LED TO INDICATE HOMING IN PROGRESS
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 2: HOME THE CUT MOTOR (BLOCKING) - RETRY ON FAILURE            ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 2: HOME THE CUT MOTOR (BLOCKING) - RETRY ON FAILURE
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 3: HOME THE FEED MOTOR (BLOCKING) - RETRACT FEED CLAMP FIRST   ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 3: HOME THE FEED MOTOR (BLOCKING) - RETRACT FEED CLAMP FIRST
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 4: RE-EXTEND FEED CLAMP (FEED MOTOR STAYS AT HOME POSITION)    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 4: RE-EXTEND FEED CLAMP (FEED MOTOR STAYS AT HOME POSITION)
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 5: SET ISHOMED FLAG TO TRUE WHEN ALL HOMING COMPLETE          ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 5: SET ISHOMED FLAG TO TRUE WHEN ALL HOMING COMPLETE
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 6: TURN OFF BLUE LED, TURN ON GREEN LED                       ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 6: TURN OFF BLUE LED, TURN ON GREEN LED
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 7: ENSURE SERVO IS AT 2 DEGREES                              ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 7: ENSURE SERVO IS AT 2 DEGREES
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 8: TRANSITION TO IDLE STATE                                   ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 8: TRANSITION TO IDLE STATE
 
 // Static variables for homing state tracking
 static bool cutMotorHomed = false;

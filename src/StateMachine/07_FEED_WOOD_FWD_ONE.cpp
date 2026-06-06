@@ -2,44 +2,26 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ➡️ FEED WOOD FWD ONE STATE                                          ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// FEED WOOD FWD ONE STATE
 // Handles the feed wood forward one sequence when fix position switch is pressed
 // in idle state AND 2x4 sensor reads LOW.
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 1: RETRACT FEED CLAMP                                         ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 1: RETRACT FEED CLAMP
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 2: MOVE POSITION MOTOR TO ZERO                                 ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 2: MOVE POSITION MOTOR TO ZERO
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 3: EXTEND FEED CLAMP AND RETRACT TOP CLAMP                    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 3: EXTEND FEED CLAMP AND RETRACT TOP CLAMP
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 4: WAIT 200MS                                                  ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 4: WAIT 200MS
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 5: MOVE TO TRAVEL DISTANCE                                     ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 5: MOVE TO TRAVEL DISTANCE
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 6: CHECK START CYCLE SWITCH AND BRANCH                         ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 6: CHECK START CYCLE SWITCH AND BRANCH
 // HIGH → CUTTING (immediate). LOW → continue to step 7 for staggered IDLE handoff.
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 7: EXTEND TOP CLAMP BEFORE FEED CLAMP RETRACTS                  ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 7: EXTEND TOP CLAMP BEFORE FEED CLAMP RETRACTS
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 8: WAIT 200MS FOR TOP CLAMP SETTLE → RETRACT FEED CLAMP → IDLE  ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 8: WAIT 200MS FOR TOP CLAMP SETTLE → RETRACT FEED CLAMP → IDLE
 
 // Top clamp must be extended this long before feed clamp may retract on the
 // IDLE transition path (gives the top clamp time to physically seat on the wood

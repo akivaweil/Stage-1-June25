@@ -5,9 +5,7 @@
 #include "Config/Config.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ❌ NOWOOD STATE — Config                                             ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// NOWOOD STATE — Config
 const float FEED_MOTOR_SPEED_MULTIPLIER      = 1.05;
 const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.15;  // Added to FEED_TRAVEL_DISTANCE on enter
 const float FEED_MOTOR_2ND_POSITION          = -1.4;  // Backward target after 0.15" nudge (final resting position with steps 8-12 disabled)
@@ -18,9 +16,7 @@ const unsigned long CLAMP_SETTLE_DELAY_MS        = 200; // Wait after clamp exte
 const unsigned long SENSOR_CLEAR_DELAY_MS        = 300; // Wait after sensor clears before extending 2x4
 unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 290; // Extra clamp hold for no-wood: extra time to travel clamp→servo activation (0.6in @ 0.828 vs 1.38 in/s = 725-435ms)
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ❌ NOWOOD — Step Enumeration                                         ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// NOWOOD — Step Enumeration
 // STEP_RETRACT_FEED_CLAMP       (0): Retract feed clamp
 // STEP_WAIT_CUT_MOTOR_HOME      (1): Wait for cut motor to finish returning home
 // STEP_INITIALIZE               (2): Start 150ms initial delay
@@ -69,9 +65,7 @@ static bool isStepTimerDone() {
     return millis() - stepTimerStart >= stepTimerDuration;
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ❌ NOWOOD STATE                                                      ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// NOWOOD STATE
 
 void executeNowoodState() {
     handleNowoodSequence();

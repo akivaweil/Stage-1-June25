@@ -101,7 +101,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .col-span-8 { grid-column: span 8; }
         .col-span-12 { grid-column: span 12; }
 
-        /* ╔═══╗ Header ═══════════════════════════════════════════ ╔═══╗ */
+        /* Header */
         header {
             grid-column: 1 / -1;
             display: flex;
@@ -147,7 +147,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             color: transparent;
         }
 
-        /* ╔═══╗ Status Badge ════════════════════════════════════ ╔═══╗ */
+        /* Status Badge */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -190,7 +190,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             box-shadow: 0 0 0 3px hsl(0 72% 51% / 0.18);
         }
 
-        /* ╔═══╗ Cards ═══════════════════════════════════════════ ╔═══╗ */
+        /* Cards */
         .card {
             background: linear-gradient(180deg,
                 hsl(222 28% 13%) 0%,
@@ -240,7 +240,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             color: var(--text-dim);
         }
 
-        /* ╔═══╗ Typography ══════════════════════════════════════ ╔═══╗ */
+        /* Typography */
         .value-huge {
             font-size: 2rem;
             font-weight: 700;
@@ -272,7 +272,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             opacity: 0.55;
         }
 
-        /* ╔═══╗ System State ════════════════════════════════════ ╔═══╗ */
+        /* System State */
         .state-display {
             text-align: center;
             padding: 0.75rem 0 0.5rem;
@@ -287,7 +287,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             margin-bottom: 0.125rem;
         }
 
-        /* ╔═══╗ Sensor Matrix ═══════════════════════════════════ ╔═══╗ */
+        /* Sensor Matrix */
         .sensor-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -336,7 +336,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             box-shadow: 0 0 8px hsl(142 71% 45% / 0.7);
         }
 
-        /* ╔═══╗ Metrics ═════════════════════════════════════════ ╔═══╗ */
+        /* Metrics */
         .metrics-container {
             display: flex;
             gap: 1.25rem;
@@ -380,7 +380,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             border-color: hsl(142 71% 45% / 0.45);
         }
 
-        /* ╔═══╗ Errors ══════════════════════════════════════════ ╔═══╗ */
+        /* Errors */
         .error-stat {
             display: flex;
             align-items: baseline;
@@ -398,7 +398,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             border-color: hsl(0 72% 51% / 0.45);
         }
 
-        /* ╔═══╗ Inputs / Buttons ═══════════════════════════════ ╔═══╗ */
+        /* Inputs / Buttons */
         .input-group { margin-bottom: 0.5rem; }
         .input-group label {
             display: block;
@@ -485,7 +485,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         }
         button.btn-primary:active { transform: translateY(0); }
 
-        /* ╔═══╗ Logs ════════════════════════════════════════════ ╔═══╗ */
+        /* Logs */
         .log-terminal {
             background: var(--bg-deepest);
             border-radius: var(--radius-md);
@@ -520,7 +520,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         .log-line.success .log-msg { color: var(--accent-success); }
         .log-line.warn    .log-msg { color: var(--accent-warning); }
 
-        /* ╔═══╗ Mode Toggle — Tuesday PageToggle (gray pill + pill-squish) ═══ ╔═══╗ */
+        /* Mode Toggle — Tuesday PageToggle (gray pill + pill-squish) */
         .mode-toggle-container {
             display: flex;
             justify-content: center;
@@ -606,7 +606,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             color: hsl(220 14% 83%);                               /* gray-200 */
         }
 
-        /* ╔═══╗ Dropdown ═══════════════════════════════════════ ╔═══╗ */
+        /* Dropdown */
         .dropdown-content {
             display: none;
             position: absolute;
@@ -657,7 +657,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             font-size: 0.72rem;
         }
 
-        /* ╔═══╗ Hero Status Card ═══════════════════════════════ ╔═══╗ */
+        /* Hero Status Card */
         .hero-card {
             background:
                 radial-gradient(ellipse 90% 100% at 0% 0%, hsl(217 91% 60% / 0.07), transparent 60%),
@@ -720,7 +720,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             grid-row: 2 / span 2;
         }
 
-        /* ╔═══╗ Section Heading inside cards (e.g. "Motion") ═══ ╔═══╗ */
+        /* Section Heading inside cards (e.g. "Motion") */
         .section-heading {
             font-size: 0.62rem;
             color: var(--text-dim);
@@ -733,7 +733,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
         }
         .section-heading:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
 
-        /* ╔═══╗ Misc ═══════════════════════════════════════════ ╔═══╗ */
+        /* Misc */
         .hidden { display: none; }
         .fade-in { animation: fadeIn 0.45s ease forwards; }
         @keyframes fadeIn {

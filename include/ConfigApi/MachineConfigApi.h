@@ -4,9 +4,7 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🌐 SHARED MACHINE CONFIG + STATUS REST API                          ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// SHARED MACHINE CONFIG + STATUS REST API
 // Canonical cross-machine dashboard contract (see docs/DASHBOARD_API_CONTRACT.md).
 // Every machine exposes the SAME three routes on port 80 with the SAME JSON
 // envelope. Stage 1 is an async machine (ESPAsyncWebServer), so the server is

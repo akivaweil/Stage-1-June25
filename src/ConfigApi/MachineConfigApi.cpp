@@ -6,9 +6,7 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🌐 MACHINE CONFIG + STATUS REST API — Stage 1 implementation        ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// MACHINE CONFIG + STATUS REST API — Stage 1 implementation
 // Implements the canonical cross-machine dashboard contract
 // (docs/DASHBOARD_API_CONTRACT.md). Async server (ESPAsyncWebServer).
 //
@@ -30,16 +28,12 @@ static const char* CORS_VALUE  = "*";
 extern String getStateName(SystemState state);
 extern String getSystemHealth();
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🚩 DEFERRED-APPLY FLAG                                               ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// DEFERRED-APPLY FLAG
 // Set when a POST is accepted + persisted mid-cycle but cannot be applied live.
 // The main loop calls applyDeferredConfigIfPending() on entry to IDLE.
 static volatile bool configDirty = false;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ✅ SAFETY GATE                                                        ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// SAFETY GATE
 bool isSafeToApplyConfig() {
     // ONLY the truly-motionless IDLE state is safe to mutate live motion
     // variables. HOMING actively drives the steppers (speed-sensitive limit
@@ -47,9 +41,7 @@ bool isSafeToApplyConfig() {
     return (getCurrentState() == IDLE);
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 📊 GET /api/status                                                   ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// GET /api/status
 String buildStatusJson() {
     JsonDocument doc;
     doc["id"]       = MACHINE_ID;
@@ -73,9 +65,7 @@ String buildStatusJson() {
     return out;
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🛠️ GET /api/config                                                  ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// GET /api/config
 String buildConfigJson() {
     JsonDocument doc;
     doc["id"]     = MACHINE_ID;
@@ -103,9 +93,7 @@ String buildConfigJson() {
     return out;
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 📥 POST /api/config — core                                           ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// POST /api/config — core
 // Returns true on success (all keys known + in range). On success the values are
 // always persisted; outDeferred reports whether live-apply was deferred.
 bool applyConfigJson(const String& body, bool& outDeferred, String& outMsg) {
@@ -189,9 +177,7 @@ bool applyConfigJson(const String& body, bool& outDeferred, String& outMsg) {
     return true;
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔁 DEFERRED APPLY (called from main loop on IDLE entry)             ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// DEFERRED APPLY (called from main loop on IDLE entry)
 void applyDeferredConfigIfPending() {
     if (!configDirty) return;
     configDirty = false;
@@ -201,9 +187,7 @@ void applyDeferredConfigIfPending() {
     applySettingsSideEffects();
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🌐 ROUTE REGISTRATION                                                ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// ROUTE REGISTRATION
 void setupConfigApi(AsyncWebServer& server) {
     // GET /api/status
     server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest* request) {

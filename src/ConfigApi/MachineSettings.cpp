@@ -2,9 +2,7 @@
 #include "Config/Config.h"
 #include "Config/MotorConfig.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ MACHINE SETTINGS — Stage 1 curated schema + EEPROM passthrough   ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// MACHINE SETTINGS — Stage 1 curated schema + EEPROM passthrough
 
 // Live runtime variables owned by other translation units.
 // CUT_TRAVEL_DISTANCE / FEED_TRAVEL_DISTANCE / ROTATION_SERVO_HOME_POSITION are
@@ -23,9 +21,7 @@ extern void saveConfiguration();
 extern void saveServoPositionsToEEPROM();
 extern void updateDynamicConfig();
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 📋 CURATED SETTINGS SCHEMA                                           ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CURATED SETTINGS SCHEMA
 // Order, keys, ranges and defaults match the central dashboard spec.
 const MachineSetting MACHINE_SETTINGS[] = {
     { "CUT_TRAVEL_DISTANCE",                   "Cut Travel (in)",          SETTING_FLOAT,   0.1,    20.0,  0.05, &CUT_TRAVEL_DISTANCE, nullptr, nullptr },
@@ -40,9 +36,7 @@ const MachineSetting MACHINE_SETTINGS[] = {
 
 const size_t MACHINE_SETTINGS_COUNT = sizeof(MACHINE_SETTINGS) / sizeof(MACHINE_SETTINGS[0]);
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔎 VALUE ACCESS                                                      ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// VALUE ACCESS
 
 double settingCurrentValue(const MachineSetting& s) {
     if (s.fTarget) return (double)(*s.fTarget);
@@ -57,9 +51,7 @@ void settingApplyValue(const MachineSetting& s, double value) {
     if (s.iTarget) { *s.iTarget = (int)(value + 0.5); return; }
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🗃️ DEFERRED-APPLY STAGING BUFFER                                    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// DEFERRED-APPLY STAGING BUFFER
 // Holds accepted-but-not-yet-live values from a mid-cycle POST. The buffer is
 // parallel to MACHINE_SETTINGS (indexed by setting index). On the deferred path
 // applyConfigJson() stages values here and persists them WITHOUT touching any
@@ -83,9 +75,7 @@ void flushStagedSettingsToLive() {
     }
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💾 DEFERRED PERSIST (no live-global writes)                          ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// DEFERRED PERSIST (no live-global writes)
 // Persist the currently-staged values to EEPROM WITHOUT writing any live global.
 // The staged values are packed into a StagedConfigOverrides and written straight
 // into the persisted ConfigurationData (and the servo-home EEPROM region) by
@@ -126,9 +116,7 @@ void persistStagedSettings() {
     saveConfigurationWithOverrides(ov);
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💾 PERSISTENCE PASSTHROUGH                                           ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// PERSISTENCE PASSTHROUGH
 
 void persistAllSettings() {
     // saveConfiguration() snapshots all the EEPROM-backed config globals

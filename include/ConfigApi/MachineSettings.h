@@ -4,9 +4,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ MACHINE SETTINGS — curated schema + persistence passthrough      ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// MACHINE SETTINGS — curated schema + persistence passthrough
 // Owns the curated list of dashboard-editable settings for Stage 1.
 //
 // Stage 1 already persists every one of these variables to EEPROM via the
@@ -40,9 +38,7 @@ struct MachineSetting {
 extern const MachineSetting MACHINE_SETTINGS[];
 extern const size_t MACHINE_SETTINGS_COUNT;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🗂️ STAGED-OVERRIDE PERSIST (deferred path — no live-global writes)  ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STAGED-OVERRIDE PERSIST (deferred path — no live-global writes)
 // Carries the deferred (staged) values for the dashboard-editable keys so they
 // can be written straight into the persisted EEPROM struct WITHOUT ever being
 // assigned to a live runtime global. Each `has*` flag selects between the staged
@@ -82,9 +78,7 @@ void settingApplyValue(const MachineSetting& s, double value);
 // (Snapshots the CURRENT live globals into EEPROM.)
 void persistAllSettings();
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🗃️ DEFERRED-APPLY STAGING (mid-cycle POST)                          ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// DEFERRED-APPLY STAGING (mid-cycle POST)
 // Stage an accepted (range-validated) value for setting `index` without
 // touching any live global. Used by the deferred POST path.
 void stageSettingValue(size_t index, double value);

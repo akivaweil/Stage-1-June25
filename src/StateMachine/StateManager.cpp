@@ -323,17 +323,6 @@ void setRotationServoActive(bool value) {
     rotationServoActive = value;
 }
 
-// Rotation servo return delay timing functions
-unsigned long getRotationServoReturnDelayStartTime() {
-    extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
-    return rotationServoReturnDelayStartTime;
-}
-
-void setRotationServoReturnDelayStartTime(unsigned long value) {
-    extern unsigned long rotationServoReturnDelayStartTime; // From main.cpp
-    rotationServoReturnDelayStartTime = value;
-}
-
 unsigned long getRotationClampExtendTime() {
     return rotationClampExtendTime;
 }
@@ -381,28 +370,6 @@ void resetConsecutiveYeswoodCount() {
 //* ************************************************************************
 //* ************************* UTILITY FUNCTIONS ****************************
 //* ************************************************************************
-
-void printStateChange() {
-    if (currentState != previousState) {
-        // Serial.print("Current State: ");
-        // switch (currentState) {
-        //     case STARTUP: Serial.println("STARTUP"); break;
-        //     case HOMING: Serial.println("HOMING"); break;
-        //     case IDLE: Serial.println("IDLE"); break;
-        //     case FEED_FIRST_CUT: Serial.println("FEED_FIRST_CUT"); break;
-        //     case FEED_WOOD_FWD_ONE: Serial.println("FEED_WOOD_FWD_ONE"); break;
-        //     case CUTTING: Serial.println("CUTTING"); break;
-        //     case YESWOOD: Serial.println("YESWOOD"); break;
-        //     case NOWOOD: Serial.println("NOWOOD"); break;
-        //     case ERROR: Serial.println("ERROR"); break;
-        //     case ERROR_RESET: Serial.println("ERROR_RESET"); break;
-        //     case SUCTION_ERROR: Serial.println("SUCTION_ERROR"); break;
-        //     case Cut_Motor_Homing_Error: Serial.println("Cut_Motor_Homing_Error"); break;
-        //     default: Serial.println("UNKNOWN"); break;
-        // }
-        previousState = currentState;
-    }
-}
 
 void updateSwitches() {
     // Update all debounced switches - moved from main loop

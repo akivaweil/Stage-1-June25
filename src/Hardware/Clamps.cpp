@@ -1,9 +1,7 @@
 #include <Arduino.h>
 #include "StateMachine/General_Functions.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 CLAMP CONTROL                                                     ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CLAMP CONTROL
 // Feed/top clamps: LOW = extended, HIGH = retracted (inverted logic).
 // Rotation clamp: HIGH = extended, LOW = retracted.
 

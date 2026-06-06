@@ -4,9 +4,7 @@
 #include "StateMachine/StateManager.h"
 #include "Config/Config.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ ROTATION SERVO                                                    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// ROTATION SERVO
 // The rotation servo swings the suction assembly between HOME and ACTIVE
 // positions. There is no position feedback from the servo, so the caller
 // has to time the movement.

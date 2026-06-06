@@ -1,20 +1,14 @@
 #include "Config/Config.h"
 
-//═══════════════════════════════════════════════════════════════════════════
-//║ 📋  SYSTEM CONFIGURATION - STAGE 1                                       ║
-//═══════════════════════════════════════════════════════════════════════════
+// SYSTEM CONFIGURATION - STAGE 1
 // Definitions for every tunable constant declared in Config.h.
 // Motor-specific constants are defined in Motor_Config.cpp.
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💾 EEPROM STORAGE                                                    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// EEPROM STORAGE
 const int CONFIG_EEPROM_SIZE = 2048;
 const int CONFIG_OFFSET = 0;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ ⚙️ ROTATION SERVO                                                    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// ROTATION SERVO
 // (HOME/ACTIVE position values live in websocket_dashboard.cpp — dashboard-managed)
 unsigned long ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = 2200;
 unsigned long ROTATION_SERVO_RETURN_DELAY_MS = 150;
@@ -22,21 +16,15 @@ unsigned long ROTATION_SERVO_HOME_WAIT_DURATION_MS = 200;  // Travel buffer from
 unsigned long ROTATION_SERVO_SUCTION_HOLD_DURATION_MS = 300;
 float ROTATION_SERVO_ACTIVATION_DISTANCE = 8.2;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 ROTATION CLAMP                                                    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// ROTATION CLAMP
 unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS = 2200;
 float ROTATION_CLAMP_ACTIVATION_DISTANCE = 5.75;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🤖 TRANSFER ARM                                                      ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// TRANSFER ARM
 unsigned long TA_SIGNAL_DURATION = 5000;
 float TA_SIGNAL_OFFSET_FROM_END = 0.2;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🧲 SUCTION SENSOR & RETRY                                            ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// SUCTION SENSOR & RETRY
 unsigned long SUCTION_WAIT_TIMEOUT_MS = 1500;
 unsigned long SUCTION_RETRY_PHASE1_WAIT_MS = 3000;
 unsigned long SUCTION_RETRY_PHASE2_WAIT_MS = 3000;

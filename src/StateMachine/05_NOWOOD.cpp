@@ -10,14 +10,10 @@
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 const float FEED_MOTOR_SPEED_MULTIPLIER      = 1.05;
 const float FEED_MOTOR_TRAVEL_PLUS_OFFSET    = 0.15;  // Added to FEED_TRAVEL_DISTANCE on enter
-const float FEED_MOTOR_2ND_POSITION          = -1.7;  // Backward target after 0.15" nudge
-const float FEED_MOTOR_HOME_POSITION         = 1.1;   // Forward mid-point
-const float FEED_MOTOR_FINAL_POSITION        = -1.2;  // Final resting position
+const float FEED_MOTOR_2ND_POSITION          = -1.4;  // Backward target after 0.15" nudge (final resting position with steps 8-12 disabled)
 const unsigned long INITIAL_FEED_DELAY_MS        = 200; // Wait before moving feed motor at enter
 const unsigned long AFTER_EXTEND_CLAMP_DELAY_MS  = 150; // Wait after extending feed clamp in step 1
 const unsigned long AFTER_RETRACT_2X4_DELAY_MS   = 100; // Wait after retracting top clamp
-const unsigned long AFTER_0_8_DELAY_MS           = 150; // Wait after feed motor reaches 0.8"
-const unsigned long AFTER_FINAL_DELAY_MS         = 150; // Wait after feed motor reaches final pos
 const unsigned long CLAMP_SETTLE_DELAY_MS        = 200; // Wait after clamp extend/retract before motor moves
 const unsigned long SENSOR_CLEAR_DELAY_MS        = 300; // Wait after sensor clears before extending 2x4
 unsigned long ROTATION_CLAMP_NO2X4_EXTRA_DELAY_MS = 290; // Extra clamp hold for no-wood: extra time to travel clamp→servo activation (0.6in @ 0.828 vs 1.38 in/s = 725-435ms)

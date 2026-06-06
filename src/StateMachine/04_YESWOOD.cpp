@@ -74,6 +74,22 @@ static const unsigned long YESWOOD_FEED_BACKSTEP_CLAMP_DELAY_MS = 300;
 // Lets the clamp fully grip before the wood is pushed to FEED_TRAVEL_DISTANCE.
 static const unsigned long FEED_CLAMP_EXTEND_SETTLE_MS = 300;
 
+// Distance-from-home (inches, cut motor) at which we extend the feed clamp and
+// start the settle timer — early, so the 300ms grip-settle overlaps the cut
+// motor's final approach. The forward feed-motor move still gates on the home
+// switch, so wood doesn't push forward until the cut is truly home.
+static const float CUT_MOTOR_FEED_CLAMP_PREP_INCHES = 3.0f;
+
+// Distance-from-home (inches, cut motor) at which we retract the top clamp so
+// its release delay overlaps the cut motor's last bit of travel. Kept tight so
+// the wood is effectively held by the top clamp "the entire way home."
+static const float CUT_MOTOR_TOP_CLAMP_RETRACT_PREP_INCHES = 0.25f;
+
+// Shorter release delay used on the YESWOOD return-to-forward handoff. The
+// general YESWOOD_TOP_CLAMP_RELEASE_DELAY_MS (150ms) stays in place for the
+// pullback sequence at YESWOOD entry, which is more sensitive.
+static const unsigned long YESWOOD_RETURN_TOP_CLAMP_RELEASE_MS = 100;
+
 // Hold the feed clamp extended this many ms after the top (secure) clamp is
 // re-extended at the end of YESWOOD before transitioning to IDLE. Gives the
 // top clamp time to physically engage the wood before the feed clamp lets go.
@@ -108,9 +124,17 @@ void onEnterYeswoodState() {
     cutMotorHomingAttemptInProgress = false;
     cutMotorIncrementalMoveTotalInches = 0.0;
 
-    // Arm the pullback FSM. Skip entirely when the configured distance is 0.
-    yeswoodPullbackStep  = (FEED_PULLBACK_DISTANCE > 0.0f) ? 1 : 0;
+    // TEMP: pullback disabled regardless of dashboard FEED_PULLBACK_DISTANCE.
+    // Forward-move compensation at YESWOOD step 9 is also dropped to keep
+    // the wood landing in the same final position. Restore both together.
+    yeswoodPullbackStep  = 0;
     yeswoodPullbackTimer = 0;
+
+    // The pullback FSM normally kicked off the cut motor return at the end of
+    // its sequence (after re-extending the top clamp). With pullback skipped,
+    // the top clamp was never retracted in CUTTING/YESWOOD entry, so we can
+    // start the cut motor return immediately.
+    startCutMotorReturnSequence();
 }
 
 void onExitYeswoodState() {
@@ -236,10 +260,9 @@ void handleYeswoodSequence() {
                     configureCutMotorForCutting();
                     showYellowLed();
                     setCuttingCycleInProgress(true);
-                    // Arm the post-forward feed pullback prep so it runs in
-                    // parallel with CUTTING step 0's setup (suction wait,
-                    // servo home check). Only happens on the continuous path.
-                    yeswoodPullbackPrepStep  = 1;
+                    // TEMPORARILY DISABLED: post-forward 1.5" backstep prep.
+                    // To re-enable, restore: yeswoodPullbackPrepStep = 1;
+                    // yeswoodPullbackPrepStep  = 1;
                     yeswoodPullbackPrepTimer = 0;
                     changeState(CUTTING);
                     resetYeswoodSteps();
@@ -291,44 +314,64 @@ void handleFeedMotorReturnSequence() {
             }
             break;
 
-        case 2: // Wait for pull-back move AND cut motor home before any clamp transition
+        case 2: // Wait for pull-back move AND cut motor within prep distance of home
             if (feedMotor && !feedMotor->isRunning()) {
-                // Gate: feed clamp may only extend, and top clamp may only retract,
-                // once the cut motor has reached home. If feed sequence is ahead, wait.
-                getCutHomingSwitch()->update();
-                if (getCutHomingSwitch()->read() == HIGH) {
+                // Extend the feed clamp and start the settle timer early — when
+                // the cut motor is within CUT_MOTOR_FEED_CLAMP_PREP_INCHES of
+                // home — so the 300ms grip-settle overlaps the cut motor's final
+                // travel. Top clamp stays extended for the full return; it only
+                // retracts in case 3 when the cut motor actually reaches home.
+                FastAccelStepper* cutMotor = getCutMotor();
+                long prepThresholdSteps =
+                    (long)(CUT_MOTOR_FEED_CLAMP_PREP_INCHES * CUT_MOTOR_STEPS_PER_INCH);
+                if (cutMotor && cutMotor->getCurrentPosition() <= prepThresholdSteps) {
                     //! ************************************************************************
-                    //! STEP 8: CUT MOTOR HOME - EXTEND FEED CLAMP AND RETRACT TOP CLAMP
+                    //! STEP 8: CUT MOTOR NEAR HOME - EXTEND FEED CLAMP (TOP CLAMP STAYS)
                     //! ************************************************************************
                     extendFeedClamp();
-                    retractTopClamp();
                     stepStartTime = millis();
                     feedMotorReturnSubStep = 3;
                 }
             }
             break;
 
-        case 3: // Wait for feed-clamp settle AND cut motor home before moving to travel distance
-            // Check that the feed-clamp settle delay has elapsed since clamp extension
+        case 3: { // Retract top clamp ~0.25" before home so its release overlaps the last bit of travel
+            // Safety check: feed clamp must have had time to settle before we
+            // hand off the wood by releasing the top clamp.
             bool minDelayMet = (millis() - stepStartTime >= FEED_CLAMP_EXTEND_SETTLE_MS);
 
-            // Safety check: Ensure cut motor is home before moving feed motor forward
-            getCutHomingSwitch()->update();
-            bool cutMotorIsHome = (getCutHomingSwitch()->read() == HIGH);
+            FastAccelStepper* cutMotor = getCutMotor();
+            long topClampRetractSteps =
+                (long)(CUT_MOTOR_TOP_CLAMP_RETRACT_PREP_INCHES * CUT_MOTOR_STEPS_PER_INCH);
+            bool cutMotorAtRetractPoint =
+                cutMotor && cutMotor->getCurrentPosition() <= topClampRetractSteps;
 
-            // Both conditions must be met: settle delay AND cut motor home
-            if (minDelayMet && cutMotorIsHome && feedMotor && !feedMotor->isRunning()) {
+            if (minDelayMet && cutMotorAtRetractPoint) {
                 //! ************************************************************************
-                //! STEP 9: MOVE TO TRAVEL DISTANCE (CLAMP SETTLED AND CUT MOTOR HOME VERIFIED)
+                //! STEP 9: 0.25" FROM HOME - RETRACT TOP CLAMP (FEED CLAMP NOW HOLDS WOOD)
                 //! ************************************************************************
-                // Add FEED_PULLBACK_FEED_COMPENSATION so the wood lands at the
-                // same final position as a non-pullback cycle (it was retreated
-                // by FEED_PULLBACK_DISTANCE at YESWOOD entry).
-                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE + FEED_PULLBACK_FEED_COMPENSATION);
+                retractTopClamp();
+                stepStartTime = millis();
+                feedMotorReturnSubStep = 4;
+            }
+            break;
+        }
+
+        case 4: // Wait for top-clamp release AND cut motor home before pushing the wood forward
+            getCutHomingSwitch()->update();
+            if (millis() - stepStartTime >= YESWOOD_RETURN_TOP_CLAMP_RELEASE_MS &&
+                getCutHomingSwitch()->read() == HIGH &&
+                feedMotor && !feedMotor->isRunning()) {
+                //! ************************************************************************
+                //! STEP 10: TOP CLAMP RELEASED - MOVE TO TRAVEL DISTANCE
+                //! ************************************************************************
+                // TEMP: pullback disabled at YESWOOD entry, so no compensation
+                // needed here. Restore '+ FEED_PULLBACK_FEED_COMPENSATION' when
+                // the pullback is re-enabled in onEnterYeswoodState.
+                moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
                 yeswoodSubStep = 1;
             }
             break;
-            
     }
 }
 
@@ -408,11 +451,14 @@ void tickYeswoodPullbackPrep() {
             break;
 
         case 2: // Hold retracted long enough for the solenoid to fully release,
-                // then back the feed motor up 0.5"
+                // then move the feed motor away from home (toward 0 / load end)
             if (millis() - yeswoodPullbackPrepTimer >= YESWOOD_FEED_BACKSTEP_CLAMP_DELAY_MS) {
                 if (feedMotor && !feedMotor->isRunning()) {
-                    // Relative move toward 0 (away from the FEED_TRAVEL_DISTANCE home)
-                    feedMotor->move(-(long)(YESWOOD_FEED_BACKSTEP_INCHES * FEED_MOTOR_STEPS_PER_INCH));
+                    // Decrease position = away from home (matches the proven
+                    // pattern used by handleYeswoodPullback at YESWOOD entry).
+                    float currentInches =
+                        (float)feedMotor->getCurrentPosition() / FEED_MOTOR_STEPS_PER_INCH;
+                    moveFeedMotorToPosition(currentInches - YESWOOD_FEED_BACKSTEP_INCHES);
                     yeswoodPullbackPrepStep = 3;
                 }
             }

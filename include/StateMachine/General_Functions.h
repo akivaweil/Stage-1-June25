@@ -122,7 +122,6 @@ void configureFeedMotorForReturn();
 void configureFeedMotorForSlowOperation(float speedMultiplier);
 void moveCutMotorToCut();
 void moveCutMotorToHome();
-void moveFeedMotorToTravel();
 // NOTE: feed-motor coordinate 0 is the pulled-back / load end. Physical
 // "home" (the home sensor) is at coordinate FEED_TRAVEL_DISTANCE.
 void moveFeedMotorToZero();
@@ -136,20 +135,12 @@ void moveFeedMotorToInitialAfterHoming();
 bool checkAndRecalibrateCutMotorHome(int attempts);
 
 //* ************************************************************************
-//* ************************* SWITCH LOGIC FUNCTIONS ***********************
-//* ************************************************************************
-void handleErrorAcknowledgement();
-void handleStartSwitchSafety();
-void handleStartSwitchContinuousMode();
-
-//* ************************************************************************
 //* ************************* STATE LOGIC HELPERS **************************
 //* ************************************************************************
 bool shouldStartCycle();
 void activateRotationServo();
 void returnRotationServoHome();
 void handleTASignalTiming();
-void moveFeedMotorToPostCutZero();
 
 //* ************************************************************************
 //* ************************* FLAG MANAGEMENT FUNCTIONS ********************

@@ -10,9 +10,7 @@ extern FastAccelStepper* cutMotor;
 extern FastAccelStepper* feedMotor;
 extern Bounce cutHomingSwitch;
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🔧 MOTOR CONTROL                                                     ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// MOTOR CONTROL
 // All motor configuration, movement, and homing lives here. The cut motor
 // (FastAccelStepper) and feed motor are driven directly; the rotation servo
 // is in Servo.cpp.
@@ -74,16 +72,10 @@ void moveCutMotorToHome() {
     }
 }
 
-void moveFeedMotorToTravel() {
-    if (feedMotor) {
-        feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-    }
-}
-
 // NOTE: feed-motor "home" (the physical home sensor / post-homing rest pose)
 // is at coordinate FEED_TRAVEL_DISTANCE — NOT at position 0. Position 0 is
-// the fully pulled-back / load end, opposite the home sensor. The helpers
-// below move to position 0, which is NOT home.
+// the fully pulled-back / load end, opposite the home sensor. The helper
+// below moves to position 0, which is NOT home.
 void moveFeedMotorToZero() {
     if (feedMotor) {
         feedMotor->moveTo(0);
@@ -93,12 +85,6 @@ void moveFeedMotorToZero() {
 void moveFeedMotorToPosition(float targetPositionInches) {
     if (feedMotor) {
         feedMotor->moveTo(targetPositionInches * FEED_MOTOR_STEPS_PER_INCH);
-    }
-}
-
-void moveFeedMotorToPostCutZero() {
-    if (feedMotor) {
-        feedMotor->moveTo(0);
     }
 }
 
@@ -114,9 +100,7 @@ void stopFeedMotor() {
     }
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🏠 HOMING                                                            ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// HOMING
 
 // Basic blocking homing function for Cut Motor - can be expanded
 void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {

@@ -1,9 +1,7 @@
 #include <Arduino.h>
 #include "StateMachine/General_Functions.h"
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💡 STATUS LEDS                                                       ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STATUS LEDS
 // Single-color show* functions also turn the other three LEDs off so the
 // panel always shows exactly one active color. turn*Off functions only
 // affect their own LED.
@@ -84,9 +82,7 @@ void turnBlueLedOff() {
   }
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 🌊 NO-WOOD LED WAVE PATTERN                                          ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// NO-WOOD LED WAVE PATTERN
 const unsigned long LED_WAVE_INTERVAL_MS = 200;    // Time between each LED starting
 const unsigned long LED_ON_DURATION_MS = 250;      // How long each LED stays on
 

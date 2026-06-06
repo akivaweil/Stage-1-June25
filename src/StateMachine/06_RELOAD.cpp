@@ -6,7 +6,8 @@
 
 // Stagger timing for reload-mode clamp transitions
 static const unsigned long RELOAD_TOP_CLAMP_RETRACT_LEAD_MS = 100; // On entry: top clamp retracts this many ms before feed clamp
-static const unsigned long RELOAD_FEED_CLAMP_EXTEND_LEAD_MS = 100; // On exit:  feed clamp extends this many ms before top clamp (matches top clamp extension duration so feed is fully seated throughout)
+static const unsigned long RELOAD_FEED_CLAMP_SETTLE_MS      = 150; // On exit:  feed clamp must already be extended this long before top clamp begins extending
+static const unsigned long RELOAD_TOP_CLAMP_EXTEND_MS       = 100; // On exit:  approximate time top clamp takes to fully extend; feed clamp stays in until this elapses
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
 //║ 🔄 RELOAD STATE                                                      ║
@@ -48,11 +49,16 @@ void onEnterReloadState() {
 }
 
 void onExitReloadState() {
-    // Stagger clamp extension on exit: feed clamp first, then top clamp after the lead time
-    // (lead matches top clamp's ~100ms extension stroke so feed is fully seated throughout)
+    // Exit sequence:
+    //   1. Extend feed clamp and let it settle for RELOAD_FEED_CLAMP_SETTLE_MS
+    //      so the wood is held before the top clamp lands.
+    //   2. Extend top clamp; wait RELOAD_TOP_CLAMP_EXTEND_MS for it to fully seat.
+    //   3. Retract feed clamp now that the top clamp is holding the wood.
     extendFeedClamp();
-    delay(RELOAD_FEED_CLAMP_EXTEND_LEAD_MS);
+    delay(RELOAD_FEED_CLAMP_SETTLE_MS);
     extendTopClamp();
+    delay(RELOAD_TOP_CLAMP_EXTEND_MS);
+    retractFeedClamp();
 
     // Cleanup when exiting reload mode
     setIsReloadMode(false);

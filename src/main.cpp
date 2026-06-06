@@ -4,8 +4,6 @@
 #include <esp_system.h>
 #include <esp_attr.h>
 #include <ESP32Servo.h>
-#include "soc/soc.h"
-#include "soc/rtc_cntl_reg.h"
 #include "Config/Pins.h"
 #include "Config/Config.h"
 #include "OTAUpdater/ota_updater.h"
@@ -60,9 +58,6 @@ bool rotationServoKnownHome = false;
 bool rotationServoHomePending = false;
 unsigned long rotationServoHomeCommandTime = 0;
 
-// Rotation servo return delay variables
-bool rotationServoReturnDelayActive = false;
-unsigned long rotationServoReturnDelayStartTime = 0;
 bool rotationServoReturnCompleted = false; // Flag to prevent multiple calls to returnRotationServoHome()
 
 unsigned long rotationClampExtendTime = 0;
@@ -70,7 +65,6 @@ bool rotationClampIsExtended = false;
 
 // SystemStates Enum is now in Functions.h
 SystemState currentState = STARTUP;
-SystemState previousState = ERROR_RESET; // Initialize to a different state to ensure first print
 
 // Motor configuration constants moved to Config/system_config.h
 
@@ -109,7 +103,6 @@ bool dashboardStartCycleTrigger = false; // Flag to trigger a start cycle from t
 unsigned long lastBlinkTime = 0;
 unsigned long lastErrorBlinkTime = 0;
 unsigned long errorStartTime = 0;
-unsigned long feedMoveStartTime = 0;
 
 // LED states
 bool blinkState = false;
@@ -223,15 +216,6 @@ static inline void updateCrashBreadcrumbs() {
 }
 
 void setup() {
-  // Disable brownout detector. TA signal trigger causes a brief 3.3V dip
-  // from the shared external load that was rebooting the ESP. Hardware fix
-  // (separate regulator / bulk cap) still recommended.
-  // Note: ESP32-S3 brownout threshold is set at build time via sdkconfig,
-  // not exposed at runtime in Arduino SDK, so it's effectively all-or-nothing
-  // here. To re-enable at lowest sensitivity, set CONFIG_ESP_BROWNOUT_DET_LVL=7
-  // (lowest voltage threshold) in build_flags and remove this WRITE_PERI_REG.
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
-
   Serial.begin(115200);
   Serial.println("Automated Table Saw Control System - Stage 1");
 

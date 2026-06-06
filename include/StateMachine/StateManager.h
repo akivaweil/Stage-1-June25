@@ -83,10 +83,6 @@ void setRotationServoActiveStartTime(unsigned long value);
 bool getRotationServoActive();
 void setRotationServoActive(bool value);
 
-// Rotation servo return delay access functions
-unsigned long getRotationServoReturnDelayStartTime();
-void setRotationServoReturnDelayStartTime(unsigned long value);
-
 unsigned long getRotationClampExtendTime();
 void setRotationClampExtendTime(unsigned long value);
 
@@ -106,7 +102,6 @@ void incrementConsecutiveYeswoodCount();
 void resetConsecutiveYeswoodCount();
 
 // Utility functions
-void printStateChange();
 void updateSwitches();
 void handleCommonOperations();
 

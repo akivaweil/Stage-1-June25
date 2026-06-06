@@ -29,8 +29,22 @@
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
 
 //╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 6: CHECK START CYCLE SWITCH AND TRANSITION TO APPROPRIATE STATE ║
+//║ STEP 6: CHECK START CYCLE SWITCH AND BRANCH                         ║
 //╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// HIGH → CUTTING (immediate). LOW → continue to step 7 for staggered IDLE handoff.
+
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ STEP 7: EXTEND TOP CLAMP BEFORE FEED CLAMP RETRACTS                  ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+
+//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
+//║ STEP 8: WAIT 200MS FOR TOP CLAMP SETTLE → RETRACT FEED CLAMP → IDLE  ║
+//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+
+// Top clamp must be extended this long before feed clamp may retract on the
+// IDLE transition path (gives the top clamp time to physically seat on the wood
+// so the wood is held throughout the hand-off).
+const unsigned long TOP_CLAMP_SETTLE_BEFORE_FEED_RETRACT_MS = 200;
 
 // Static variables for feed wood fwd one state tracking
 enum FeedWoodFwdOneStep {
@@ -39,7 +53,9 @@ enum FeedWoodFwdOneStep {
     EXTEND_FEED_CLAMP_RETRACT_TOP,
     WAIT_200MS,
     MOVE_TO_TRAVEL_DISTANCE,
-    CHECK_START_CYCLE_SWITCH
+    CHECK_START_CYCLE_SWITCH,
+    EXTEND_TOP_CLAMP_BEFORE_IDLE,
+    WAIT_TOP_CLAMP_SETTLE_BEFORE_IDLE
 };
 
 static FeedWoodFwdOneStep currentStep = RETRACT_FEED_CLAMP;
@@ -107,7 +123,7 @@ void executeFeedWoodFwdOneStep() {
         case CHECK_START_CYCLE_SWITCH:
             if (feedMotor && !feedMotor->isRunning()) {
                 //serial.println("FeedWoodFwdOne: Checking start cycle switch for next state");
-                
+
                 // Check the start cycle switch state
                 if (getStartCycleSwitch()->read() == HIGH) {
                     //serial.println("FeedWoodFwdOne: Start cycle switch HIGH - transitioning to CUTTING state");
@@ -117,9 +133,25 @@ void executeFeedWoodFwdOneStep() {
                     showYellowLed();
                     extendFeedClamp();
                 } else {
-                    //serial.println("FeedWoodFwdOne: Start cycle switch LOW - transitioning to IDLE state");
-                    changeState(IDLE);
+                    //serial.println("FeedWoodFwdOne: Start cycle switch LOW - extending top clamp before IDLE");
+                    advanceToNextFeedWoodFwdOneStep();
                 }
+            }
+            break;
+
+        case EXTEND_TOP_CLAMP_BEFORE_IDLE:
+            // Top clamp must be settled on the wood before feed clamp releases,
+            // otherwise the wood would be unsupported during the hand-off.
+            extendTopClamp();
+            stepStartTime = millis();
+            currentStep = WAIT_TOP_CLAMP_SETTLE_BEFORE_IDLE;
+            break;
+
+        case WAIT_TOP_CLAMP_SETTLE_BEFORE_IDLE:
+            if (millis() - stepStartTime >= TOP_CLAMP_SETTLE_BEFORE_FEED_RETRACT_MS) {
+                retractFeedClamp();
+                //serial.println("FeedWoodFwdOne: Top clamp settled - feed clamp retracted, transitioning to IDLE");
+                changeState(IDLE);
             }
             break;
     }

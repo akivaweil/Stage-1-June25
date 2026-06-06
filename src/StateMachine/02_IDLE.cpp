@@ -2,6 +2,7 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/General_Functions.h"
 #include "WebSocketDashboard/websocket_dashboard.h"
+#include "ConfigApi/MachineConfigApi.h"
 
 const unsigned long IDLE_WOOD_PRESENT_ACTIVE_DELAY_MS = 1500;
 static bool idleWoodPresentPreviousState = LOW;
@@ -38,41 +39,29 @@ static bool checkWoodPresentActiveAutoFeedFirstCut() {
     return false;
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 😴 IDLE STATE                                                       ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// IDLE STATE
 // Handles the idle state, awaiting user input or automatic cycle start.
 // CRITICAL: Maintains secure wood clamp extended in normal idle.
 // Maintains feed clamp retracted.
 // Checks for pushwood forward switch press to transition to FeedFirstCut state.
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 1: TURN ON GREEN LED TO INDICATE SYSTEM IS IDLE               ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 1: TURN ON GREEN LED TO INDICATE SYSTEM IS IDLE
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 2: CHECK FOR PUSHWOOD FORWARD SWITCH PRESS AND SENSOR STATE    ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 2: CHECK FOR PUSHWOOD FORWARD SWITCH PRESS AND SENSOR STATE
 // AND Start cycle switch safety is not active  
 // AND Wood suction error is not present
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 3: CHECK MANUAL FEED BUTTON PRESS AND FIRST_CUT_OR_WOOD_FWD_ONE ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 3: CHECK MANUAL FEED BUTTON PRESS AND FIRST_CUT_OR_WOOD_FWD_ONE
 // If HIGH, transition to FeedFirstCut state
 // If LOW, transition to FeedWoodFwdOne state
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 4: CHECK FOR START CYCLE CONDITIONS                           ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 4: CHECK FOR START CYCLE CONDITIONS
 // Start switch just flipped ON (rising edge)
 // OR Continuous mode active AND not already in a cutting cycle
 // AND Wood suction error is not present
 // AND Start switch is safe to use
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ STEP 5: IF START CONDITIONS MET - TRANSITION TO CUTTING            ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// STEP 5: IF START CONDITIONS MET - TRANSITION TO CUTTING
 // Turn off green LED, turn on yellow LED
 // Set cuttingCycleInProgress flag to true
 // Transition to CUTTING state
@@ -95,6 +84,9 @@ void executeIdleState() {
 }
 
 void onEnterIdleState() {
+    // Apply any config POST that was persisted mid-cycle but deferred until idle.
+    applyDeferredConfigIfPending();
+
     idleWoodPresentPreviousState = getWoodPresentSensorBounce()->read();
     idleWoodPresentDelayActive = false;
     idleWoodPresentDelayStartMs = 0;

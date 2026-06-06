@@ -4,6 +4,8 @@
 #include "StateMachine/General_Functions.h"
 #include "Config/Pins.h"
 #include "Config/Config.h"
+#include "ConfigApi/MachineConfigApi.h"
+#include "ConfigApi/MachineSettings.h"
 #include <ArduinoJson.h>
 #include <EEPROM.h>
 
@@ -390,8 +392,11 @@ void applyConfiguration(const ConfigurationData& config) {
     CUT_TRAVEL_DISTANCE = config.CUT_TRAVEL_DISTANCE;
     FEED_TRAVEL_DISTANCE = config.FEED_TRAVEL_DISTANCE;
     CUT_MOTOR_NORMAL_SPEED = config.CUT_MOTOR_NORMAL_SPEED;
+    FEED_MOTOR_NORMAL_SPEED = config.FEED_MOTOR_NORMAL_SPEED;
     FEED_MOTOR_OFFSET_FROM_SENSOR = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
+    ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
     ROTATION_CLAMP_EXTEND_DURATION_MS = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
+    TA_SIGNAL_DURATION = config.TA_SIGNAL_DURATION;
 
     // Feed pullback (apply only when stored values look sane; old EEPROM
     // layouts predating these fields may contain garbage in this region)
@@ -558,7 +563,7 @@ void loadConfiguration() {
     }
     
     if (!isValid) {
-        // ╔═══╗ Graceful schema migration ════════════════════════════════════
+        // Graceful schema migration
         // If the magic number is intact, the EEPROM was written by an older
         // firmware whose struct layout differed (e.g. fewer fields). Rather
         // than nuking every setting, keep each field whose value falls in a
@@ -631,46 +636,63 @@ void loadConfiguration() {
     }
 }
 
-void saveConfiguration() {
+// Core persist routine. Every field is sourced from the live globals EXCEPT the
+// ones flagged in `ov`, which are taken from the staged values. CRITICAL: this
+// function never assigns any live runtime global — staged values are written
+// straight into the local ConfigurationData (and the servo-home EEPROM region),
+// so the deferred path leaves every motion global byte-for-byte unchanged while
+// the main loop on the other core keeps reading them mid-cycle.
+void saveConfigurationWithOverrides(const StagedConfigOverrides& ov) {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
-    
+
+    // Resolve each dashboard-editable source value: staged value if flagged,
+    // else the current live global. No live global is written here.
+    float srcCutTravelDistance   = ov.hasCutTravelDistance   ? ov.cutTravelDistance   : CUT_TRAVEL_DISTANCE;
+    float srcFeedTravelDistance  = ov.hasFeedTravelDistance  ? ov.feedTravelDistance  : FEED_TRAVEL_DISTANCE;
+    float srcCutMotorNormalSpeed = ov.hasCutMotorNormalSpeed ? ov.cutMotorNormalSpeed : CUT_MOTOR_NORMAL_SPEED;
+    float srcFeedMotorNormalSpeed= ov.hasFeedMotorNormalSpeed? ov.feedMotorNormalSpeed: FEED_MOTOR_NORMAL_SPEED;
+    unsigned long srcServoActiveHoldMs    = ov.hasServoActiveHoldMs    ? ov.servoActiveHoldMs    : ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
+    unsigned long srcRotationClampExtendMs= ov.hasRotationClampExtendMs? ov.rotationClampExtendMs: ROTATION_CLAMP_EXTEND_DURATION_MS;
+    unsigned long srcTaSignalDuration     = ov.hasTaSignalDuration     ? ov.taSignalDuration     : TA_SIGNAL_DURATION;
+
     // Compute diff and clampExtraBuffer so we store BASELINE values for activation distances
     // (same logic as updateDynamicConfig). This keeps clamp, servo, and TA independent when
-    // user changes only one of them.
+    // user changes only one of them. Use the (possibly staged) cut distance so the stored
+    // activation baselines match what updateDynamicConfig() will derive once it goes live.
     ConfigurationData baselineConfig;
     EEPROM.get(CONFIG_OFFSET_3INCH, baselineConfig);
     if (baselineConfig.magic != CONFIG_MAGIC) {
         baselineConfig = getDefaultConfiguration();
     }
-    float baselineCutDistance = (currentConfigMode == 0) ? CUT_TRAVEL_DISTANCE : baselineConfig.CUT_TRAVEL_DISTANCE;
-    float diff = baselineCutDistance - CUT_TRAVEL_DISTANCE;
+    float baselineCutDistance = (currentConfigMode == 0) ? srcCutTravelDistance : baselineConfig.CUT_TRAVEL_DISTANCE;
+    float diff = baselineCutDistance - srcCutTravelDistance;
     float clampExtraBuffer = getClampExtraBufferForMode(currentConfigMode);
-    
+
     ConfigurationData config;
-    
+
     // Set magic number
     config.magic = CONFIG_MAGIC;
-    
+
     // Get current values
     config.CUT_MOTOR_STEPS_PER_INCH = CUT_MOTOR_STEPS_PER_INCH;
     config.FEED_MOTOR_STEPS_PER_INCH = FEED_MOTOR_STEPS_PER_INCH;
-    config.CUT_TRAVEL_DISTANCE = CUT_TRAVEL_DISTANCE;
-    config.FEED_TRAVEL_DISTANCE = FEED_TRAVEL_DISTANCE;
+    config.CUT_TRAVEL_DISTANCE = srcCutTravelDistance;
+    config.FEED_TRAVEL_DISTANCE = srcFeedTravelDistance;
     config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES = CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
     config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
-    config.CUT_MOTOR_NORMAL_SPEED = CUT_MOTOR_NORMAL_SPEED;
+    config.CUT_MOTOR_NORMAL_SPEED = srcCutMotorNormalSpeed;
     config.CUT_MOTOR_NORMAL_ACCELERATION = CUT_MOTOR_NORMAL_ACCELERATION;
     config.CUT_MOTOR_RETURN_SPEED = CUT_MOTOR_RETURN_SPEED;
     config.CUT_MOTOR_HOMING_SPEED = CUT_MOTOR_HOMING_SPEED;
-    config.FEED_MOTOR_NORMAL_SPEED = FEED_MOTOR_NORMAL_SPEED;
+    config.FEED_MOTOR_NORMAL_SPEED = srcFeedMotorNormalSpeed;
     config.FEED_MOTOR_NORMAL_ACCELERATION = FEED_MOTOR_NORMAL_ACCELERATION;
     config.FEED_MOTOR_RETURN_SPEED = FEED_MOTOR_RETURN_SPEED;
     config.FEED_MOTOR_RETURN_ACCELERATION = FEED_MOTOR_RETURN_ACCELERATION;
     config.FEED_MOTOR_HOMING_SPEED = FEED_MOTOR_HOMING_SPEED;
-    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
-    config.ROTATION_CLAMP_EXTEND_DURATION_MS = ROTATION_CLAMP_EXTEND_DURATION_MS;
+    config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = srcServoActiveHoldMs;
+    config.ROTATION_CLAMP_EXTEND_DURATION_MS = srcRotationClampExtendMs;
     config.CUT_HOME_TIMEOUT = CUT_HOME_TIMEOUT;
-    config.TA_SIGNAL_DURATION = TA_SIGNAL_DURATION;
+    config.TA_SIGNAL_DURATION = srcTaSignalDuration;
     // Store baselines so updateDynamicConfig() can apply diff independently per setting
     config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE + diff + clampExtraBuffer;
     config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE + diff;
@@ -687,15 +709,27 @@ void saveConfiguration() {
 
     config.version = 2;
     config.checksum = calculateChecksum(config);
-    
+
     int offset = (currentConfigMode == 0) ? CONFIG_OFFSET_3INCH : CONFIG_OFFSET_MINIS;
     EEPROM.put(offset, config);
-    
+
     // Also ensure mode is saved
     EEPROM.put(CONFIG_MODE_ADDRESS, currentConfigMode);
-    
+
+    // Servo home lives in its own EEPROM region; persist the staged value (if any)
+    // straight to that region without touching the live ROTATION_SERVO_HOME_POSITION.
+    if (ov.hasServoHomePosition) {
+        EEPROM.put(SERVO_HOME_EEPROM_ADDRESS, ov.servoHomePosition);
+    }
+
     EEPROM.commit();
     Serial.println("Configuration saved (Mode: " + String(currentConfigMode == 0 ? "3 Inch" : "Minis") + ")");
+}
+
+void saveConfiguration() {
+    // Snapshot every dashboard-editable value from the live globals (no overrides).
+    StagedConfigOverrides none;
+    saveConfigurationWithOverrides(none);
 }
 
 float getFeedTravelDistance() {
@@ -1288,9 +1322,7 @@ void addSerialLog(const String& message) {
     Serial.println(message);
 }
 
-//╔═══╗ ════════════════════════════════════════════════════════════════ ╔═══╗
-//║ 💥 CRASH INFO BROADCAST                                              ║
-//╚═══╝ ════════════════════════════════════════════════════════════════ ╚═══╝
+// CRASH INFO BROADCAST
 // Sends last reset reason and pre-crash breadcrumbs (state + cutting step + uptime)
 // captured in main.cpp from RTC_NOINIT_ATTR memory across resets.
 
@@ -1360,10 +1392,14 @@ void setupWebSocketDashboard() {
         request->send(response);
     });
     
+    // Register the shared cross-machine REST config + status API
+    // (/api/status, /api/config) before starting the server.
+    setupConfigApi(server);
+
     // Setup WebSocket event handler
     ws.onEvent(onWebSocketEvent);
     server.addHandler(&ws);
-    
+
     // Start the server
     server.begin();
     Serial.println("Enhanced Web server and WebSocket started on port 80");

@@ -9,7 +9,7 @@
 const float FEED_MOTOR_FIRST_RUN_START_POSITION = -1.2; // inches - absolute position for first run start
 const float FEED_MOTOR_FIRST_RUN_END_POSITION = 3.4; // inches - absolute position for first run end
 const float FEED_MOTOR_SECOND_RUN_START_POSITION = -1.2; // inches - absolute position for second run start
-const float FEED_MOTOR_SECOND_RUN_END_POSITION = 0.35; // inches - absolute position for second run end
+const float FEED_MOTOR_SECOND_RUN_END_POSITION = -0.05; // inches - absolute position for second run end
 const float FEED_MOTOR_MINIS_SECOND_RUN_OFFSET = -0.25; // inches - in Minis mode (2.65" squares), advance 0.25" less while clamped
 const unsigned long FEED_CLAMP_DELAY_MS = 400; // Delay after extending feed clamp and retracting top clamp
 
@@ -73,13 +73,11 @@ void onEnterFeedFirstCutState() {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
     stopReloadTimer(); // Stop reload time tracking when entering feed first cut state
-    //serial.println("FeedFirstCut: Starting feed first cut sequence");
 }
 
 void onExitFeedFirstCutState() {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
-    //serial.println("FeedFirstCut: Feed clamp retracted");
 }
 
 void executeFeedFirstCutStep() {
@@ -89,14 +87,12 @@ void executeFeedFirstCutStep() {
     switch (currentStep) {
         case RETRACT_FEED_CLAMP:
             retractFeedClamp();
-            //serial.println("FeedFirstCut: Feed clamp retracted");
             advanceToNextFeedFirstCutStep();
             break;
 
         case MOVE_TO_FIRST_RUN_START_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_MOTOR_FIRST_RUN_START_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to first run start position (-1.2 inches)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -108,7 +104,6 @@ void executeFeedFirstCutStep() {
                 if (!getComingFromNoWoodWithSensorsClear()) {
                     retractTopClamp();
                 }
-                //serial.println("FeedFirstCut: Feed clamp extended, top clamp retracted");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
             }
@@ -116,7 +111,6 @@ void executeFeedFirstCutStep() {
 
         case WAIT_200MS:
             if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
-                //serial.println("FeedFirstCut: Waiting 200ms");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -124,28 +118,24 @@ void executeFeedFirstCutStep() {
         case MOVE_TO_FIRST_RUN_END_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_MOTOR_FIRST_RUN_END_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to first run end position (3.4 inches)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
 
         case FIRST_RUN_COMPLETE:
             if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("FeedFirstCut: First run complete, starting second run");
                 advanceToNextFeedFirstCutStep();
             }
             break;
 
         case RETRACT_FEED_CLAMP_SECOND:
             retractFeedClamp();
-            //serial.println("FeedFirstCut: Feed clamp retracted (second run)");
             advanceToNextFeedFirstCutStep();
             break;
 
         case MOVE_TO_SECOND_RUN_START_POSITION:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_MOTOR_SECOND_RUN_START_POSITION);
-                //serial.println("FeedFirstCut: Moving feed motor to second run start position (-1.2 inches)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -154,7 +144,6 @@ void executeFeedFirstCutStep() {
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
                 retractTopClamp();
-                //serial.println("FeedFirstCut: Feed clamp extended, secure wood clamp retracted (second run)");
                 stepStartTime = millis();
                 advanceToNextFeedFirstCutStep();
             }
@@ -162,7 +151,6 @@ void executeFeedFirstCutStep() {
 
         case WAIT_200MS_SECOND:
             if (millis() - stepStartTime >= FEED_CLAMP_DELAY_MS) {
-                //serial.println("FeedFirstCut: Waiting 200ms (second run)");
                 advanceToNextFeedFirstCutStep();
             }
             break;
@@ -174,14 +162,12 @@ void executeFeedFirstCutStep() {
                     endPos += FEED_MOTOR_MINIS_SECOND_RUN_OFFSET;
                 }
                 moveFeedMotorToPosition(endPos);
-                //serial.println("FeedFirstCut: Moving feed motor to second run end position");
                 advanceToNextFeedFirstCutStep();
             }
             break;
 
         case CHECK_START_CYCLE_SWITCH:
             if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("FeedFirstCut: Checking start cycle switch for next state");
                 
                 // Set start switch safety flag as if user flipped the switch
                 setStartSwitchSafe(true);
@@ -191,14 +177,12 @@ void executeFeedFirstCutStep() {
                 
                 // Check the start cycle switch state
                 if (getStartCycleSwitch()->read() == HIGH) {
-                    //serial.println("FeedFirstCut: Start cycle switch HIGH - transitioning to CUTTING state");
                     changeState(STATE_CUTTING);
                     setCuttingCycleInProgress(true);
                     configureCutMotorForCutting();
                     showYellowLed();
                     extendFeedClamp();
                 } else {
-                    //serial.println("FeedFirstCut: Start cycle switch LOW - transitioning to IDLE state");
                     changeState(STATE_IDLE);
                 }
             }

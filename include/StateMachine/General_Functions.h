@@ -82,6 +82,10 @@ extern const int STATUS_LED_BLUE;
 // Signaling Functions
 void sendSignalToTA();
 
+// Cut-Rate Stats (rolling cuts-per-minute over 1/3/5/15 min windows)
+void recordCut();
+void getCutRates(float& perMin1, float& perMin3, float& perMin5, float& perMin15);
+
 // Clamp Functions
 void extendFeedClamp();
 void retractFeedClamp();
@@ -120,7 +124,6 @@ void moveFeedMotorToPosition(float targetPositionInches);
 void stopCutMotor();
 void stopFeedMotor();
 void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout);
-void homeFeedMotorBlocking(Bounce& homingSwitch);
 bool homeFeedMotorNonBlocking(Bounce& homingSwitch);
 void moveFeedMotorToInitialAfterHoming();
 bool checkAndRecalibrateCutMotorHome(int attempts);

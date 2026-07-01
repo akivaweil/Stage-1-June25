@@ -91,6 +91,14 @@ static const unsigned long YESWOOD_RETURN_TOP_CLAMP_RELEASE_MS = 100;
 // (run-cycle switch on) timing.
 static const unsigned long YESWOOD_TO_IDLE_FEED_CLAMP_HOLD_MS = 400;
 
+// Number of cut-home-switch reads when verifying the cut motor reached home
+// after its return, and the per-read settle delay between them.
+static const int CUT_HOME_VERIFICATION_ATTEMPTS = 3;
+static const unsigned long CUT_HOME_VERIFICATION_READ_DELAY_MS = 5;
+
+// Reset the consecutive-yeswood counter once it reaches this many cycles.
+static const int CONSECUTIVE_YESWOOD_RESET_THRESHOLD = 3;
+
 void handleYeswoodState() {
     handleYeswoodSequence();
 }
@@ -170,8 +178,8 @@ void handleYeswoodSequence() {
                 bool sensorDetectedHome = false;
                 
                 // Execute homing verification sequence - 3-attempt verification
-                for (int i = 0; i < 3; i++) {
-                    delay(5);
+                for (int i = 0; i < CUT_HOME_VERIFICATION_ATTEMPTS; i++) {
+                    delay(CUT_HOME_VERIFICATION_READ_DELAY_MS);
                     getCutHomingSwitch()->update();
                     bool sensorReading = getCutHomingSwitch()->read();
                     
@@ -194,9 +202,6 @@ void handleYeswoodSequence() {
                     // Home switch not detected - try incremental move recovery
                     
                     if (cutMotorIncrementalMoveTotalInches < CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES) {
-                        Serial.print("Attempting incremental move. Total moved: ");
-                        Serial.print(cutMotorIncrementalMoveTotalInches);
-                        Serial.println(" inches.");
                         if (cutMotor) {
                             cutMotor->move(-CUT_MOTOR_INCREMENTAL_MOVE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
                             cutMotorIncrementalMoveTotalInches += CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
@@ -204,7 +209,7 @@ void handleYeswoodSequence() {
                         // Stay in same step to re-check sensor after move
                     } else {
                         // Max incremental moves exceeded - transition to error
-                        Serial.println("ERROR: Cut motor position switch did not detect home after MAX incremental moves!");
+                        Serial.println("[Stage1] FAULT: cut motor home not detected after max incremental moves");
                         onErrorOccurred("Cut motor home switch not detected after max moves");
                         if (cutMotor) cutMotor->forceStop();
                         if (feedMotor) feedMotor->forceStop();
@@ -236,8 +241,8 @@ void handleYeswoodSequence() {
                 incrementCuttingCycleCounter();
                 setCuttingCycleInProgress(false);
                 
-                // Reset consecutive yeswood counter only when it reaches 3
-                if (getConsecutiveYeswoodCount() >= 3) {
+                // Reset consecutive yeswood counter only when it reaches the threshold
+                if (getConsecutiveYeswoodCount() >= CONSECUTIVE_YESWOOD_RESET_THRESHOLD) {
                     resetConsecutiveYeswoodCount();
                 }
                 

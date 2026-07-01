@@ -386,7 +386,6 @@ void handleCommonOperations() {
     // Check for cut motor hitting home sensor during YESWOOD return
     extern bool cutMotorInYeswoodReturn; // This global flag is still in main.cpp
     if (cutMotorInYeswoodReturn && cutMotor && cutMotor->isRunning() && cutHomingSwitch.read() == HIGH) {
-        //serial.println("Cut motor hit homing sensor during YESWOOD return - stopping immediately!");
         cutMotor->forceStopAndNewPosition(0);  // Stop immediately and set position to 0
         delay(50); // Allow sensor to settle after force-stop to prevent false negative verification
     }
@@ -471,10 +470,10 @@ void handleCommonOperations() {
     if (rotationClampIsExtended && rotationServoActiveStartTime > rotationClampExtendTime) {
         unsigned long rotationClampRetractDelay = ROTATION_CLAMP_EXTEND_DURATION_MS;
 
-        // In Minis mode (config mode 1), add an additional fixed 50ms
-        // so the catcher stays engaged longer than in 3 Inch mode.
+        // In Minis mode (config mode 1), hold a little longer so the catcher
+        // stays engaged longer than in 3 Inch mode.
         if (getCurrentConfigMode() == 1) {
-            rotationClampRetractDelay += 50;
+            rotationClampRetractDelay += ROTATION_CLAMP_MINIS_EXTRA_HOLD_MS;
         }
 
         // Add extra delay if no wood detected (applies during CUTTING and NOWOOD)
@@ -485,7 +484,15 @@ void handleCommonOperations() {
 
         if (millis() - rotationServoActiveStartTime >= rotationClampRetractDelay) {
             retractRotationClamp();
-            //serial.println("Rotation Clamp retracted after configured duration.");
+            addSerialLog("Rotation clamp retracting (" + String(rotationClampRetractDelay) +
+                         "ms after servo activation)");
+            // Push the clamp state to the dashboard right away so the live
+            // indicator flips at the retract moment instead of on the next
+            // 1s periodic update. Skipped during CUTTING per the existing
+            // no-broadcast-while-cutting convention in updateDashboardStatus().
+            if (currentState != STATE_CUTTING) {
+                broadcastClampStatus();
+            }
         }
     }
 
@@ -534,7 +541,6 @@ void handleCommonOperations() {
         extern const int TRANSFER_ARM_SIGNAL_PIN; // This is in main.cpp
         digitalWrite(TRANSFER_ARM_SIGNAL_PIN, LOW); // Return to inactive state (LOW)
         taSignalActive = false;
-        //serial.println("Signal to Transfer Arm (TA) timed out and reset to LOW"); 
     }
 }
 
@@ -548,7 +554,6 @@ void handleStandardErrorState() {
     if (reloadSwitch.rose()) {
         changeState(STATE_ERROR_RESET);
         errorAcknowledged = true;
-        //serial.println("Standard error acknowledged by reload switch.");
     }
 }
 

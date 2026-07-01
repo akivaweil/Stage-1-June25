@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <FastAccelStepper.h>
 #include <Bounce2.h>
+#include <esp_task_wdt.h>
 #include "StateMachine/General_Functions.h"
 #include "StateMachine/StateManager.h"
 #include "Config/Config.h"
@@ -16,6 +17,14 @@ extern Bounce cutHomingSwitch;
 // is in Servo.cpp.
 
 const unsigned long FEED_HOME_TIMEOUT = 30000; // 30 seconds timeout
+
+// Minimal negative overshoot past home so the cut motor firmly seats the home switch.
+const float CUT_MOTOR_HOME_OVERSHOOT_INCHES = -0.02;
+// Large negative seek target for blocking cut homing: drives the motor toward the
+// home switch; the switch (not this target) actually stops the move.
+const long CUT_MOTOR_HOME_SEEK_TARGET_STEPS = -40000;
+// Settle delay after the cut motor force-stops at home, before re-reading the switch.
+const unsigned long CUT_MOTOR_HOME_SETTLE_DELAY_MS = 50;
 
 void configureCutMotorForCutting() {
     if (cutMotor) {
@@ -68,7 +77,7 @@ void moveCutMotorToCut() {
 
 void moveCutMotorToHome() {
     if (cutMotor) {
-        cutMotor->moveTo(-0.02 * CUT_MOTOR_STEPS_PER_INCH); // Minimal overshoot
+        cutMotor->moveTo(CUT_MOTOR_HOME_OVERSHOOT_INCHES * CUT_MOTOR_STEPS_PER_INCH); // Minimal overshoot
     }
 }
 
@@ -110,9 +119,10 @@ void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {
 
     unsigned long startTime = millis();
     cutMotor->setSpeedInHz((uint32_t)(CUT_MOTOR_HOMING_SPEED * CUT_MOTOR_STEPS_PER_INCH));
-    cutMotor->moveTo(-40000);
+    cutMotor->moveTo(CUT_MOTOR_HOME_SEEK_TARGET_STEPS);
 
     while (homingSwitch.read() != HIGH) {
+        esp_task_wdt_reset();  // blocking wait — keep the task watchdog fed
         homingSwitch.update();
 
         if (millis() - startTime > timeout) {
@@ -125,67 +135,10 @@ void homeCutMotorBlocking(Bounce& homingSwitch, unsigned long timeout) {
     cutMotor->forceStopAndNewPosition(0);
 
     // Add a small delay to ensure motor has fully stopped
-    delay(50);
+    delay(CUT_MOTOR_HOME_SETTLE_DELAY_MS);
 
     // Verify the switch is still pressed after stopping
     homingSwitch.update();
-}
-
-// Basic blocking homing function for Feed Motor - can be expanded
-void homeFeedMotorBlocking(Bounce& homingSwitch) {
-    if (!feedMotor) {
-        return;
-    }
-
-    // Step 1: Move toward home sensor until it triggers
-    feedMotor->setSpeedInHz((uint32_t)FEED_MOTOR_HOMING_SPEED);
-
-    // Try using runForward() instead of moveTo() for more reliable operation
-    feedMotor->runForward();
-
-    // Verify motor started
-    delay(100); // Small delay to let motor start
-
-    // Add timeout for feed motor homing
-    unsigned long startTime = millis();
-
-    while (homingSwitch.read() != LOW) {
-        homingSwitch.update();
-
-        // If motor stopped running unexpectedly, restart it
-        static unsigned long lastRestartCheck = 0;
-        if (millis() - lastRestartCheck >= 1000) {
-            if (!feedMotor->isRunning()) {
-                feedMotor->runForward();
-            }
-            lastRestartCheck = millis();
-        }
-
-        // Check for timeout
-        if (millis() - startTime > FEED_HOME_TIMEOUT) {
-            feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
-            return;
-        }
-    }
-
-    feedMotor->forceStopAndNewPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-
-    // Step 2: Move to working position (offset from sensor)
-    feedMotor->moveTo(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH - FEED_MOTOR_OFFSET_FROM_SENSOR * FEED_MOTOR_STEPS_PER_INCH);
-
-    // Wait for move to complete with timeout
-    unsigned long moveStartTime = millis();
-    while (feedMotor->isRunning()) {
-        if (millis() - moveStartTime > 10000) { // 10 second timeout for positioning
-            feedMotor->forceStopAndNewPosition(feedMotor->getCurrentPosition());
-            break;
-        }
-    }
-
-    // Step 3: Set this position as the new zero
-    feedMotor->setCurrentPosition(FEED_TRAVEL_DISTANCE * FEED_MOTOR_STEPS_PER_INCH);
-
-    configureFeedMotorForNormalOperation();
 }
 
 // Non-blocking feed motor homing state variables
@@ -287,7 +240,6 @@ bool checkAndRecalibrateCutMotorHome(int attempts) {
     bool sensorDetectedHome = false;
     for (int i = 0; i < attempts; i++) {
         cutHomingSwitch.update();
-        Serial.print("Cut position switch read attempt "); Serial.print(i + 1); Serial.print(": ");
         if (cutHomingSwitch.read() == HIGH) {
             sensorDetectedHome = true;
             cutMotor->setCurrentPosition(0);

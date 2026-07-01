@@ -361,22 +361,6 @@ void updateDynamicConfig() {
     } else {
         TA_SIGNAL_OFFSET_FROM_END = 0.2;
     }
-    
-    // Log for debugging
-    Serial.print("Dynamic Config Update: Mode=");
-    Serial.print(currentConfigMode);
-    Serial.print(", BaseCut=");
-    Serial.print(baselineCutDistance);
-    Serial.print(", CurrCut=");
-    Serial.print(CUT_TRAVEL_DISTANCE);
-    Serial.print(", Diff=");
-    Serial.print(diff);
-    Serial.print(", ServoAct=");
-    Serial.print(ROTATION_SERVO_ACTIVATION_DISTANCE);
-    Serial.print(", ClampAct=");
-    Serial.print(ROTATION_CLAMP_ACTIVATION_DISTANCE);
-    Serial.print(", TaOffsetFromEnd=");
-    Serial.println(TA_SIGNAL_OFFSET_FROM_END);
 }
 
 // Apply configuration to global variables
@@ -390,7 +374,9 @@ void applyConfiguration(const ConfigurationData& config) {
     CUT_TRAVEL_DISTANCE = config.CUT_TRAVEL_DISTANCE;
     FEED_TRAVEL_DISTANCE = config.FEED_TRAVEL_DISTANCE;
     CUT_MOTOR_NORMAL_SPEED = config.CUT_MOTOR_NORMAL_SPEED;
+    CUT_MOTOR_NORMAL_ACCELERATION = config.CUT_MOTOR_NORMAL_ACCELERATION;
     FEED_MOTOR_NORMAL_SPEED = config.FEED_MOTOR_NORMAL_SPEED;
+    FEED_MOTOR_NORMAL_ACCELERATION = config.FEED_MOTOR_NORMAL_ACCELERATION;
     FEED_MOTOR_OFFSET_FROM_SENSOR = config.FEED_MOTOR_OFFSET_FROM_SENSOR;
     ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS = config.ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
     ROTATION_CLAMP_EXTEND_DURATION_MS = config.ROTATION_CLAMP_EXTEND_DURATION_MS;
@@ -505,6 +491,19 @@ uint32_t calculateChecksum(const ConfigurationData& config) {
     return checksum;
 }
 
+// Switch the active config mode (0 = 3 Inch, 1 = Minis) and reload that mode's
+// EEPROM config block. Mirrors the websocket "set_config_mode" handler so the
+// central REST dashboard can change modes too (via the reserved __mode__ key).
+void setConfigMode(int mode) {
+    if (mode != 0 && mode != 1) return;
+    currentConfigMode = mode;
+    EEPROM.begin(CONFIG_EEPROM_SIZE);
+    EEPROM.put(CONFIG_MODE_ADDRESS, currentConfigMode);
+    EEPROM.commit();
+    loadConfiguration();    // load + apply the selected mode's config block
+    updateDynamicConfig();  // recompute derived values (explicit; loadConfiguration also does this)
+}
+
 // Configuration management functions
 void loadConfiguration() {
     EEPROM.begin(CONFIG_EEPROM_SIZE);
@@ -533,33 +532,28 @@ void loadConfiguration() {
     // Check magic number first
     if (config.magic != CONFIG_MAGIC) {
         isValid = false;
-        Serial.println("Configuration magic number invalid (EEPROM may be empty), using defaults");
     }
-    
+
     // Check version (bump to 2 when structure changes)
     if (config.version != 2) {
         isValid = false;
-        Serial.println("Configuration version mismatch, using defaults");
     }
-    
+
     // Check checksum
     uint32_t calculatedChecksum = calculateChecksum(config);
     if (config.checksum != calculatedChecksum) {
         isValid = false;
-        Serial.println("Configuration checksum invalid, using defaults");
     }
-    
+
     // Check for reasonable value ranges
     if (config.FEED_TRAVEL_DISTANCE < 0.1 || config.FEED_TRAVEL_DISTANCE > 10.0) {
         isValid = false;
-        Serial.println("FEED_TRAVEL_DISTANCE out of range, using defaults");
     }
-    
+
     if (config.FEED_MOTOR_OFFSET_FROM_SENSOR < 0.01 || config.FEED_MOTOR_OFFSET_FROM_SENSOR > 1.0) {
         isValid = false;
-        Serial.println("FEED_MOTOR_OFFSET_FROM_SENSOR out of range, using defaults");
     }
-    
+
     if (!isValid) {
         // Graceful schema migration
         // If the magic number is intact, the EEPROM was written by an older
@@ -606,9 +600,6 @@ void loadConfiguration() {
             KEEP_OR_DEFAULT(FEED_PULLBACK_DISTANCE,                   0.0f,    1.0f);
             KEEP_OR_DEFAULT(FEED_PULLBACK_FEED_COMPENSATION,          0.0f,    1.0f);
             #undef KEEP_OR_DEFAULT
-            Serial.println("Configuration migrated from older firmware schema (sane fields preserved)");
-        } else {
-            Serial.println("Configuration loaded: Using default values");
         }
         config = migrated;
 
@@ -629,7 +620,6 @@ void loadConfiguration() {
         applyConfiguration(config);
         saveConfiguration();
     } else {
-        Serial.println("Configuration loaded: Using stored values");
         applyConfiguration(config);
     }
 }
@@ -649,9 +639,12 @@ void saveConfigurationWithOverrides(const StagedConfigOverrides& ov) {
     float srcFeedTravelDistance  = ov.hasFeedTravelDistance  ? ov.feedTravelDistance  : FEED_TRAVEL_DISTANCE;
     float srcCutMotorNormalSpeed = ov.hasCutMotorNormalSpeed ? ov.cutMotorNormalSpeed : CUT_MOTOR_NORMAL_SPEED;
     float srcFeedMotorNormalSpeed= ov.hasFeedMotorNormalSpeed? ov.feedMotorNormalSpeed: FEED_MOTOR_NORMAL_SPEED;
+    float srcCutMotorNormalAccel = ov.hasCutMotorNormalAccel ? ov.cutMotorNormalAccel : CUT_MOTOR_NORMAL_ACCELERATION;
+    float srcFeedMotorNormalAccel= ov.hasFeedMotorNormalAccel? ov.feedMotorNormalAccel: FEED_MOTOR_NORMAL_ACCELERATION;
     unsigned long srcServoActiveHoldMs    = ov.hasServoActiveHoldMs    ? ov.servoActiveHoldMs    : ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS;
     unsigned long srcRotationClampExtendMs= ov.hasRotationClampExtendMs? ov.rotationClampExtendMs: ROTATION_CLAMP_EXTEND_DURATION_MS;
     unsigned long srcTaSignalDuration     = ov.hasTaSignalDuration     ? ov.taSignalDuration     : TA_SIGNAL_DURATION;
+    float srcRotationClampActivationDistance = ov.hasRotationClampActivationDistance ? ov.rotationClampActivationDistance : ROTATION_CLAMP_ACTIVATION_DISTANCE;
 
     // Compute diff and clampExtraBuffer so we store BASELINE values for activation distances
     // (same logic as updateDynamicConfig). This keeps clamp, servo, and TA independent when
@@ -679,11 +672,11 @@ void saveConfigurationWithOverrides(const StagedConfigOverrides& ov) {
     config.CUT_MOTOR_INCREMENTAL_MOVE_INCHES = CUT_MOTOR_INCREMENTAL_MOVE_INCHES;
     config.CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES = CUT_MOTOR_MAX_INCREMENTAL_MOVE_INCHES;
     config.CUT_MOTOR_NORMAL_SPEED = srcCutMotorNormalSpeed;
-    config.CUT_MOTOR_NORMAL_ACCELERATION = CUT_MOTOR_NORMAL_ACCELERATION;
+    config.CUT_MOTOR_NORMAL_ACCELERATION = srcCutMotorNormalAccel;
     config.CUT_MOTOR_RETURN_SPEED = CUT_MOTOR_RETURN_SPEED;
     config.CUT_MOTOR_HOMING_SPEED = CUT_MOTOR_HOMING_SPEED;
     config.FEED_MOTOR_NORMAL_SPEED = srcFeedMotorNormalSpeed;
-    config.FEED_MOTOR_NORMAL_ACCELERATION = FEED_MOTOR_NORMAL_ACCELERATION;
+    config.FEED_MOTOR_NORMAL_ACCELERATION = srcFeedMotorNormalAccel;
     config.FEED_MOTOR_RETURN_SPEED = FEED_MOTOR_RETURN_SPEED;
     config.FEED_MOTOR_RETURN_ACCELERATION = FEED_MOTOR_RETURN_ACCELERATION;
     config.FEED_MOTOR_HOMING_SPEED = FEED_MOTOR_HOMING_SPEED;
@@ -692,7 +685,7 @@ void saveConfigurationWithOverrides(const StagedConfigOverrides& ov) {
     config.CUT_HOME_TIMEOUT = CUT_HOME_TIMEOUT;
     config.TA_SIGNAL_DURATION = srcTaSignalDuration;
     // Store baselines so updateDynamicConfig() can apply diff independently per setting
-    config.ROTATION_CLAMP_ACTIVATION_DISTANCE = ROTATION_CLAMP_ACTIVATION_DISTANCE + diff + clampExtraBuffer;
+    config.ROTATION_CLAMP_ACTIVATION_DISTANCE = srcRotationClampActivationDistance + diff + clampExtraBuffer;
     config.ROTATION_SERVO_ACTIVATION_DISTANCE = ROTATION_SERVO_ACTIVATION_DISTANCE + diff;
     config.TA_SIGNAL_OFFSET_FROM_END = TA_SIGNAL_OFFSET_FROM_END;  // no diff needed - offset is relative to end of cut
     config.ROTATION_SERVO_RETURN_DELAY_MS = ROTATION_SERVO_RETURN_DELAY_MS;
@@ -721,7 +714,6 @@ void saveConfigurationWithOverrides(const StagedConfigOverrides& ov) {
     }
 
     EEPROM.commit();
-    Serial.println("Configuration saved (Mode: " + String(currentConfigMode == 0 ? "3 Inch" : "Minis") + ")");
 }
 
 void saveConfiguration() {
@@ -1315,9 +1307,6 @@ void addSerialLog(const String& message) {
     if (serialLog.logCount < 100) {
         serialLog.logCount++;
     }
-    
-    // Also print to Serial
-    Serial.println(message);
 }
 
 // CRASH INFO BROADCAST
@@ -1371,10 +1360,8 @@ void broadcastSerialLog() {
 
 void setupWebSocketDashboard() {
     // Initialize SPIFFS for serving files (if needed in future)
-    if (!SPIFFS.begin(true)) {
-        Serial.println("SPIFFS Mount Failed");
-    }
-    
+    SPIFFS.begin(true);
+
     // Initialize dashboard data
     initializeDashboardData();
     
@@ -1400,12 +1387,6 @@ void setupWebSocketDashboard() {
 
     // Start the server
     server.begin();
-    Serial.println("Enhanced Web server and WebSocket started on port 80");
-    
-    // Print IP address for easy access
-    Serial.print("Dashboard available at: http://");
-    Serial.print(WiFi.localIP());
-    Serial.println("/");
 }
 
 // Helper to populate JsonObject with config data — order matches the
@@ -1431,9 +1412,6 @@ void populateConfigJson(const ConfigurationData& config, JsonObject obj) {
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     switch(type) {
         case WS_EVT_CONNECT: {
-            Serial.printf("Client %u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
-            Serial.println("WebSocket connection established successfully");
-            
             // Send all current data to newly connected client
             
             // Send all status data
@@ -1451,8 +1429,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
         }
             
         case WS_EVT_DISCONNECT:
-            Serial.printf("Client %u disconnected\n", client->id());
-            Serial.println("WebSocket client disconnected");
             break;
             
         case WS_EVT_DATA: {
@@ -1868,10 +1844,7 @@ void updateTimeSinceLastCycle() {
 void incrementCuttingCycleCounter() {
     unsigned long cycleTime = millis() - lastCycleStartTime;
     lastCycleCompletionTime = millis(); // Record when this cycle completed
-    
-    
-    Serial.println("Cutting cycle completed.");
-    
+
     // Update performance metrics
     updatePerformanceMetrics(cycleTime);
     
@@ -1887,7 +1860,6 @@ void startReloadTimer() {
     reloadTimeStart = millis();
     reloadTimeActive = true;
     reloadTimeSeconds = 0.0;
-    Serial.println("Reload timer started");
 }
 
 // Stop reload time timer when entering FEED_FIRST_CUT or CUTTING state
@@ -1903,7 +1875,6 @@ void stopReloadTimer() {
             reloadTimeCount++;
         }
         
-        Serial.println("Reload timer stopped - Time: " + String(reloadTimeSeconds, 1) + "s");
         addEventToLog("Reload completed - " + String(reloadTimeSeconds, 1) + "s");
     }
 }

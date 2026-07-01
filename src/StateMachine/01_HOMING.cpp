@@ -22,6 +22,9 @@
 
 // STEP 8: TRANSITION TO IDLE STATE
 
+// Blink interval for the blue "homing in progress" LED indicator.
+static const unsigned long HOMING_LED_BLINK_INTERVAL_MS = 500;
+
 // Static variables for homing state tracking
 static bool cutMotorHomed = false;
 static bool feedMotorHomed = false;
@@ -38,7 +41,7 @@ void onEnterHomingState() {
 
 void handleHomingState() {
     // Blink blue LED to indicate homing in progress
-    if (millis() - blinkTimer > 500) {
+    if (millis() - blinkTimer > HOMING_LED_BLINK_INTERVAL_MS) {
         bool blinkState = getBlinkState();
         blinkState = !blinkState;
         setBlinkState(blinkState);
@@ -46,63 +49,36 @@ void handleHomingState() {
         blinkTimer = millis();
     }
 
-    // Debug output to track homing progress
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 2000) {
-        Serial.print("HOMING STATE DEBUG - cutMotorHomed: ");
-        Serial.print(cutMotorHomed);
-        Serial.print(", feedMotorHomed: ");
-        Serial.print(feedMotorHomed);
-        Serial.print(", feedHomingPhaseInitiated: ");
-        Serial.println(feedHomingPhaseInitiated);
-        lastDebugTime = millis();
-    }
-
     if (!cutMotorHomed) {
-        //serial.println("Starting cut motor homing phase (blocking)...");
         homeCutMotorBlocking(*getCutHomingSwitch(), CUT_HOME_TIMEOUT);
         if (getCutMotor() && getCutMotor()->getCurrentPosition() == 0) { // Check if homing was successful
             cutMotorHomed = true;
-            //serial.println("Cut motor homing marked as successful.");
-        } else {
-            //serial.println("Cut motor homing failed or timed out. Retrying or error.");
         }
     } else if (!feedMotorHomed) {
         if (!feedHomingPhaseInitiated) {
-            //serial.println("Starting feed motor homing phase (non-blocking)..."); 
-            retractFeedClamp(); 
-            //serial.println("Feed clamp retracted for homing."); 
+            retractFeedClamp();
             feedHomingPhaseInitiated = true;
         }
-        //serial.println("Calling homeFeedMotorNonBlocking...");
         if (homeFeedMotorNonBlocking(*getFeedHomingSwitch())) {
             extendFeedClamp();
-            //serial.println("Feed clamp re-extended.");
-            feedMotorHomed = true; 
+            feedMotorHomed = true;
             feedHomingPhaseInitiated = false; // Reset for next potential homing cycle
-            //serial.println("Feed motor homing marked as successful.");
         }
     } else {
-        //serial.println("All homing steps complete! Transitioning to IDLE..."); 
-        cutMotorHomed = false; 
+        cutMotorHomed = false;
         feedMotorHomed = false;
-        
+
         extern bool isHomed; // This is in main.cpp
-        isHomed = true; 
-        //serial.println("isHomed flag set to true.");
+        isHomed = true;
 
         turnBlueLedOff();
         showGreenLed();
-        //serial.println("LEDs updated: Blue OFF, Green ON.");
 
         // SAFETY CHANGE: Do NOT automatically home the rotation servo on startup
         // This prevents ramming stuck wood pieces into the blade during emergency restart
         // The servo will only be homed when manually starting a cut cycle
-        //serial.println("Servo homing skipped on startup for safety - will home when cut cycle starts.");
-        
-        //serial.println("Changing state to IDLE...");
+
         changeState(STATE_IDLE);
-        //serial.println("State change to IDLE completed.");
     }
 }
 

@@ -3,6 +3,7 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <esp_task_wdt.h>
 #include "Config/Pins_Definitions.h"
 
 // OTA Updater Implementation
@@ -46,7 +47,6 @@ void otaUpdateProgressLEDs(unsigned int progress, unsigned int total) {
 }
 
 void setupOTA() {
-  //serial.println("Booting for OTA...");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   // Bounded connect attempt, then proceed so the machine still boots and runs
@@ -59,6 +59,13 @@ void setupOTA() {
   while (WiFi.status() != WL_CONNECTED &&
          millis() - wifiConnectStart < WIFI_CONNECT_TIMEOUT_MS) {
     delay(WIFI_CONNECT_POLL_MS);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("[Stage1] wifi ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("[Stage1] wifi unavailable - standalone");
   }
 
   // Port defaults to 3232
@@ -87,14 +94,7 @@ void setupOTA() {
       taSignalDelayPending = false;
       taSignalOffTime = millis();
 
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH) {
-        type = "sketch";
-      } else { // U_SPIFFS
-        type = "filesystem";
-      }
-      // NOTE: if updating SPIFFS, ensure SPIFFS is mounted via SPIFFS.begin()
-      //serial.println("Start updating " + type);
+      Serial.println("[Stage1] OTA start");
 
       // Flash all LEDs 3 times to clearly indicate upload start
       for(int i = 0; i < 3; i++) {
@@ -109,10 +109,9 @@ void setupOTA() {
       
       // Start with red LED for 0% progress
       digitalWrite(STATUS_LED_RED, HIGH);
-      //serial.println("OTA Upload started - LED progress indication active");
     })
     .onEnd([]() {
-      //serial.println("\nOTA Upload completed!");
+      Serial.println("[Stage1] OTA done");
       otaAllLedsOff(); // Clear LEDs
       // Briefly flash all LEDs to indicate completion
       for(int i = 0; i < 3; i++) {
@@ -124,23 +123,13 @@ void setupOTA() {
         otaAllLedsOff();
         delay(200);
       }
-      //serial.println("OTA completion flash sequence finished");
     })
     .onProgress([](unsigned int progress, unsigned int total) {
+      esp_task_wdt_reset();  // upload blocks one loop iteration — feed the WDT
       otaUpdateProgressLEDs(progress, total);
     })
     .onError([](ota_error_t error) {
-      if (error == OTA_AUTH_ERROR) {
-        //serial.println("Auth Failed");
-      } else if (error == OTA_BEGIN_ERROR) {
-        //serial.println("Begin Failed");
-      } else if (error == OTA_CONNECT_ERROR) {
-        //serial.println("Connect Failed");
-      } else if (error == OTA_RECEIVE_ERROR) {
-        //serial.println("Receive Failed");
-      } else if (error == OTA_END_ERROR) {
-        //serial.println("End Failed");
-      }
+      Serial.printf("[Stage1] OTA error %u\n", error);
       // Error indication: rapid red blinking
       otaAllLedsOff();
       for(int i = 0; i < 10; i++) {
@@ -149,14 +138,9 @@ void setupOTA() {
         digitalWrite(STATUS_LED_RED, LOW);
         delay(100);
       }
-      //serial.println("OTA error indication completed");
     });
 
   ArduinoOTA.begin();
-
-  Serial.println("OTA Initialized");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
 }
 
 void handleOTA() {

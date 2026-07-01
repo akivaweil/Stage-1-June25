@@ -18,6 +18,7 @@ extern float ROTATION_SERVO_ACTIVATION_DISTANCE;
 
 // ROTATION CLAMP
 extern unsigned long ROTATION_CLAMP_EXTEND_DURATION_MS;
+extern unsigned long ROTATION_CLAMP_MINIS_EXTRA_HOLD_MS; // Added to the retract delay in Minis mode only
 extern float ROTATION_CLAMP_ACTIVATION_DISTANCE;
 
 // TRANSFER ARM

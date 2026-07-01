@@ -335,6 +335,19 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             box-shadow: 0 0 8px hsl(142 71% 45% / 0.7);
         }
 
+        /* Amber flash while the rotation clamp is retracting */
+        .sensor-item.retracting {
+            background: hsl(38 92% 50% / 0.10);
+            border-color: hsl(38 92% 50% / 0.5);
+        }
+        .sensor-item.retracting .sensor-label {
+            color: var(--text-main);
+        }
+        .sensor-item.retracting .sensor-led {
+            background: var(--accent-warning);
+            box-shadow: 0 0 8px hsl(38 92% 50% / 0.7);
+        }
+
         /* Metrics */
         .metrics-container {
             display: flex;
@@ -867,6 +880,10 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                     <span class="sensor-label">Reload</span>
                     <div class="sensor-led"></div>
                 </div>
+                <div class="sensor-item" id="clamp_rotation">
+                    <span class="sensor-label" id="clamp_rotation_label">Rotation Clamp</span>
+                    <div class="sensor-led"></div>
+                </div>
             </div>
         </div>
 
@@ -958,7 +975,7 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             </div>
 
             <div class="input-group">
-                <label>Clamp Hold After Servo Rotation (ms)</label>
+                <label>Clamp Retract Delay After Servo Rotation (ms) <span style="opacity:0.7;font-weight:normal;">&mdash; per mode</span></label>
                 <input type="number" id="rotationClampExtendMs" step="50" placeholder="2200">
             </div>
 
@@ -1188,6 +1205,9 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
                 updateSensor('sensor_feedhome', data.feedMotorHomeSensor);
                 updateSensor('sensor_reload', data.reloadSwitch);
             }
+            else if (data.type === 'clamp_status') {
+                updateRotationClampIndicator(data.rotationClamp);
+            }
             else if (data.type === 'performance_metrics') {
                 if (data.reloadTime !== undefined) {
                     const newReloadTime = data.reloadTime;
@@ -1331,6 +1351,38 @@ const char dashboardHTML[] PROGMEM = R"rawliteral(
             const el = document.getElementById(id);
             if (active) el.classList.add('active');
             else el.classList.remove('active');
+        }
+
+        // Rotation clamp live indicator: green while extended, amber
+        // "Retracting" flash on the extended->retracted transition.
+        const ROTATION_CLAMP_RETRACT_FLASH_MS = 1500;
+        let rotationClampWasExtended = null;
+        let rotationClampFlashTimer = null;
+        function updateRotationClampIndicator(extended) {
+            const item = document.getElementById('clamp_rotation');
+            const label = document.getElementById('clamp_rotation_label');
+            if (!item || !label) return;
+            if (extended) {
+                if (rotationClampFlashTimer) { clearTimeout(rotationClampFlashTimer); rotationClampFlashTimer = null; }
+                item.classList.remove('retracting');
+                item.classList.add('active');
+                label.textContent = 'Rotation Clamp — Extended';
+            } else {
+                item.classList.remove('active');
+                if (rotationClampWasExtended === true) {
+                    item.classList.add('retracting');
+                    label.textContent = 'Rotation Clamp — Retracting';
+                    if (rotationClampFlashTimer) clearTimeout(rotationClampFlashTimer);
+                    rotationClampFlashTimer = setTimeout(() => {
+                        item.classList.remove('retracting');
+                        label.textContent = 'Rotation Clamp';
+                        rotationClampFlashTimer = null;
+                    }, ROTATION_CLAMP_RETRACT_FLASH_MS);
+                } else if (!rotationClampFlashTimer) {
+                    label.textContent = 'Rotation Clamp';
+                }
+            }
+            rotationClampWasExtended = extended;
         }
         
         function updateMetric(id, val) {

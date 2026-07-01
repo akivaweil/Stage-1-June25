@@ -23,15 +23,33 @@ extern void updateDynamicConfig();
 
 // CURATED SETTINGS SCHEMA
 // Order, keys, ranges and defaults match the central dashboard spec.
+//
+// Trailing members: { group, fromSteps, collapsed }.
+//   group     — dashboard section heading (first-appearance order).
+//   fromSteps — true ONLY for fields stored in STEPS; the shared dashboard then
+//               divides value/min/max by doc["stepsPerInch"] (= FEED_MOTOR_STEPS_PER_INCH,
+//               1000) to display in/s and multiplies back on POST.
+//   collapsed — the field's group section starts collapsed.
+//
+// TWO-DIFFERENT-STEPS-PER-INCH NOTE: only ONE stepsPerInch is emitted
+// (FEED_MOTOR_STEPS_PER_INCH = 1000). The FEED speed/accel are stored in STEPS,
+// so they get fromSteps=true. The CUT speed/accel are ALREADY stored in
+// inches/sec (and in/s^2), so they MUST NOT set fromSteps — flagging them would
+// wrongly divide by 1000. They are simply relabeled with their inch units.
 const MachineSetting MACHINE_SETTINGS[] = {
-    { "CUT_TRAVEL_DISTANCE",                   "Cut Travel (in)",          SETTING_FLOAT,   0.1,    20.0,  0.05, &CUT_TRAVEL_DISTANCE, nullptr, nullptr },
-    { "FEED_TRAVEL_DISTANCE",                  "Feed Travel (in)",         SETTING_FLOAT,   0.1,    10.0,  0.05, &FEED_TRAVEL_DISTANCE, nullptr, nullptr },
-    { "ROTATION_SERVO_HOME_POSITION",          "Servo Home (deg)",         SETTING_INT,     0.0,   180.0,  1.0,  nullptr, nullptr, &ROTATION_SERVO_HOME_POSITION },
-    { "ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS","Servo Active Hold (ms)",   SETTING_INT,   100.0, 60000.0,  10.0, nullptr, &ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS, nullptr },
-    { "ROTATION_CLAMP_EXTEND_DURATION_MS",     "Rotation Clamp Extend (ms)",SETTING_INT,  200.0,  5000.0,  10.0, nullptr, &ROTATION_CLAMP_EXTEND_DURATION_MS, nullptr },
-    { "TA_SIGNAL_DURATION",                    "TA Signal Duration (ms)",  SETTING_INT,   100.0, 60000.0,  10.0, nullptr, &TA_SIGNAL_DURATION, nullptr },
-    { "CUT_MOTOR_NORMAL_SPEED",                "Cut Motor Speed (in/s)",   SETTING_FLOAT,   0.1,    50.0,  0.01, &CUT_MOTOR_NORMAL_SPEED, nullptr, nullptr },
-    { "FEED_MOTOR_NORMAL_SPEED",               "Feed Motor Speed (steps/s)",SETTING_INT,  100.0, 50000.0,  10.0, &FEED_MOTOR_NORMAL_SPEED, nullptr, nullptr },
+    { "CUT_TRAVEL_DISTANCE",                   "Cut Travel (in)",          SETTING_FLOAT,   0.1,    20.0,  0.05, &CUT_TRAVEL_DISTANCE, nullptr, nullptr,                                  "General", false, false },
+    { "FEED_TRAVEL_DISTANCE",                  "Feed Travel (in)",         SETTING_FLOAT,   0.1,    10.0,  0.05, &FEED_TRAVEL_DISTANCE, nullptr, nullptr,                                 "General", false, false },
+    { "ROTATION_SERVO_HOME_POSITION",          "Servo Home (deg)",         SETTING_INT,     0.0,   180.0,  1.0,  nullptr, nullptr, &ROTATION_SERVO_HOME_POSITION,                            "General", false, false },
+    { "ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS","Servo Active Hold (ms)",   SETTING_INT,   100.0, 60000.0,  10.0, nullptr, &ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS, nullptr,                  "General", false, false },
+    { "ROTATION_CLAMP_EXTEND_DURATION_MS",     "Rotation Clamp Extend (ms)",SETTING_INT,  200.0,  5000.0,  10.0, nullptr, &ROTATION_CLAMP_EXTEND_DURATION_MS, nullptr,                       "General", false, false },
+    { "ROTATION_CLAMP_ACTIVATION_DISTANCE",    "Rotation Clamp Activation (in)",SETTING_FLOAT, 0.1, 20.0,  0.05, &ROTATION_CLAMP_ACTIVATION_DISTANCE, nullptr, nullptr,                  "General", false, false },
+    { "TA_SIGNAL_DURATION",                    "TA Signal Duration (ms)",  SETTING_INT,   100.0, 60000.0,  10.0, nullptr, &TA_SIGNAL_DURATION, nullptr,                                      "General", false, false },
+    // Motors group — CUT params are stored in inches (NO fromSteps); FEED params
+    // are stored in steps (fromSteps=true, dashboard divides by stepsPerInch).
+    { "CUT_MOTOR_NORMAL_SPEED",                "Cut Motor Speed (in/s)",   SETTING_FLOAT,   0.1,    50.0,  0.01, &CUT_MOTOR_NORMAL_SPEED, nullptr, nullptr,                              "Motors", false, true },
+    { "CUT_MOTOR_NORMAL_ACCELERATION",         "Cut Motor Accel (in/s^2)", SETTING_FLOAT,   0.5,   500.0,  0.1,  &CUT_MOTOR_NORMAL_ACCELERATION, nullptr, nullptr,                       "Motors", false, true },
+    { "FEED_MOTOR_NORMAL_SPEED",               "Feed Motor Speed (in/s)",  SETTING_INT,   100.0, 50000.0,  10.0, &FEED_MOTOR_NORMAL_SPEED, nullptr, nullptr,                             "Motors", true,  true },
+    { "FEED_MOTOR_NORMAL_ACCELERATION",        "Feed Motor Accel (in/s^2)",SETTING_INT,   100.0,500000.0,  10.0, &FEED_MOTOR_NORMAL_ACCELERATION, nullptr, nullptr,                      "Motors", true,  true },
 };
 
 const size_t MACHINE_SETTINGS_COUNT = sizeof(MACHINE_SETTINGS) / sizeof(MACHINE_SETTINGS[0]);
@@ -101,10 +119,16 @@ void persistStagedSettings() {
             ov.hasCutMotorNormalSpeed = true; ov.cutMotorNormalSpeed = (float)v;
         } else if (strcmp(key, "FEED_MOTOR_NORMAL_SPEED") == 0) {
             ov.hasFeedMotorNormalSpeed = true; ov.feedMotorNormalSpeed = (float)v;
+        } else if (strcmp(key, "CUT_MOTOR_NORMAL_ACCELERATION") == 0) {
+            ov.hasCutMotorNormalAccel = true; ov.cutMotorNormalAccel = (float)v;
+        } else if (strcmp(key, "FEED_MOTOR_NORMAL_ACCELERATION") == 0) {
+            ov.hasFeedMotorNormalAccel = true; ov.feedMotorNormalAccel = (float)v;
         } else if (strcmp(key, "ROTATION_SERVO_ACTIVE_HOLD_DURATION_MS") == 0) {
             ov.hasServoActiveHoldMs = true; ov.servoActiveHoldMs = (unsigned long)(v + 0.5);
         } else if (strcmp(key, "ROTATION_CLAMP_EXTEND_DURATION_MS") == 0) {
             ov.hasRotationClampExtendMs = true; ov.rotationClampExtendMs = (unsigned long)(v + 0.5);
+        } else if (strcmp(key, "ROTATION_CLAMP_ACTIVATION_DISTANCE") == 0) {
+            ov.hasRotationClampActivationDistance = true; ov.rotationClampActivationDistance = (float)v;
         } else if (strcmp(key, "TA_SIGNAL_DURATION") == 0) {
             ov.hasTaSignalDuration = true; ov.taSignalDuration = (unsigned long)(v + 0.5);
         } else if (strcmp(key, "ROTATION_SERVO_HOME_POSITION") == 0) {

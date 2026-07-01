@@ -18,6 +18,7 @@
 // LED Wave Pattern (cutting-state local; not a system-wide config)
 const float NO_WOOD_LED_WAVE_SPEED_MULTIPLIER = 5.0f;             // How much slower to blink vs NOWOOD state when no wood detected during cut
 const float RELOAD_INTERRUPT_MAX_CUT_FRACTION = 0.75f;            // Reload switch only cancels cut if motor is below this fraction of total cut distance
+const unsigned long HOME_POSITION_ERROR_BLINK_INTERVAL_MS = 100;  // Red/yellow blink interval while in the home-position error indication
 
 // STATE VARIABLES
 namespace {
@@ -380,6 +381,7 @@ void handleCuttingStep2() {
     // Check if cut is complete
     FastAccelStepper* cutMotor = getCutMotor();
     if (cutMotor && !cutMotor->isRunning()) {
+        recordCut();  // cut travel finished → log it for the dashboard cuts/min stats
         const bool no2x4Detected = !isWoodPresent();
 
         // When wood is present AND pullback is enabled, defer the cut motor
@@ -427,7 +429,7 @@ void handleHomePositionError() {
     unsigned long lastErrorBlinkTime = getLastErrorBlinkTime();
     bool errorBlinkState = getErrorBlinkState();
     
-    if (millis() - lastErrorBlinkTime > 100) { 
+    if (millis() - lastErrorBlinkTime > HOME_POSITION_ERROR_BLINK_INTERVAL_MS) {
         errorBlinkState = !errorBlinkState;
         setErrorBlinkState(errorBlinkState);
         if(errorBlinkState) showRedLed(); else turnRedLedOff();

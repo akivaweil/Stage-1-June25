@@ -28,6 +28,16 @@ static const char* CORS_VALUE  = "*";
 extern String getStateName(SystemState state);
 extern String getSystemHealth();
 
+// Feed motor steps/inch, used as the single dashboard stepsPerInch (see note in
+// buildConfigJson). Declared extern by MotorConfig.h.
+extern float FEED_MOTOR_STEPS_PER_INCH;
+
+// Dual-mode (3 Inch / Minis) accessors, defined in WebDashboard.cpp. Exposed in
+// /api/status as "mode" and switched via the reserved "__mode__" POST key so the
+// central dashboard can drive the toggle that the old standalone dashboard had.
+extern int  getCurrentConfigMode();
+extern void setConfigMode(int mode);
+
 // DEFERRED-APPLY FLAG
 // Set when a POST is accepted + persisted mid-cycle but cannot be applied live.
 // The main loop calls applyDeferredConfigIfPending() on entry to IDLE.
@@ -51,6 +61,7 @@ String buildStatusJson() {
     doc["uptimeMs"] = (uint32_t)millis();
     doc["freeHeap"] = (uint32_t)ESP.getFreeHeap();
     doc["rssi"]     = (int)WiFi.RSSI();
+    doc["mode"]     = getCurrentConfigMode();         // 0 = 3 Inch, 1 = Minis
 
     // Flat sensor object. Polarity matches updateSensorStatus() in the dashboard.
     JsonObject sensors = doc["sensors"].to<JsonObject>();
@@ -59,6 +70,15 @@ String buildStatusJson() {
     sensors["cutMotorHomeSwitch"] = digitalRead(CUT_MOTOR_HOME_SWITCH) == HIGH;
     sensors["feedMotorHomeSensor"]= digitalRead(FEED_MOTOR_HOME_SENSOR) == LOW;
     sensors["startCycleSwitch"]   = digitalRead(START_CYCLE_SWITCH) == HIGH;
+
+    // Rolling cuts-per-minute averaged over 1/3/5/15-minute windows.
+    float r1, r3, r5, r15;
+    getCutRates(r1, r3, r5, r15);
+    JsonObject cutRates = doc["cutRates"].to<JsonObject>();
+    cutRates["m1"]  = r1;
+    cutRates["m3"]  = r3;
+    cutRates["m5"]  = r5;
+    cutRates["m15"] = r15;
 
     String out;
     serializeJson(doc, out);
@@ -70,6 +90,12 @@ String buildConfigJson() {
     JsonDocument doc;
     doc["id"]     = MACHINE_ID;
     doc["schema"] = 1;
+    // Single steps/inch for the shared dashboard's steps<->inches conversion. The
+    // dashboard divides value/min/max of any fromSteps field by this and rounds
+    // back to whole steps on POST. Only the FEED motor fields are stored in steps
+    // (FEED_MOTOR_STEPS_PER_INCH = 1000); the CUT fields are already in inches and
+    // carry NO fromSteps, so this constant never touches them.
+    doc["stepsPerInch"] = FEED_MOTOR_STEPS_PER_INCH;
 
     JsonArray fields = doc["fields"].to<JsonArray>();
     for (size_t i = 0; i < MACHINE_SETTINGS_COUNT; i++) {
@@ -86,6 +112,9 @@ String buildConfigJson() {
         f["min"]  = s.min;
         f["max"]  = s.max;
         f["step"] = s.step;
+        f["group"] = s.group;
+        if (s.fromSteps) f["fromSteps"] = true;
+        if (s.collapsed) f["collapsed"] = true;
     }
 
     String out;
@@ -109,6 +138,22 @@ bool applyConfigJson(const String& body, bool& outDeferred, String& outMsg) {
     if (obj.isNull()) {
         outMsg = "expected JSON object";
         return false;
+    }
+
+    // Reserved key: switch the 3 Inch / Minis config mode. Not a MACHINE_SETTINGS
+    // field — handle it here (before field validation) so the central dashboard's
+    // mode toggle works. Switching reloads the active EEPROM block (mirrors the
+    // old websocket set_config_mode), so it is sent on its own with no other keys.
+    if (obj["__mode__"].is<int>() || obj["__mode__"].is<long>()) {
+        int m = obj["__mode__"].as<int>();
+        if (m != 0 && m != 1) {
+            outMsg = "__mode__ invalid/out of range";
+            return false;
+        }
+        setConfigMode(m);
+        outDeferred = false;
+        outMsg = "saved";
+        return true;
     }
 
     // PASS 1 — validate every key/value BEFORE mutating anything. A single bad

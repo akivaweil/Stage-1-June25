@@ -7,8 +7,13 @@
 // Error LED Functions
 // Contains LED functions specifically for error state handling.
 
+// Blink interval for the alternating red/yellow ERROR-state indicator.
+const unsigned long ERROR_LED_BLINK_INTERVAL_MS = 250;
+// Blink interval for the red SUCTION_ERROR-state indicator.
+const unsigned long SUCTION_ERROR_LED_BLINK_INTERVAL_MS = 1500;
+
 void handleErrorLedBlink() {
-    if (millis() - lastErrorBlinkTime > 250) {
+    if (millis() - lastErrorBlinkTime > ERROR_LED_BLINK_INTERVAL_MS) {
         errorBlinkState = !errorBlinkState;
         if(errorBlinkState) showRedLed(); else turnRedLedOff();
         if(!errorBlinkState) showYellowLed(); else turnYellowLedOff();
@@ -17,7 +22,7 @@ void handleErrorLedBlink() {
 }
 
 void handleSuctionErrorLedBlink(unsigned long& lastBlinkTimeRef, bool& blinkStateRef) {
-    if (millis() - lastBlinkTimeRef >= 1500) {
+    if (millis() - lastBlinkTimeRef >= SUCTION_ERROR_LED_BLINK_INTERVAL_MS) {
         lastBlinkTimeRef = millis();
         blinkStateRef = !blinkStateRef;
         if(blinkStateRef) showRedLed(); else turnRedLedOff();
@@ -52,6 +57,8 @@ void handleSuctionErrorLedBlink(unsigned long& lastBlinkTimeRef, bool& blinkStat
 // Error recovery constants
 const unsigned long CUT_MOTOR_HOME_RECOVERY_TIMEOUT_MS = 5000; // 5 second maximum recovery time
 const float CUT_MOTOR_HOME_RECOVERY_SPEED = 1000; // Recovery speed (same as homing speed)
+const uint32_t CUT_MOTOR_HOME_RECOVERY_ACCELERATION = 10000; // Moderate acceleration for controlled recovery
+const unsigned long CUT_MOTOR_HOME_RECOVERY_POLL_DELAY_MS = 10; // Sensor poll interval during recovery
 
 // ========================================================================
 // RESULT STRUCTURE CREATION HELPERS
@@ -113,6 +120,8 @@ void performCutMotorRealTimeHomeSensorCheck(FastAccelStepper* cutMotor, Bounce& 
     // SAFETY DISTANCE AND TIMING CONSTANTS
     const float DECELERATION_DISTANCE_INCHES = 0.2; // Maximum 0.2 inch deceleration distance
     const unsigned long SENSOR_VERIFICATION_DELAY_MS = 30; // 30ms sensor stabilization delay
+    // High deceleration so the motor stops quickly within DECELERATION_DISTANCE_INCHES.
+    const uint32_t REALTIME_HOME_DECELERATION = 30000;
     
     // ONLY ACTIVE DURING Yes_2x4 RETURN SEQUENCES
     if (cutMotorInYes2x4Return && cutMotor) {
@@ -122,25 +131,15 @@ void performCutMotorRealTimeHomeSensorCheck(FastAccelStepper* cutMotor, Bounce& 
             case MONITORING:
                 if (cutMotor->isRunning() && cutHomingSwitch.read() == HIGH) {
                     // HOME SENSOR DETECTED DURING MOVEMENT!
-                    //serial.println("REAL-TIME DETECTION: Cut motor hit homing sensor during Yes_2x4 return - beginning controlled deceleration...");
-                    
                     // Calculate safe target position for controlled stop
                     // Move further toward home (more negative) to ensure sensor is firmly pressed
                     long currentPosition = cutMotor->getCurrentPosition();
                     long targetPosition = currentPosition - (DECELERATION_DISTANCE_INCHES * CUT_MOTOR_STEPS_PER_INCH);
-                    
+
                     // Set high deceleration for quick but controlled stop within safety distance
-                    cutMotor->setAcceleration(30000); // High deceleration for quick stop within 0.2 inch
+                    cutMotor->setAcceleration(REALTIME_HOME_DECELERATION); // High deceleration for quick stop within 0.2 inch
                     cutMotor->moveTo(targetPosition);
-                    
-                    Serial.print("Decelerating from position ");
-                    Serial.print(currentPosition);
-                    Serial.print(" to target position ");
-                    Serial.print(targetPosition);
-                    Serial.print(" (");
-                    Serial.print(DECELERATION_DISTANCE_INCHES);
-                    //serial.println(" inch max distance)");
-                    
+
                     realTimeCheckState = DECELERATING;
                 }
                 break;
@@ -152,11 +151,6 @@ void performCutMotorRealTimeHomeSensorCheck(FastAccelStepper* cutMotor, Bounce& 
                     // Motor has stopped after controlled deceleration, start verification delay
                     verificationDelayStartTime = millis();
                     realTimeCheckState = WAITING_FOR_DELAY;
-                    //serial.println("Cut motor deceleration complete. Starting 30ms sensor verification delay...");
-                }
-                //? Continue monitoring sensor during deceleration in case it goes LOW
-                if (cutHomingSwitch.read() == LOW) {
-                    //serial.println("WARNING: Home sensor went LOW during deceleration - possible contact issue");
                 }
                 break;
                 
@@ -175,12 +169,8 @@ void performCutMotorRealTimeHomeSensorCheck(FastAccelStepper* cutMotor, Bounce& 
                     // SUCCESSFUL HOME DETECTION WITH STABLE CONTACT
                     cutMotor->setCurrentPosition(0); // Recalibrate position to home
                     cutMotorInYes2x4Return = false;  // Clear the Yes_2x4 return flag
-                    //serial.println("SUCCESS: Home sensor verified as stable after 30ms delay.");
-                    //serial.println("Cut motor position recalibrated to 0, Yes_2x4 return flag cleared.");
                 } else {
                     // FALSE TRIGGER OR INSUFFICIENT CONTACT
-                    //serial.println("WARNING: Home sensor not active after 30ms verification delay.");
-                    //serial.println("This was likely a false trigger or insufficient contact. Motor will continue movement.");
                     //? Note: cutMotorInYes2x4Return flag remains true so movement can continue
                 }
                 realTimeCheckState = MONITORING; // Return to monitoring state
@@ -189,7 +179,6 @@ void performCutMotorRealTimeHomeSensorCheck(FastAccelStepper* cutMotor, Bounce& 
     } else {
         // RESET STATE MACHINE when not in Yes_2x4 return mode
         if (realTimeCheckState != MONITORING) {
-            //serial.println("Real-time check state reset - exiting Yes_2x4 return mode");
             realTimeCheckState = MONITORING;
         }
     }
@@ -209,28 +198,20 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
     bool allowSlowRecovery
 ) {
     bool sensorDetectedHome = false;
-    Serial.print("ERROR DETECTION: Checking cut motor home position for context: ");
-    //serial.println(contextDescription);
-    
+
     // ====================================================================
     // PHASE 1: INITIAL HOME VERIFICATION (3-try approach)
     // ====================================================================
-    
+
     for (int attemptNumber = 1; attemptNumber <= 3; attemptNumber++) {
         delay(30);  // Brief delay for sensor stabilization
         cutHomingSwitch.update();
-        Serial.print("Initial home verification attempt ");
-        Serial.print(attemptNumber);
-        Serial.print(" of 3: ");
-        //serial.println(cutHomingSwitch.read() == HIGH ? "HOME DETECTED" : "NO HOME");
-        
+
         if (cutHomingSwitch.read() == HIGH) {
             sensorDetectedHome = true;
             if (cutMotor) {
                 cutMotor->setCurrentPosition(0); // Recalibrate position to absolute zero
             }
-            Serial.print("SUCCESS: Cut motor home position confirmed on initial check for ");
-            //serial.println(contextDescription);
             return createSuccessResult();
         }
     }
@@ -240,23 +221,17 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
     // ====================================================================
     
     if (!sensorDetectedHome && allowSlowRecovery) {
-        //serial.println("INITIATING SLOW RECOVERY: Moving cut motor slowly back to home at homing speed...");
-        
         if (cutMotor) {
             // CONFIGURE MOTOR FOR RECOVERY MOVEMENT
             cutMotor->setSpeedInHz(CUT_MOTOR_HOME_RECOVERY_SPEED);
-            cutMotor->setAcceleration(10000); // Moderate acceleration for controlled movement
+            cutMotor->setAcceleration(CUT_MOTOR_HOME_RECOVERY_ACCELERATION); // Moderate acceleration for controlled movement
             
             // START RECOVERY MOVEMENT (backward toward home)
             cutMotor->runBackward();
             
             unsigned long recoveryStartTime = millis();
             bool homeFoundDuringRecovery = false;
-            
-            Serial.print("Slow recovery started at homing speed (");
-            Serial.print(CUT_MOTOR_HOME_RECOVERY_SPEED);
-            //serial.println(" steps/sec) with 5-second timeout...");
-            
+
             // MONITOR FOR HOME SENSOR DETECTION DURING RECOVERY
             while ((millis() - recoveryStartTime) < CUT_MOTOR_HOME_RECOVERY_TIMEOUT_MS) {
                 cutHomingSwitch.update();
@@ -265,19 +240,11 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
                     // HOME SENSOR DETECTED DURING RECOVERY!
                     cutMotor->forceStopAndNewPosition(0);
                     homeFoundDuringRecovery = true;
-                    
-                    unsigned long recoveryDuration = millis() - recoveryStartTime;
-                    Serial.print("SUCCESS: Home sensor detected during slow recovery after ");
-                    Serial.print(recoveryDuration);
-                    //serial.println(" ms. Cut motor position recalibrated to 0.");
-                    
-                    String successMessage = "Recovery successful for " + contextDescription + 
-                                          " after " + String(recoveryDuration) + " ms";
                     return createSuccessResult();
                 }
                 
                 // Small delay to prevent excessive sensor polling
-                delay(10);
+                delay(CUT_MOTOR_HOME_RECOVERY_POLL_DELAY_MS);
             }
             
             // RECOVERY TIMEOUT - Stop motor and report error
@@ -285,36 +252,32 @@ CutMotorHomeErrorResult handleCutMotorHomeError(
             
             if (!homeFoundDuringRecovery) {
                 String timeoutErrorMessage = String("CRITICAL ERROR: Recovery timeout after 5 seconds. ") +
-                                           String("Cut motor failed to find home position during slow recovery for context: ") + 
+                                           String("Cut motor failed to find home position during slow recovery for context: ") +
                                            contextDescription;
-                //serial.println(timeoutErrorMessage);
                 return createErrorTransitionResult(timeoutErrorMessage);
             }
         } else {
             String motorErrorMessage = "CRITICAL ERROR: Cut motor object is null during recovery for context: " + contextDescription;
-            //serial.println(motorErrorMessage);
             return createErrorTransitionResult(motorErrorMessage);
         }
-    } 
+    }
     // ====================================================================
     // PHASE 3: HANDLE CASES WHERE SLOW RECOVERY IS DISABLED
     // ====================================================================
     
     else if (!allowSlowRecovery) {
         //? Slow recovery not allowed for this context (currently only used for NO_WOOD sequences)
-        String warningMessage = String("WARNING: Cut motor home sensor did not detect home for ") + contextDescription + 
+        String warningMessage = String("WARNING: Cut motor home sensor did not detect home for ") + contextDescription +
                               String(", but slow recovery disabled. Proceeding with warning.");
-        //serial.println(warningMessage);
         return createWarningOnlyResult(warningMessage);
     }
-    
+
     // ====================================================================
     // FINAL FALLBACK - All detection and recovery attempts failed
     // ====================================================================
-    
+
     String finalErrorMessage = String("FAILED: Cut motor home sensor did not detect home position after 3 attempts. ") +
                              String("Context: ") + contextDescription;
-    //serial.println(finalErrorMessage);
     return createErrorTransitionResult(finalErrorMessage);
 }
 
@@ -336,30 +299,26 @@ void executeCutMotorErrorStateTransition(
     unsigned long& errorStartTime,
     bool shouldExtendTopClamp
 ) {
-    //serial.println("EXECUTING CUT MOTOR ERROR STATE TRANSITION");
-    
+    Serial.println("[Stage1] FAULT: cut motor home detection failed");
+
     // IMMEDIATE MOTOR SAFETY - Stop all movement immediately
     if (cutMotor) {
         cutMotor->forceStopAndNewPosition(cutMotor->getCurrentPosition());
-        //serial.println("Cut motor stopped and position locked.");
     }
     if (positionMotor) {
         positionMotor->forceStopAndNewPosition(positionMotor->getCurrentPosition());
-        //serial.println("Position motor stopped and position locked.");
     }
-    
+
     // EXTEND SAFETY CLAMPS - Secure all mechanical systems
     extendFeedClamp();  // Always extend feed clamp for safety
     if (shouldExtendTopClamp) {
         extendTopClamp();
-        //serial.println("Top clamp extended for safety.");
     }
-    
+
     // SET ERROR INDICATION LEDS - Visual status indicators
     showRedLed();      // Red = Error condition
     turnYellowLedOff();  // Yellow off = Operation stopped
-    //serial.println("Error LEDs activated (Red ON, Yellow OFF).");
-    
+
     // TRANSITION TO ERROR STATE
     currentState = STATE_ERROR;
     errorStartTime = millis();
@@ -373,8 +332,6 @@ void executeCutMotorErrorStateTransition(
     fixPositionStep = 0;
     fixPositionSubStep2 = 0;
     
-    //serial.println("System transitioned to ERROR state due to cut motor home detection failure.");
-    //serial.println("User must acknowledge error with reload switch to continue.");
 }
 
 // ========================================================================
@@ -383,19 +340,5 @@ void executeCutMotorErrorStateTransition(
 
 // LOG CUT MOTOR HOME ERROR RESULTS FOR DEBUGGING AND MONITORING
 void logCutMotorHomeErrorResult(const CutMotorHomeErrorResult& result) {
-    if (!result.errorMessage.isEmpty()) {
-        Serial.print("Cut Motor Home Error Handler Result: ");
-        //serial.println(result.errorMessage);
-    }
-    
-    // VISUAL STATUS INDICATORS FOR SERIAL MONITOR
-    if (result.wasHomeDetected) {
-        //serial.println("✓ Cut motor home position successfully verified.");
-    } else if (result.shouldAttemptSlowRecovery) {
-        //serial.println("→ Slow recovery at homing speed will be attempted.");
-    } else if (result.shouldTransitionToError) {
-        //serial.println("✗ ERROR STATE TRANSITION REQUIRED.");
-    } else if (result.shouldContinueWithWarning) {
-        //serial.println("⚠ Continuing with warning - monitor system closely.");
-    }
-} 
+    (void)result;
+}

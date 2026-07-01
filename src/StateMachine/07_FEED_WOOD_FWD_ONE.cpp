@@ -12,7 +12,7 @@
 
 // STEP 3: EXTEND FEED CLAMP AND RETRACT TOP CLAMP
 
-// STEP 4: WAIT 200MS
+// STEP 4: WAIT (FEED_WOOD_FWD_ONE_DELAY_MS)
 
 // STEP 5: MOVE TO TRAVEL DISTANCE
 
@@ -28,12 +28,17 @@
 // so the wood is held throughout the hand-off).
 const unsigned long TOP_CLAMP_SETTLE_BEFORE_FEED_RETRACT_MS = 200;
 
+// Settle delay after extending the feed clamp / retracting the top clamp before
+// the feed motor moves to travel distance. (Label previously said "200ms" but the
+// value has always been 400ms — fixed the misleading name/comment, value unchanged.)
+const unsigned long FEED_WOOD_FWD_ONE_DELAY_MS = 400;
+
 // Static variables for feed wood fwd one state tracking
 enum FeedWoodFwdOneStep {
     RETRACT_FEED_CLAMP,
     MOVE_POSITION_MOTOR_TO_ZERO,
     EXTEND_FEED_CLAMP_RETRACT_TOP,
-    WAIT_200MS,
+    WAIT_FEED_WOOD_FWD_ONE_DELAY,
     MOVE_TO_TRAVEL_DISTANCE,
     CHECK_START_CYCLE_SWITCH,
     EXTEND_TOP_CLAMP_BEFORE_IDLE,
@@ -50,13 +55,11 @@ void handleFeedWoodFwdOneState() {
 void onEnterFeedWoodFwdOneState() {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
-    //serial.println("FeedWoodFwdOne: Starting feed wood forward one sequence");
 }
 
 void onExitFeedWoodFwdOneState() {
     currentStep = RETRACT_FEED_CLAMP;
     stepStartTime = 0;
-    //serial.println("FeedWoodFwdOne: Feed clamp retracted");
 }
 
 void executeFeedWoodFwdOneStep() {
@@ -65,14 +68,12 @@ void executeFeedWoodFwdOneStep() {
     switch (currentStep) {
         case RETRACT_FEED_CLAMP:
             retractFeedClamp();
-            //serial.println("FeedWoodFwdOne: Feed clamp retracted");
             advanceToNextFeedWoodFwdOneStep();
             break;
 
         case MOVE_POSITION_MOTOR_TO_ZERO:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToZero();
-                //serial.println("FeedWoodFwdOne: Moving feed motor to 0");
                 advanceToNextFeedWoodFwdOneStep();
             }
             break;
@@ -81,15 +82,13 @@ void executeFeedWoodFwdOneStep() {
             if (feedMotor && !feedMotor->isRunning()) {
                 extendFeedClamp();
                 retractTopClamp();
-                //serial.println("FeedWoodFwdOne: Feed clamp extended, top clamp retracted");
                 stepStartTime = millis();
                 advanceToNextFeedWoodFwdOneStep();
             }
             break;
 
-        case WAIT_200MS:
-            if (millis() - stepStartTime >= 400) {
-                //serial.println("FeedWoodFwdOne: Waiting 200ms");
+        case WAIT_FEED_WOOD_FWD_ONE_DELAY:
+            if (millis() - stepStartTime >= FEED_WOOD_FWD_ONE_DELAY_MS) {
                 advanceToNextFeedWoodFwdOneStep();
             }
             break;
@@ -97,25 +96,21 @@ void executeFeedWoodFwdOneStep() {
         case MOVE_TO_TRAVEL_DISTANCE:
             if (feedMotor && !feedMotor->isRunning()) {
                 moveFeedMotorToPosition(FEED_TRAVEL_DISTANCE);
-                //serial.println("FeedWoodFwdOne: Moving feed motor to travel distance");
                 advanceToNextFeedWoodFwdOneStep();
             }
             break;
 
         case CHECK_START_CYCLE_SWITCH:
             if (feedMotor && !feedMotor->isRunning()) {
-                //serial.println("FeedWoodFwdOne: Checking start cycle switch for next state");
 
                 // Check the start cycle switch state
                 if (getStartCycleSwitch()->read() == HIGH) {
-                    //serial.println("FeedWoodFwdOne: Start cycle switch HIGH - transitioning to CUTTING state");
                     changeState(STATE_CUTTING);
                     setCuttingCycleInProgress(true);
                     configureCutMotorForCutting();
                     showYellowLed();
                     extendFeedClamp();
                 } else {
-                    //serial.println("FeedWoodFwdOne: Start cycle switch LOW - extending top clamp before IDLE");
                     advanceToNextFeedWoodFwdOneStep();
                 }
             }
@@ -132,7 +127,6 @@ void executeFeedWoodFwdOneStep() {
         case WAIT_TOP_CLAMP_SETTLE_BEFORE_IDLE:
             if (millis() - stepStartTime >= TOP_CLAMP_SETTLE_BEFORE_FEED_RETRACT_MS) {
                 retractFeedClamp();
-                //serial.println("FeedWoodFwdOne: Top clamp settled - feed clamp retracted, transitioning to IDLE");
                 changeState(STATE_IDLE);
             }
             break;

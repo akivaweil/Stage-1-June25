@@ -114,7 +114,6 @@ void onEnterIdleState() {
         setComingFromNoWoodWithSensorsClear(false);
     }
 
-    //serial.println("Idle: All clamps retracted");
 }
 
 void onExitIdleState() {
@@ -131,13 +130,11 @@ void checkFirstCutConditions() {
     bool firstCutSensorLow = (digitalRead(FIRST_CUT_OR_WOOD_FWD_ONE) == LOW);
     
     if (pushwoodPressed && firstCutSensorHigh) {
-        //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor HIGH - transitioning to FEED_FIRST_CUT");
         // Reset the no-wood flag when feed button is pressed
         setComingFromNoWoodWithSensorsClear(false);
         changeState(STATE_FEED_FIRST_CUT);
     }
     else if (pushwoodPressed && firstCutSensorLow) {
-        //serial.println("Idle: Manual feed switch pressed with FIRST_CUT_OR_WOOD_FWD_ONE sensor LOW - transitioning to FEED_WOOD_FWD_ONE");
         // Reset the no-wood flag when feed button is pressed
         setComingFromNoWoodWithSensorsClear(false);
         changeState(STATE_FEED_WOOD_FWD_ONE);

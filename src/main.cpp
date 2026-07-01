@@ -3,6 +3,7 @@
 #include <FastAccelStepper.h>
 #include <esp_system.h>
 #include <esp_attr.h>
+#include <esp_task_wdt.h>
 #include <ESP32Servo.h>
 #include "Config/Pins_Definitions.h"
 #include "Config/Config.h"
@@ -12,6 +13,12 @@
 #include "StateMachine/StateManager.h"
 #include "StateMachine/03_CUTTING.h"
 #include "WebDashboard/WebDashboard.h"
+
+// Task watchdog timeout (seconds): resets the chip if the loop task stalls longer
+// than this. Generous enough never to trip on legitimate blocking (cut homing,
+// OTA upload); the loop, the blocking cut-homing wait, and the OTA progress
+// callback all feed it.
+const uint32_t WATCHDOG_TIMEOUT_S = 15;
 
 // Automated Table Saw
 // Main control system for Stage 1 of the automated table saw.
@@ -190,17 +197,6 @@ static void captureCrashDiagnostics() {
   crashBreadcrumbCuttingStep = 0xFFFFFFFF;
   crashBreadcrumbLastAliveMs = 0;
 
-  Serial.print("Reset reason: ");
-  Serial.println(lastResetReasonStr);
-  if (lastResetWasAbnormal) {
-    Serial.print("Last alive in state: ");
-    Serial.print(lastCrashStateStr);
-    Serial.print(" (cutting step ");
-    Serial.print(lastCrashCuttingStep);
-    Serial.print(") at uptime ");
-    Serial.print(lastCrashUptimeMs);
-    Serial.println(" ms");
-  }
 }
 
 static inline void updateCrashBreadcrumbs() {
@@ -211,7 +207,7 @@ static inline void updateCrashBreadcrumbs() {
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Automated Table Saw Control System - Stage 1");
+  Serial.println("[Stage1] booting");
 
   captureCrashDiagnostics();
   
@@ -284,8 +280,6 @@ void setup() {
     cutMotor->setDirectionPin(CUT_MOTOR_DIR_PIN);
     configureCutMotorForCutting();
     cutMotor->setCurrentPosition(0);
-  } else {
-    //serial.println("Failed to init cutMotor");
   }
 
   feedMotor = engine.stepperConnectToPin(FEED_MOTOR_STEP_PIN);
@@ -293,13 +287,9 @@ void setup() {
     feedMotor->setDirectionPin(FEED_MOTOR_DIR_PIN);
     configureFeedMotorForNormalOperation();
     feedMotor->setCurrentPosition(0);
-  } else {
-    //serial.println("Failed to init feedMotor");
   }
   
   // Initialize servo with robust attachment
-  //Serial.printf("Initializing servo on pin %d with robust attachment\n", ROTATION_SERVO_PIN);
-  
   // Force servo attachment using multiple methods to ensure proper initialization
   rotationServo.attach(ROTATION_SERVO_PIN);
   rotationServo.attach(ROTATION_SERVO_PIN, 500, 2500);
@@ -308,14 +298,11 @@ void setup() {
   
   // Final forced attach
   rotationServo.attach(ROTATION_SERVO_PIN);
-  
-  //Serial.println("✓ Servo attachment completed - Commands will be sent regardless of attach status");
-  
+
   // SAFETY: Do NOT set initial servo position during startup
   // This prevents the servo from moving and potentially ramming stuck wood into the blade
   // The servo will only be positioned when manually starting a cut cycle
-  //Serial.println("Servo initialization complete - no initial position set for safety");
-  
+
   // Configure initial state
   currentState = STATE_STARTUP;
   
@@ -325,11 +312,22 @@ void setup() {
   } else {
     startSwitchSafe = true;
   }
-  
+
+  // Subscribe the loop task to the task watchdog (after boot-time WiFi connect so
+  // that wait isn't watched). esp_task_wdt_init() reconfigures the core's TWDT to
+  // our timeout; add(NULL) watches this (loop) task.
+  esp_task_wdt_init(WATCHDOG_TIMEOUT_S, true);
+  esp_task_wdt_add(NULL);
+
   delay(10);
+
+  Serial.println("[Stage1] ready");
 }
 
 void loop() {
+  // Feed the task watchdog each iteration.
+  esp_task_wdt_reset();
+
   updateCrashBreadcrumbs();
 
   // Handle OTA requests when in IDLE, HOMING, RELOAD states, or at the beginning of CUTTING state (step 0)
@@ -355,8 +353,9 @@ void loop() {
   executeStateMachine();
   
   // Update dashboard status periodically (only when not cutting to avoid timing interference)
+  static const unsigned long DASHBOARD_UPDATE_INTERVAL_MS = 1000;
   static unsigned long lastDashboardUpdate = 0;
-  if (millis() - lastDashboardUpdate > 1000) { // Update every second
+  if (millis() - lastDashboardUpdate > DASHBOARD_UPDATE_INTERVAL_MS) { // Update every second
     updateDashboardStatus();
     lastDashboardUpdate = millis();
   }

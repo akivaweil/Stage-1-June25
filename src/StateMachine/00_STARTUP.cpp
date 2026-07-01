@@ -8,20 +8,14 @@
 
 // STEP 1: TURN ON BLUE LED TO INDICATE STARTUP/HOMING
 
-// STEP 2: DISPLAY IP ADDRESS ON SERIAL MONITOR
-
-// STEP 3: TRANSITION TO HOMING STATE
+// STEP 2: TRANSITION TO HOMING STATE
 
 void handleStartupState() {
     showBlueLed();  // Blue LED on during startup/homing
-    
-    // Display IP address on startup
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-    
-    // Small delay to ensure IP is visible
+
+    // Small startup settle delay
     delay(1000);
-    
+
     changeState(STATE_HOMING);
 }
 

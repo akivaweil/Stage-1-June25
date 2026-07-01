@@ -81,7 +81,6 @@ void handleSuctionErrorState() {
 
     // Step 4 & 5: Use StateManager to access switches instead of global variables
     if (getStartCycleSwitch()->rose()) { // Check for start switch OFF to ON transition
-        //serial.println("Start cycle switch toggled ON. Resetting from suction error. Transitioning to HOMING.");
         turnRedLedOff();   // Turn off error LED explicitly before changing state
         
         setContinuousModeActive(false); // Ensure continuous mode is off

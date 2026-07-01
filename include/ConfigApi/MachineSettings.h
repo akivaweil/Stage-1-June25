@@ -31,6 +31,11 @@ struct MachineSetting {
     float* fTarget;        // for SETTING_FLOAT
     unsigned long* ulTarget; // for ulong-backed SETTING_INT
     int* iTarget;            // for int-backed SETTING_INT
+
+    // Dashboard grouping / display metadata (shared central-dashboard contract).
+    const char* group;   // section heading (first-appearance order)
+    bool fromSteps;      // true => value is in STEPS; dashboard converts to in/s via stepsPerInch
+    bool collapsed;      // true => the field's group section starts collapsed
 };
 
 // Curated schema (defined in MachineSettings.cpp).
@@ -49,8 +54,11 @@ struct StagedConfigOverrides {
     bool  hasFeedTravelDistance = false;    float        feedTravelDistance = 0;
     bool  hasCutMotorNormalSpeed = false;   float        cutMotorNormalSpeed = 0;
     bool  hasFeedMotorNormalSpeed = false;  float        feedMotorNormalSpeed = 0;
+    bool  hasCutMotorNormalAccel = false;   float        cutMotorNormalAccel = 0;
+    bool  hasFeedMotorNormalAccel = false;  float        feedMotorNormalAccel = 0;
     bool  hasServoActiveHoldMs = false;     unsigned long servoActiveHoldMs = 0;
     bool  hasRotationClampExtendMs = false; unsigned long rotationClampExtendMs = 0;
+    bool  hasRotationClampActivationDistance = false; float rotationClampActivationDistance = 0;
     bool  hasTaSignalDuration = false;      unsigned long taSignalDuration = 0;
     bool  hasServoHomePosition = false;     int           servoHomePosition = 0;
 };
